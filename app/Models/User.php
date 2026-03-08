@@ -1,0 +1,143 @@
+<?php
+
+namespace App\Models;
+
+// use Illuminate\Contracts\Auth\MustVerifyEmail;
+
+use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Traits\HasRoles;
+
+class User extends Authenticatable implements MustVerifyEmail
+{
+    use HasApiTokens, HasFactory, Notifiable, HasRoles;
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'name',
+        'email',
+        'password',
+        'settings',
+        'user_config',
+        'phone_number',
+        'api_token',
+        'api_token_id',
+        'user_category_id',
+        'kyc_level',
+        'webhook_url',
+        // From second list, merged and deduplicated
+        'address',
+        'original_token',
+        'username',
+        'referal_username',
+        'phone_number',
+        'last_login',
+        'last_login_ip',
+        'active',
+        'user_package_id',
+        'kyc_verified_at',
+        'bvn',
+        'nin',
+        'account_status',
+        'bank_account_number',
+        'bank_account_name',
+        'bank_account_bank',
+        'bank_account_bank_code',
+    ];
+
+    /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var array<int, string>
+     */
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+        'settings' => 'json',
+        'user_config' => 'json',
+    ];
+
+
+
+
+    /**
+     * Get the count of phone numbers associated with the user.
+     *
+     * @return int
+     */
+
+    public function transactions() : HasMany {
+        return $this->hasMany(Transaction::class);
+    }
+
+
+
+    public function package() {
+        return $this->belongsTo(UserPackage::class, 'user_package_id');
+    }
+
+
+    public function wallet() {
+        return $this->hasOne(Wallet::class);
+    }
+
+    public function fundingAccounts() {
+        return $this->hasMany(FundingAccount::class);
+    }
+
+
+
+    public function category()
+    {
+        return $this->belongsTo(UserCategory::class, 'user_category_id');
+    }
+
+
+    public function getCanAttribute()
+    {
+        $permissions = [];
+        foreach (Permission::all() as $permission) {
+            if ($this->can($permission->name)) {
+                $permissions[$permission->name] = true;
+            } else {
+                $permissions[$permission->name] = false;
+            }
+        }
+        return $permissions;
+    }
+
+    public function getRoleAttribute()
+    {
+        return $this->roles->isNotEmpty()  ? $this->roles->first()->only('id', 'name') : null;
+    }
+
+    public function getIsAdminAttribute(): bool
+    {
+        return $this->hasRole(['Admin', 'Superadmin','Masteradmin']);
+    }
+
+    public function isSuperAdmin(): bool
+    {
+        return $this->hasRole(['Superadmin', 'Masteradmin']);
+    }
+
+}

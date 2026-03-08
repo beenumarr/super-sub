@@ -1,0 +1,299 @@
+import { WelcomeAnnouncementModal } from '@/components/modals/welcome-announcement-modal';
+import { NetworkIcon } from '@/components/shared/network-icon';
+import AppLayout from '@/layouts/app-layout';
+import { type BreadcrumbItem } from '@/types';
+import { formatToThousands } from '@/utils';
+import { Head, Link, usePage } from '@inertiajs/react';
+import { ChevronRight, Copy, Eye, EyeOff, Headset, History, Phone, Plus, Receipt, User, Wallet, Wifi } from 'lucide-react';
+import { useState } from 'react';
+import toast from 'react-hot-toast';
+
+interface RecentTransaction {
+    id: string;
+    description: string;
+    reference_id: string;
+    date: string;
+    status: string;
+    telco_price: string;
+    network: string;
+    api_response: string;
+}
+
+interface FundingAccount {
+    id: number;
+    bank_name: string;
+    account_name: string;
+    account_number: string;
+}
+
+interface DashboardProps {
+    recent_transactions: RecentTransaction[];
+    wallet?: {
+        balance: number;
+        actual_balance: number;
+        outstanding_balance: number;
+        today_usage_fee: number;
+        bonus_balance: number;
+    };
+    funding_accounts: FundingAccount[];
+    welcome_announcement?: {
+        enabled: boolean;
+        show: boolean;
+        title: string;
+        content: string;
+    };
+}
+
+export default function Index({ recent_transactions, wallet, funding_accounts, welcome_announcement }: DashboardProps) {
+    const { auth } = usePage<{
+        auth: {
+            user: {
+                name: string;
+                feat_glo_gifting?: boolean;
+                feat_airtel_gifting?: boolean;
+                feat_mtn_gifting?: boolean;
+                feat_mtn_datashare?: boolean;
+                feat_momo_airtime?: boolean;
+            };
+        };
+    }>().props;
+    const user = auth.user;
+
+    const breadcrumbs: BreadcrumbItem[] = [{ title: 'Dashboard', href: '/dashboard' }];
+
+    const [isBalanceVisible, setIsBalanceVisible] = useState(true);
+    const [showWelcomeModal, setShowWelcomeModal] = useState(welcome_announcement?.show ?? false);
+    const [hasNewAnnouncement, setHasNewAnnouncement] = useState(welcome_announcement?.enabled ?? false);
+
+    const handleShowAnnouncement = () => {
+        setShowWelcomeModal(true);
+        setHasNewAnnouncement(false);
+    };
+
+    const handleCloseModal = () => {
+        setShowWelcomeModal(false);
+        setHasNewAnnouncement(false);
+    };
+
+    const copyToClipboard = (text: string) => {
+        navigator.clipboard.writeText(text);
+        toast.success('Account number copied', { duration: 2000 });
+    };
+
+    const displayBalance = isBalanceVisible ? `₦${formatToThousands(wallet?.balance ?? 0)}` : '••••••';
+    const displayBonus = isBalanceVisible ? `₦${formatToThousands(wallet?.bonus_balance ?? 0)}` : '••••••';
+
+    const historyHref = '/data-transactions/history/data';
+
+    function getStatusColor(status: string) {
+        const s = status?.toUpperCase() ?? '';
+        if (s === 'SUCCESS' || s === 'COMPLETED') return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
+        if (s === 'PENDING') return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400';
+        if (s === 'FAILED' || s === 'ERROR') return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+        return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300';
+    }
+
+    function formatDisplayDate(dateStr: string) {
+        const d = new Date(dateStr);
+        return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+
+    return (
+        <AppLayout
+            breadcrumbs={breadcrumbs}
+            announcement={
+                welcome_announcement
+                    ? {
+                          enabled: welcome_announcement.enabled,
+                          hasNew: hasNewAnnouncement,
+                          title: welcome_announcement.title,
+                          content: welcome_announcement.content,
+                      }
+                    : undefined
+            }
+            onShowAnnouncement={handleShowAnnouncement}
+        >
+            <Head title="Dashboard" />
+
+            <div className="container mx-auto max-w-2xl px-2 pt-3 pb-8 sm:px-4">
+                {/* Wallet card */}
+                <div className="bg-theme-1 mb-2.5 rounded-xl border border-gray-200 p-4 dark:border-gray-700">
+                    <div className="flex items-center justify-between">
+                        <span className="text-primary-foreground/90 text-sm">Wallet Balance</span>
+                        <Link
+                            href="/wallet"
+                            className="bg-primary-foreground text-primary inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-sm font-medium hover:opacity-90"
+                        >
+                            <Plus className="h-3.5 w-3.5" />
+                            Fund
+                        </Link>
+                    </div>
+                    <div className="mt-2 flex items-center justify-between">
+                        <span className="text-primary-foreground text-3xl font-bold">{displayBalance}</span>
+                        <button
+                            type="button"
+                            onClick={() => setIsBalanceVisible((v) => !v)}
+                            className="text-primary-foreground hover:bg-primary-foreground/10 rounded p-1"
+                            aria-label={isBalanceVisible ? 'Hide balance' : 'Show balance'}
+                        >
+                            {isBalanceVisible ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
+                        </button>
+                    </div>
+                    <p className="text-primary-foreground/90 mt-1 text-sm">Bonus: {displayBonus}</p>
+                </div>
+
+                {/* Funding Accounts */}
+                {funding_accounts && funding_accounts.length > 0 && (
+                    <>
+                        <h3 className="mb-1 px-1 text-sm font-semibold text-gray-800 dark:text-gray-200">Funding Accounts</h3>
+                        <div className="scrollbar-hide mb-3 flex gap-2 overflow-x-auto pb-1">
+                            {funding_accounts.map((account) => (
+                                <div
+                                    key={account.id}
+                                    className="bg-card min-w-[280px] flex-1 rounded-lg border border-gray-200 p-2.5 dark:border-gray-700"
+                                >
+                                    <div className="flex items-center gap-2">
+                                        <div className="bg-theme-1/10 flex h-8 w-8 items-center justify-center rounded-md">
+                                            <Wallet className="text-theme-1 h-4 w-4" />
+                                        </div>
+                                        <div className="min-w-0 flex-1 text-sm">
+                                            <span className="text-foreground font-semibold">{account.bank_name}</span>
+                                            <span className="mx-1.5 text-gray-400">|</span>
+                                            <span className="text-muted-foreground truncate">{account.account_name}</span>
+                                        </div>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => copyToClipboard(account.account_number)}
+                                        className="bg-muted/50 text-foreground hover:bg-muted mt-2 flex w-full items-center justify-between rounded-md px-2.5 py-2 text-left text-sm font-semibold"
+                                    >
+                                        {account.account_number}
+                                        <Copy className="text-muted-foreground h-4 w-4 shrink-0" />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    </>
+                )}
+
+                {/* Services */}
+                <h3 className="mb-2 px-1 text-sm font-semibold text-gray-800 dark:text-gray-200">Services</h3>
+                <div className="bg-card rounded-xl border border-gray-200 p-2.5 dark:border-gray-700">
+                    <div className="grid grid-cols-3 gap-0">
+                        <ServiceItem icon={Wifi} label="Data" href="/send-data" />
+                        <ServiceItem icon={Phone} label="Airtime" href="/send-airtime" borderLeft={true} borderRight={true} />
+                        <ServiceItem icon={Wallet} label="Fund Wallet" href="/wallet" />
+                    </div>
+                    <div className="my-1 border-t border-gray-200 dark:border-gray-600" />
+                    <div className="grid grid-cols-3 gap-0">
+                        <ServiceItem icon={Headset} label="Support" href="mailto:support@vtuapp.com.ng" external />
+                        <ServiceItem icon={History} label="History" href={historyHref} borderLeft={true} borderRight={true} />
+                        <ServiceItem icon={User} label="Profile" href="/user-settings/profile" />
+                    </div>
+                </div>
+
+                {/* Recent Transactions */}
+                <div className="mt-4 flex items-center justify-between px-1">
+                    <h3 className="text-foreground text-sm font-medium">Recent Transactions</h3>
+                    <Link href={historyHref} className="text-foreground inline-flex items-center gap-0.5 text-sm font-medium hover:underline">
+                        View All
+                        <ChevronRight className="h-5 w-5" />
+                    </Link>
+                </div>
+
+                {recent_transactions.length === 0 ? (
+                    <div className="bg-card mt-2 flex flex-col items-center justify-center rounded-lg border border-gray-200 py-10 dark:border-gray-700">
+                        <div className="bg-muted/50 rounded-full p-5">
+                            <Receipt className="text-muted-foreground h-12 w-12" />
+                        </div>
+                        <p className="text-foreground mt-5 text-lg font-semibold">No recent activity</p>
+                        <p className="text-muted-foreground mt-2 max-w-xs text-center text-sm">
+                            Your transaction history will appear here once you start using our services
+                        </p>
+                    </div>
+                ) : (
+                    <div className="mt-2 space-y-1.5">
+                        {recent_transactions.map((tx) => (
+                            <div key={tx.id} className="bg-card flex items-center gap-3 rounded-lg border border-gray-200 p-3 dark:border-gray-700">
+                                <div className="bg-primary/10 flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full">
+                                    {tx.network && tx.network !== 'Unknown' ? (
+                                        <NetworkIcon network={tx.network.toUpperCase()} />
+                                    ) : (
+                                        <Receipt className="text-primary h-4 w-4" />
+                                    )}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                    <p className="text-foreground truncate text-sm font-semibold">{tx.description}</p>
+                                    <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
+                                        <span className="text-muted-foreground truncate text-xs">
+                                            {tx.network && tx.network !== 'Unknown' ? tx.network : 'Wallet'}
+                                        </span>
+                                        <span className={`inline-flex rounded px-1.5 py-0.5 text-[10px] font-semibold ${getStatusColor(tx.status)}`}>
+                                            {tx.status}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div className="shrink-0 text-right">
+                                    <p className="text-foreground text-sm font-bold">₦{formatToThousands(tx.telco_price)}</p>
+                                    <p className="text-muted-foreground text-[10px]">{formatDisplayDate(tx.date)}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            {welcome_announcement && (
+                <WelcomeAnnouncementModal
+                    isOpen={showWelcomeModal}
+                    onClose={handleCloseModal}
+                    title={welcome_announcement.title || 'Welcome!'}
+                    content={welcome_announcement.content || ''}
+                    showOnce={true}
+                />
+            )}
+        </AppLayout>
+    );
+}
+
+function ServiceItem({
+    icon: Icon,
+    label,
+    href,
+    external,
+    borderLeft,
+    borderRight,
+}: {
+    icon: React.ComponentType<{ className?: string }>;
+    label: string;
+    href: string;
+    external?: boolean;
+    borderLeft?: boolean;
+    borderRight?: boolean;
+}) {
+    // Use boolean borderLeft and borderRight, default to false
+    const borderLeftClass = borderLeft ? 'border-l border-gray-200 dark:border-gray-600' : '';
+    const borderRightClass = borderRight ? 'border-r border-gray-200 dark:border-gray-600' : '';
+    const borderClasses = [borderLeftClass, borderRightClass].join(' ');
+
+    const content = (
+        <div className={`flex flex-col items-center justify-center py-2 ${borderClasses}`}>
+            <div className="bg-theme-1/10 flex h-11 w-11 items-center justify-center rounded-full">
+                <Icon className="text-theme-1 h-6 w-6" />
+            </div>
+            <span className="text-foreground mt-1 text-center text-xs font-medium">{label}</span>
+        </div>
+    );
+    if (external) {
+        return (
+            <a href={href} target="_blank" rel="noopener noreferrer" className="block transition-opacity hover:opacity-80">
+                {content}
+            </a>
+        );
+    }
+    return (
+        <Link href={href} className="block transition-opacity hover:opacity-80">
+            {content}
+        </Link>
+    );
+}

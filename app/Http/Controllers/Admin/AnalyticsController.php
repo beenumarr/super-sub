@@ -1,0 +1,150 @@
+<?php
+namespace App\Http\Controllers\Admin;
+
+use App\Models\User;
+use Inertia\Inertia;
+use App\Models\UserPackage;
+use App\Models\WalletTransaction;
+use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\Controller;
+use App\Http\Resources\Admin\UserAnalyticsResource;
+use App\Models\AirtimeTransaction;
+use App\Models\CableSubscriptionTransaction;
+use App\Models\DataTransaction;
+use App\Models\ElectricityBillTransaction;
+use App\Models\Transaction;
+use Illuminate\Support\Facades\Request as FilterRequest;
+
+class AnalyticsController extends Controller
+{
+        public function users()
+        {
+            $pageSize = request('pageSize', 50);
+            $currentPage = request('page', 1);
+
+            $transactionTypes = [
+                AirtimeTransaction::class,
+                DataTransaction::class,
+                ElectricityBillTransaction::class,
+                CableSubscriptionTransaction::class
+            ];
+
+
+            // Total Wallet Fund Sum and Count
+            $totalFund = Transaction::select('user_id', DB::raw('SUM(amount) as total_amount'), DB::raw('COUNT(*) as total_count'))
+            ->whereHasMorph('transactionable', WalletTransaction::class, function ($query) { $query->where('type', 'credit');})
+            ->groupBy('user_id');
+
+
+            // Total Spend Sum
+            $totalSpend = Transaction::select('user_id', DB::raw('SUM(amount) as total_amount'), DB::raw('COUNT(*) as total_count'))
+            ->where('status', 'success')
+            ->whereHasMorph('transactionable', $transactionTypes)
+            ->groupBy('user_id');
+
+
+
+            $query = User::select(
+                'users.id',
+                'users.name',
+                'users.phone',
+                'users.referal_username',
+                'users.last_login',
+                'users.email',
+                // transactions
+                'transaction_sum_count.total_amount as total_spending',
+                'transaction_sum_count.total_count as transaction_count',
+                // funding
+                'total_funding.total_amount as total_funding',
+                'total_funding.total_count as wallet_funding_count'
+            )->with('wallet:id,user_id,balance')
+            ->leftJoinSub($totalFund, 'total_funding', function ($join) {
+                $join->on('users.id', '=', 'total_funding.user_id');
+            })
+            ->leftJoinSub($totalSpend, 'transaction_sum_count', function ($join) {
+                $join->on('users.id', '=', 'transaction_sum_count.user_id');
+            });
+
+
+            $query->orderBy('total_funding.total_count', 'desc');
+
+
+            $query->filter(FilterRequest::only('search', 'trashed', 'user_id', 'status','role', 'package'));
+            // Paginate the result
+            $paginatedData = $query->paginate($pageSize, ['*'], 'page', $currentPage);
+
+
+
+            return Inertia::render('Admin/Analytics/Index', [
+                'data' => UserAnalyticsResource::collection($paginatedData->appends(FilterRequest::all())),
+                'packages' => UserPackage::all(),
+            ]);
+        }
+
+    public function index()
+    {
+        // Top Spenders
+        $topSpenders = User::withSum('transactions', 'amount')
+            ->orderBy('transactions_sum_amount', 'desc')
+            ->take(10)
+            ->get();
+
+        // Most Active Users
+        $mostActiveUsers = User::withCount('transactions')
+            ->orderBy('transactions_count', 'desc')
+            ->take(10)
+            ->get();
+
+        // High-Value Users
+        $highValueUsers = User::select('users.*')
+            ->join('transactions', 'users.id', '=', 'transactions.user_id')
+            ->selectRaw('AVG(transactions.amount) as avg_amount')
+            ->groupBy('users.id')
+            ->orderByDesc('avg_amount')
+            ->take(10)
+            ->get();
+
+
+        // Retention and Engagement Metrics
+        $userRetention = $this->calculateUserRetention();
+        $activeUsersDaily = $this->countActiveUsers('daily');
+        $activeUsersMonthly = $this->countActiveUsers('monthly');
+        $churnRate = $this->calculateChurnRate();
+
+        return Inertia::render('Admin/Analytics/Index', [
+            'topSpenders' => $topSpenders,
+            'mostActiveUsers' => $mostActiveUsers,
+            'highValueUsers' => $highValueUsers,
+            'userRetention' => $userRetention,
+            'activeUsersDaily' => $activeUsersDaily,
+            'activeUsersMonthly' => $activeUsersMonthly,
+            'churnRate' => $churnRate,
+        ]);
+    }
+
+    // Additional Methods for Metrics Calculations
+
+    private function calculateUserRetention()
+    {
+        $totalUsers = User::count();
+        $retainedUsers = User::where('last_login', '>=', now()->subDays(30))->count();
+        return ($retainedUsers / $totalUsers) * 100;
+    }
+
+    private function countActiveUsers($period)
+    {
+        if ($period == 'daily') {
+            return User::where('last_login', '>=', now()->subDay())->count();
+        } elseif ($period == 'monthly') {
+            return User::where('last_login', '>=', now()->subMonth())->count();
+        }
+        return 0;
+    }
+
+    private function calculateChurnRate()
+    {
+        $totalUsers = User::count();
+        $churnedUsers = User::where('last_login', '<', now()->subMonth())->count();
+        return ($churnedUsers / $totalUsers) * 100;
+    }
+}
