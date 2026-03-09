@@ -4,7 +4,7 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { formatToThousands } from '@/utils';
 import { Head, Link, usePage } from '@inertiajs/react';
-import { ChevronRight, Copy, Eye, EyeOff, Headset, History, Phone, Plus, Receipt, User, Wallet, Wifi } from 'lucide-react';
+import { ChevronRight, Copy, Eye, EyeOff, Headset, History, Phone, Plus, Receipt, Settings2, User, Wallet, Wifi } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 
@@ -55,9 +55,10 @@ export default function Index({ recent_transactions, wallet, funding_accounts, w
                 feat_mtn_datashare?: boolean;
                 feat_momo_airtime?: boolean;
             };
+            isAdmin?: boolean;
+            can?: Record<string, boolean>;
         };
     }>().props;
-    const user = auth.user;
 
     const breadcrumbs: BreadcrumbItem[] = [{ title: 'Dashboard', href: '/dashboard' }];
 
@@ -98,6 +99,8 @@ export default function Index({ recent_transactions, wallet, funding_accounts, w
         return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
     }
 
+    console.log('auth.isAdmin', auth.isAdmin);
+
     return (
         <AppLayout
             breadcrumbs={breadcrumbs}
@@ -115,6 +118,17 @@ export default function Index({ recent_transactions, wallet, funding_accounts, w
         >
             <Head title="Dashboard" />
 
+            <div className="container mx-auto mt-3 flex max-w-2xl justify-end px-2 pt-3 pb-8 sm:px-4">
+                {auth.isAdmin && (
+                    <Link
+                        href="/admin/dashboard"
+                        className="inline-flex items-center gap-1 rounded-md bg-orange-500/10 px-2 py-1.5 text-sm font-medium text-orange-500 hover:bg-orange-500/20"
+                    >
+                        <Settings2 className="h-4 w-4 text-orange-500" />
+                        Admin Dashboard
+                    </Link>
+                )}
+            </div>
             <div className="container mx-auto max-w-2xl px-2 pt-3 pb-8 sm:px-4">
                 {/* Wallet card */}
                 <div className="bg-theme-1 mb-2.5 rounded-xl border border-gray-200 p-4 dark:border-gray-700">

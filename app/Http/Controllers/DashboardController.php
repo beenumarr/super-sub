@@ -12,10 +12,6 @@ class DashboardController extends Controller
     {
         $user = $request->user();
 
-        if ($user->hasRole(['Admin', 'Superadmin','Masteradmin'])) {
-            return redirect()->route('admin.dashboard');
-        }
-
         $recent_transactions = Transaction::where('user_id', $user->id)
             ->latest()
             ->take(10)

@@ -135,7 +135,7 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasRole(['Admin', 'Superadmin','Masteradmin']);
     }
 
-    public function isSuperAdmin(): bool
+    public function getIsSuperAdminAttribute(): bool
     {
         return $this->hasRole(['Superadmin', 'Masteradmin']);
     }

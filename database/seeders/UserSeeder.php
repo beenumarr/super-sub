@@ -39,7 +39,8 @@ class UserSeeder extends Seeder
             'email' => 'masteradmin@dev.com',
             'password' => Hash::make('Important!'),
             'phone_number' => "08101234567",
-            'address' => "Bauchi"
+            'address' => "Bauchi",
+            'email_verified_at' => now(),
         ]);
 
         $user = User::create([
@@ -49,12 +50,13 @@ class UserSeeder extends Seeder
             'phone_number' => "09088776655",
             'address' => "Test Address",
             'password' => Hash::make('Pass2444'),
+            'email_verified_at' => now(),
         ]);
 
         // Create Wallet
 
         $user->wallet()->create([
-            'balance' => 0,
+            'balance' => 2000,
         ]);
 
         $admin->wallet()->create([

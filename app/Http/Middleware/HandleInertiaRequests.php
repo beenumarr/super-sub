@@ -2,7 +2,6 @@
 
 namespace App\Http\Middleware;
 
-use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 use Tighten\Ziggy\Ziggy;
@@ -37,20 +36,58 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
-        [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
 
         $debug = session('debug') || ($request->user() && $request->user()->hasRole(['Admin', 'Superadmin','Masteradmin']));
+
+        $can = '';
+        $isMaster = false;
+        $isSuperAdmin = false;
+        $isAdmin = false;
+
+        if($request->user()){
+            $can = $request->user()->getCanAttribute();
+            $request->user()->wallet;
+            $request->user()->package;
+            $isAdmin = $request->user()->isAdmin;
+            $isMaster = $request->user()->hasRole(['Masteradmin']);
+            $isSuperAdmin = $request->user()->isSuperAdmin ;
+            $fund_wallet = $request->user()->fundedWallet;
+            $made_transaction = $request->user()->madeTransactions;
+            $kyc_verified = $request->user()->kyc_verified_at && true ?? false;
+        }
+
 
         return [
             ...parent::share($request),
             'name' => config('app.name'),
-            // 'quote' => ['message' => trim($message), 'author' => trim($author)],
+            'theme'=> config('settings.site_primary_color'),
+            'isStl'=> config('app.enable_standalone_api'),
+            'enable_referral'=> config('app.enable_referral'),
+            'config'=> [
+                'monnify_contract_code'=> config('settings.monnify_contract_code'),
+                'monnify_api_key'=> config('settings.monnify_api_key'),
+                'monnify_marchant_name'=> config('settings.monnify_marchant_name'),
+                'monnify_funding_charges'=> config('settings.monnify_funding_charges'),
+                'site_name'=> config('settings.site_name'),
+            ],
+            'feature_enabled'=> [
+                'wallet_transfer'=> config('settings.feat_enable_wallet_transfer') === '1',
+                'airtime_to_cash'=> config('settings.feat_enable_airtime_to_cash') === '1',
+                'referral'=> config('settings.feat_enable_referral')=== '1',
+            ],
             'auth' => [
                 'user' => $request->user(),
-                'can' => $request->user()?->can ?? [],
-            ],
-            'system_configuration' => [
-
+                'can' => $can,
+                'site_name'=> config('settings.site_name'),
+                'site_primary_color'=> config('settings.site_primary_color'),
+                'site_contact_number'=> config('settings.site_contact_number'),
+                'isAdmin' => $isAdmin,
+                'isSuperAdmin' => $isSuperAdmin,
+                'isMaster' => $isMaster,
+                'funded_wallet' => $fund_wallet ?? false,
+                'kyc_verified' => $kyc_verified ?? false,
+                'made_transaction' => $made_transaction ?? false,
+                'notifications'=> config('settings.site_notification')
             ],
             'debug' => $debug,
             'ziggy' => fn (): array => [

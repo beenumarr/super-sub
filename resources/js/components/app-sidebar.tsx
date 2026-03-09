@@ -2,8 +2,7 @@ import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 // import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
-import { SharedData, type NavItem } from '@/types';
-import { usePage } from '@inertiajs/react';
+import { type NavItem } from '@/types';
 import { FileText, GraduationCap, HelpCircle, LayoutDashboard, List, Phone, Settings, Signal, Tv, Wallet, Zap } from 'lucide-react';
 import AppLogoIcon from './app-logo-icon';
 
@@ -109,8 +108,8 @@ const footerNavItems: NavItem[] = [
 ];
 
 export function AppSidebar() {
-    const features = usePage<SharedData>().props.auth.features;
-    const system_configuration_features = usePage<SharedData>().props.system_configuration.features;
+    const features = {};
+    const system_configuration_features = {};
 
     return (
         <Sidebar collapsible="icon" variant="inset">
