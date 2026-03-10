@@ -76,3 +76,22 @@ export function formatDateForHuman(dateString: string, future = false) {
         }
     }
 }
+
+export const applyMonnifyCharges = (amount: number, charges: string) => {
+    let totalCharge: number = 0;
+
+    if (charges) {
+        const charge = charges?.split(' ');
+
+        const chargeType = charge[1];
+        const chargeAmount = Number(charge[0]);
+
+        if (chargeType === '%') {
+            totalCharge = (amount * chargeAmount) / 100;
+        } else if (chargeType === 'N') {
+            totalCharge = chargeAmount;
+        }
+    }
+
+    return totalCharge;
+};

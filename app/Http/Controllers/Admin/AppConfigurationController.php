@@ -18,11 +18,7 @@ class AppConfigurationController extends Controller
 {
     private $encConfigs = ApiUtils::ENCRCONFIGS;
 
-    function __construct()
-    {
-        $this->middleware('permission:view_site_configurations', ['only' => ['index']]);
-        $this->middleware('permission:update_site_configurations', ['only' => ['update']]);
-    }
+
 
     public function index(): Response
     {

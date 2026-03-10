@@ -12,12 +12,12 @@ import { type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
 import {
     BadgePercent,
-    BarChart3,
+    ChevronDown,
     Cog,
     DollarSign,
     Gift,
-    LayoutDashboard,
     Layers,
+    LayoutDashboard,
     Receipt,
     Settings,
     Tv,
@@ -26,7 +26,6 @@ import {
     Wallet,
     Wifi,
 } from 'lucide-react';
-import { ChevronDown } from 'lucide-react';
 
 const adminMainNavItems: NavItem[] = [
     // Overview
@@ -36,15 +35,15 @@ const adminMainNavItems: NavItem[] = [
         icon: LayoutDashboard,
     },
     {
-        title: 'Transactions',
+        title: 'Transactions History',
         href: '/admin/transactions',
         icon: Receipt,
     },
-    {
-        title: 'Analytics',
-        href: '/admin/analytics',
-        icon: BarChart3,
-    },
+    // {
+    //     title: 'Analytics',
+    //     href: '/admin/analytics',
+    //     icon: BarChart3,
+    // },
     {
         title: '',
         href: '',
@@ -87,36 +86,36 @@ const adminMainNavItems: NavItem[] = [
         href: '/admin/service-charges',
         icon: DollarSign,
     },
-    {
-        title: 'Airtime to Cash',
-        href: '',
-        icon: Wallet,
-        submenu: [
-            {
-                title: 'Transactions',
-                href: '/admin/a2c-transactions',
-            },
-            {
-                title: 'Settings',
-                href: '/admin/airtime2cash-settings',
-            },
-        ],
-    },
-    {
-        title: 'Kirani',
-        href: '',
-        icon: Wifi,
-        submenu: [
-            {
-                title: 'Configurations',
-                href: '/admin/kirani',
-            },
-            {
-                title: 'Plans',
-                href: '/admin/kirani/plans',
-            },
-        ],
-    },
+    // {
+    //     title: 'Airtime to Cash',
+    //     href: '',
+    //     icon: Wallet,
+    //     submenu: [
+    //         {
+    //             title: 'Transactions',
+    //             href: '/admin/a2c-transactions',
+    //         },
+    //         {
+    //             title: 'Settings',
+    //             href: '/admin/airtime2cash-settings',
+    //         },
+    //     ],
+    // },
+    // {
+    //     title: 'Kirani',
+    //     href: '',
+    //     icon: Wifi,
+    //     submenu: [
+    //         {
+    //             title: 'Configurations',
+    //             href: '/admin/kirani',
+    //         },
+    //         {
+    //             title: 'Plans',
+    //             href: '/admin/kirani/plans',
+    //         },
+    //     ],
+    // },
     {
         title: '',
         href: '',
@@ -222,18 +221,8 @@ export function NavMain({
                                         >
                                             {item.submenu ? (
                                                 <div className="flex items-center gap-2">
-                                                    {item.icon && (
-                                                        <item.icon
-                                                            className={isItemActive(item) ? activeIconClass : inactiveIconClass}
-                                                        />
-                                                    )}
-                                                    <span
-                                                        className={
-                                                            isItemActive(item) ? activeIconClass : inactiveIconClass
-                                                        }
-                                                    >
-                                                        {item.title}
-                                                    </span>
+                                                    {item.icon && <item.icon className={isItemActive(item) ? activeIconClass : inactiveIconClass} />}
+                                                    <span className={isItemActive(item) ? activeIconClass : inactiveIconClass}>{item.title}</span>
 
                                                     <ChevronDown
                                                         size={18}
@@ -243,23 +232,9 @@ export function NavMain({
                                             ) : (
                                                 <Link href={item.href} className="flex items-center gap-2">
                                                     {item.icon && (
-                                                        <item.icon
-                                                            className={
-                                                                item.href === page.url
-                                                                    ? activeIconClass
-                                                                    : inactiveIconClass
-                                                            }
-                                                        />
+                                                        <item.icon className={item.href === page.url ? activeIconClass : inactiveIconClass} />
                                                     )}
-                                                    <span
-                                                        className={
-                                                            item.href === page.url
-                                                                ? activeIconClass
-                                                                : inactiveIconClass
-                                                        }
-                                                    >
-                                                        {item.title}
-                                                    </span>
+                                                    <span className={item.href === page.url ? activeIconClass : inactiveIconClass}>{item.title}</span>
                                                 </Link>
                                             )}
                                         </SidebarMenuButton>
@@ -271,28 +246,12 @@ export function NavMain({
                                                 return (
                                                     <SidebarMenuSub key={sub.title}>
                                                         <SidebarMenuItem key={sub.title}>
-                                                            <SidebarMenuButton
-                                                                asChild
-                                                                isActive={isSubActive}
-                                                                tooltip={{ children: sub.title }}
-                                                            >
+                                                            <SidebarMenuButton asChild isActive={isSubActive} tooltip={{ children: sub.title }}>
                                                                 <Link href={sub.href} className="flex items-center gap-2">
                                                                     {sub.icon && (
-                                                                        <sub.icon
-                                                                            className={
-                                                                                isSubActive
-                                                                                    ? activeIconClass
-                                                                                    : inactiveIconClass
-                                                                            }
-                                                                        />
+                                                                        <sub.icon className={isSubActive ? activeIconClass : inactiveIconClass} />
                                                                     )}
-                                                                    <span
-                                                                        className={
-                                                                            isSubActive
-                                                                                ? activeIconClass
-                                                                                : inactiveIconClass
-                                                                        }
-                                                                    >
+                                                                    <span className={isSubActive ? activeIconClass : inactiveIconClass}>
                                                                         {sub.title}
                                                                     </span>
                                                                 </Link>

@@ -24,7 +24,7 @@ const configItems = [
 export default function AdvancedConfig({ data, setData }: AdvancedConfigProps) {
     return (
         <div className="mb-20 pt-3">
-            <div className="rounded-t-md bg-muted px-4 py-2">
+            <div className="bg-muted rounded-t-md px-4 py-2">
                 <h3 className="text-lg font-medium">Features</h3>
             </div>
             <div className="space-y-4 rounded-b-md border border-t-0 p-4">
@@ -34,16 +34,8 @@ export default function AdvancedConfig({ data, setData }: AdvancedConfigProps) {
                             {label}
                         </Label>
                         <div className="flex items-center gap-2">
-                            <Switch
-                                id={key}
-                                checked={Boolean(data[key])}
-                                onCheckedChange={(checked) =>
-                                    setData({ ...data, [key]: checked })
-                                }
-                            />
-                            <span className="text-sm text-muted-foreground">
-                                {Boolean(data[key]) ? 'Enable' : 'Disabled'}
-                            </span>
+                            <Switch id={key} checked={data[key] as boolean} onCheckedChange={(checked) => setData({ ...data, [key]: checked })} />
+                            <span className="text-muted-foreground text-sm">{(data[key] as boolean) ? 'Enable' : 'Disabled'}</span>
                         </div>
                     </div>
                 ))}

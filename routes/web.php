@@ -52,9 +52,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/buy_data/filter_data_plan_types', [BuyDataController::class, 'filterDataPlanType']);
     Route::get('/buy_data/filter_data_plans', [BuyDataController::class, 'filterDataPlan']);
 
-    // New data transactions flow using BuyDataController and TSX pages
-    Route::get('/send-data', [BuyDataController::class, 'index'])->name('data-transactions.index');
-    Route::post('/send-data', [BuyDataController::class, 'store'])->name('data-transactions.purchase')->middleware(['throttle:30,1']);
+
 
     Route::get('/result_checker', [ResultCheckerController::class, 'index'])->name('result_checker');
     Route::post('/result_checker', [ResultCheckerController::class, 'store'])->name('result_checker.store');

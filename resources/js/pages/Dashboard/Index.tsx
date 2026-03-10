@@ -135,7 +135,7 @@ export default function Index({ recent_transactions, wallet, funding_accounts, w
                     <div className="flex items-center justify-between">
                         <span className="text-primary-foreground/90 text-sm">Wallet Balance</span>
                         <Link
-                            href="/wallet"
+                            href="/funding"
                             className="bg-primary-foreground text-primary inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-sm font-medium hover:opacity-90"
                         >
                             <Plus className="h-3.5 w-3.5" />
@@ -194,9 +194,9 @@ export default function Index({ recent_transactions, wallet, funding_accounts, w
                 <h3 className="mb-2 px-1 text-sm font-semibold text-gray-800 dark:text-gray-200">Services</h3>
                 <div className="bg-card rounded-xl border border-gray-200 p-2.5 dark:border-gray-700">
                     <div className="grid grid-cols-3 gap-0">
-                        <ServiceItem icon={Wifi} label="Data" href="/send-data" />
-                        <ServiceItem icon={Phone} label="Airtime" href="/send-airtime" borderLeft={true} borderRight={true} />
-                        <ServiceItem icon={Wallet} label="Fund Wallet" href="/wallet" />
+                        <ServiceItem icon={Wifi} label="Data" href="/buy_data" />
+                        <ServiceItem icon={Phone} label="Airtime" href="/buy_airtime" borderLeft={true} borderRight={true} />
+                        <ServiceItem icon={Wallet} label="Fund Wallet" href="/funding" />
                     </div>
                     <div className="my-1 border-t border-gray-200 dark:border-gray-600" />
                     <div className="grid grid-cols-3 gap-0">

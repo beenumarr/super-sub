@@ -1,13 +1,7 @@
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
-import { ConfigItem } from '../ConfigItem';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { ConfigItem } from '../ConfigItem';
 
 interface PaymentGatewayProps {
     data: Record<string, unknown>;
@@ -35,16 +29,10 @@ const fundingCharges = [
     { name: 'Settlement Amount', value: 'settlement_amount' },
 ];
 
-function SectionBlock({
-    title,
-    children,
-}: {
-    title: string;
-    children: React.ReactNode;
-}) {
+function SectionBlock({ title, children }: { title: string; children: React.ReactNode }) {
     return (
         <div className="pt-3">
-            <div className="rounded-t-md bg-muted px-4 py-2">
+            <div className="bg-muted rounded-t-md px-4 py-2">
                 <h3 className="text-lg font-medium">{title}</h3>
             </div>
             <div className="space-y-4 rounded-b-md border border-t-0 p-4">{children}</div>
@@ -67,13 +55,8 @@ function ToggleRow({
         <div className="flex items-center justify-between">
             <Label>{label}</Label>
             <div className="flex items-center gap-2">
-                <Switch
-                    checked={Boolean(data[dataKey])}
-                    onCheckedChange={(checked) => setData({ ...data, [dataKey]: checked })}
-                />
-                <span className="text-sm text-muted-foreground">
-                    {Boolean(data[dataKey]) ? 'Enable' : 'Disabled'}
-                </span>
+                <Switch checked={data[dataKey] as boolean} onCheckedChange={(checked) => setData({ ...data, [dataKey]: checked })} />
+                <span className="text-muted-foreground text-sm">{(data[dataKey] as boolean) ? 'Enable' : 'Disabled'}</span>
             </div>
         </div>
     );
@@ -111,17 +94,10 @@ export default function PaymentGateway({
                         </SelectContent>
                     </Select>
                 </div>
-                {data.feat_enable_temp_account && (
+                {(data.feat_enable_temp_account as boolean) && (
                     <>
-                        <div className="my-5 border-b py-2 text-base font-medium">
-                            Temporary Account
-                        </div>
-                        <ToggleRow
-                            label="Enable Temporary Account"
-                            dataKey="temp_account_enable"
-                            data={data}
-                            setData={setData}
-                        />
+                        <div className="my-5 border-b py-2 text-base font-medium">Temporary Account</div>
+                        <ToggleRow label="Enable Temporary Account" dataKey="temp_account_enable" data={data} setData={setData} />
                         <ConfigItem
                             label="Temporary Account Limit"
                             name="temp_account_limit"
@@ -145,12 +121,7 @@ export default function PaymentGateway({
             </SectionBlock>
 
             <SectionBlock title="Monnify">
-                <ConfigItem
-                    label="API Key"
-                    name="monnify_api_key"
-                    value={data['monnify_api_key'] as string}
-                    handleOnChange={handleOnChange}
-                />
+                <ConfigItem label="API Key" name="monnify_api_key" value={data['monnify_api_key'] as string} handleOnChange={handleOnChange} />
                 <ConfigItem
                     label="Secret Key"
                     name="monnify_secret_key"
@@ -230,12 +201,7 @@ export default function PaymentGateway({
                             </SelectContent>
                         </Select>
                     </div>
-                    <ToggleRow
-                        label="Enable Service"
-                        dataKey="payvessel_service"
-                        data={data}
-                        setData={setData}
-                    />
+                    <ToggleRow label="Enable Service" dataKey="payvessel_service" data={data} setData={setData} />
                 </SectionBlock>
             )}
 
@@ -272,12 +238,7 @@ export default function PaymentGateway({
                             </SelectContent>
                         </Select>
                     </div>
-                    <ToggleRow
-                        label="Enable Service"
-                        dataKey="BillStack_service"
-                        data={data}
-                        setData={setData}
-                    />
+                    <ToggleRow label="Enable Service" dataKey="BillStack_service" data={data} setData={setData} />
                 </SectionBlock>
             )}
 
@@ -305,9 +266,7 @@ export default function PaymentGateway({
                         <Label>Funding Charges</Label>
                         <Select
                             value={(data['paymentPoint_funding_charges'] as string) || 'none'}
-                            onValueChange={(v) =>
-                                setDataKey('paymentPoint_funding_charges', v === 'none' ? '' : v)
-                            }
+                            onValueChange={(v) => setDataKey('paymentPoint_funding_charges', v === 'none' ? '' : v)}
                         >
                             <SelectTrigger>
                                 <SelectValue placeholder="Select" />
@@ -322,12 +281,7 @@ export default function PaymentGateway({
                             </SelectContent>
                         </Select>
                     </div>
-                    <ToggleRow
-                        label="Enable Service"
-                        dataKey="paymentPoint_service"
-                        data={data}
-                        setData={setData}
-                    />
+                    <ToggleRow label="Enable Service" dataKey="paymentPoint_service" data={data} setData={setData} />
                 </SectionBlock>
             )}
         </>

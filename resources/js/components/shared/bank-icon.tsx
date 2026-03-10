@@ -1,35 +1,31 @@
 import { cn } from '@/lib/utils';
 
-export const NetworkIcon = ({ network }: { network: string }) => {
+export const BankIcon = ({ bank }: { bank: string }) => {
     // Map of network names to their brand colors and icons
-    const networkConfig: Record<string, { color: string; logo: string }> = {
-        MTN: {
+    const bankConfig: Record<string, { color: string; logo: string }> = {
+        WEMA: {
             color: 'bg-yellow-400 dark:bg-yellow-500',
-            logo: '/images/icons/mtn.png', // Path to your logo
+            logo: '/images/icons/banks/wema_bank.svg', // Path to your logo
         },
-        AIRTEL: {
-            color: 'bg-red-500 dark:bg-red-600',
-            logo: '/images/icons/airtel.png',
-        },
-        GLO: {
-            color: 'bg-green-500 dark:bg-green-600',
-            logo: '/images/icons/glo.png',
-        },
-        T2MOBILE: {
+        STERLING: {
             color: 'bg-green-400 dark:bg-green-500',
-            logo: '/images/icons/t2mobile.jpg',
+            logo: '/images/icons/banks/sterling_bank.svg',
         },
-        MOMO: {
+        MONIEPOINT: {
             color: 'bg-green-400 dark:bg-green-500',
-            logo: '/images/icons/momo-log.svg',
+            logo: '/images/icons/banks/moniepoint.svg',
         },
-        SMARTCASH: {
+        NINEPSB: {
             color: 'bg-green-400 dark:bg-green-500',
-            logo: '/images/icons/smartcash.png',
+            logo: '/images/icons/banks/9psb.png',
+        },
+        PALMPAY: {
+            color: 'bg-green-400 dark:bg-green-500',
+            logo: '/images/icons/banks/palmpay.png',
         },
     };
 
-    const config = networkConfig[network] || {
+    const config = bankConfig[bank] || {
         color: 'bg-gray-200 dark:bg-gray-700',
         logo: '',
     };
@@ -41,7 +37,7 @@ export const NetworkIcon = ({ network }: { network: string }) => {
                 <div className={cn('flex items-center justify-center rounded-full', config.color)}>
                     <img
                         src={config.logo}
-                        alt={network}
+                        alt={bank}
                         className="h-10 w-10 rounded-full"
                         onError={(e) => {
                             const target = e.currentTarget as HTMLImageElement;
@@ -61,7 +57,7 @@ export const NetworkIcon = ({ network }: { network: string }) => {
     // Fallback to just showing the first letter
     return (
         <div className={cn('flex h-10 w-10 items-center justify-center rounded-full', config.color)}>
-            <span className="font-bold text-white">{network.charAt(0)}</span>
+            <span className="font-bold text-white">{bank.charAt(0)}</span>
         </div>
     );
 };

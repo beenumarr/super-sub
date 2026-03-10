@@ -12,7 +12,6 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Trash2 } from 'lucide-react';
-import axios from '@/lib/axios';
 import { router } from '@inertiajs/react';
 import toast from 'react-hot-toast';
 
@@ -33,11 +32,25 @@ interface GeneralSettingsProps {
 }
 
 function clearImages(setProcessing: (v: boolean) => void) {
-    axios.post('/admin/clear-images', { all: true }).then(() => {
-        toast.success('Images cleared successfully');
-        setProcessing(false);
-        router.reload();
-    });
+    setProcessing(true);
+
+    router.post(
+        '/admin/clear-images',
+        { all: true },
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                toast.success('Images cleared successfully');
+                router.reload();
+            },
+            onError: (errors) => {
+                Object.values(errors)
+                    .flat()
+                    .forEach((err) => toast.error(String(err)));
+            },
+            onFinish: () => setProcessing(false),
+        },
+    );
 }
 
 export default function GeneralSettings({
@@ -186,10 +199,7 @@ export default function GeneralSettings({
                             variant="ghost"
                             size="sm"
                             className="text-destructive hover:bg-destructive/10"
-                            onClick={() => {
-                                setProcessing2(true);
-                                clearImages(setProcessing2);
-                            }}
+                            onClick={() => clearImages(setProcessing2)}
                         >
                             <Trash2 className="mr-2 h-4 w-4" />
                             Clear photos
@@ -218,7 +228,7 @@ export default function GeneralSettings({
                                 }
                             />
                             <span className="text-sm text-muted-foreground">
-                                {Boolean(data['enable_user_registration']) ? 'Enable' : 'Disabled'}
+                                {data['enable_user_registration'] ? 'Enable' : 'Disabled'}
                             </span>
                         </div>
                     </div>
@@ -230,7 +240,7 @@ export default function GeneralSettings({
                                 onCheckedChange={(checked) => setData('enable_user_login', checked)}
                             />
                             <span className="text-sm text-muted-foreground">
-                                {Boolean(data['enable_user_login']) ? 'Enable' : 'Disabled'}
+                                {data['enable_user_login'] ? 'Enable' : 'Disabled'}
                             </span>
                         </div>
                     </div>

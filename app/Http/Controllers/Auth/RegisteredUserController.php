@@ -61,10 +61,15 @@ class RegisteredUserController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'phone_number' => $request->phone_number,
+
+            'username' => $request->email,
+            'address' => $request->address,
         ]);
 
 
-        $user->wallet()->create();
+        $user->wallet()->create([
+            'balance' => 0,
+        ]);
 
 
         event(new Registered($user));
