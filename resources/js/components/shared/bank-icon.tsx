@@ -23,6 +23,10 @@ export const BankIcon = ({ bank }: { bank: string }) => {
             color: 'bg-green-400 dark:bg-green-500',
             logo: '/images/icons/banks/palmpay.png',
         },
+        GTBANK: {
+            color: 'bg-green-400 dark:bg-green-500',
+            logo: '/images/icons/banks/gtbank.png',
+        },
     };
 
     const config = bankConfig[bank] || {

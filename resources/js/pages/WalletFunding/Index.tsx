@@ -1,10 +1,9 @@
 import { BankIcon } from '@/components/shared/bank-icon';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
 import { SharedData } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
-import { ArrowLeftRight, CreditCard, RefreshCw, Wallet } from 'lucide-react';
+import { ArrowLeftRight, Copy, CreditCard, Wallet } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import CardFundingForm from './Components/CardFundingForm';
@@ -34,6 +33,11 @@ interface FundingAccount {
     account_name: string;
     account_number: string;
 }
+
+const copyAccountNumber = (accountNumber: string) => {
+    navigator.clipboard.writeText(accountNumber);
+    toast.success('Account number copied', { duration: 2000 });
+};
 
 export default function Index() {
     const [formModal, setFormModal] = useState(false);
@@ -84,44 +88,34 @@ export default function Index() {
             <div className="px-4 py-8 lg:px-0">
                 <div className="mx-auto max-w-5xl space-y-6">
                     {/* Header */}
-                    <div className="flex flex-col items-start justify-between gap-4 border-b pb-4 sm:flex-row sm:items-center">
-                        <div>
-                            <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Wallet Management</h1>
-                            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                                Hi {auth.user.name}, manage your wallet balances and funding options here.
-                            </p>
-                        </div>
-
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={refreshAccounts}
-                            disabled={processing}
-                            className="inline-flex items-center gap-2"
-                        >
-                            {processing ? (
-                                <>
-                                    <RefreshCw className="h-4 w-4 animate-spin" />
-                                    Refreshing...
-                                </>
-                            ) : (
-                                <>
-                                    <RefreshCw className="h-4 w-4" />
-                                    Refresh
-                                </>
-                            )}
-                        </Button>
+                    <div className="flex flex-col items-start justify-between gap-4 border-b pb-2 sm:flex-row sm:items-center">
+                        <BalancePill label="Wallet Balance" amount={walletBalance} icon={<Wallet className="h-4 w-4" />} />
+                        {/* <BalancePill label="A2C" amount={a2cBalance} icon={<ArrowLeftRight className="h-4 w-4" />} /> */}
+                        <BalancePill label="Bonus" amount={bonusBalance} icon={<Wallet className="h-4 w-4" />} />
                     </div>
 
-                    {/* Balance Cards */}
-                    <div className="grid gap-4 md:grid-cols-3">
-                        <BalanceCard label="Main Balance" amount={walletBalance} icon={<Wallet className="h-5 w-5 text-emerald-500" />} />
-                        <BalanceCard label="A2C Balance" amount={a2cBalance} icon={<ArrowLeftRight className="h-5 w-5 text-blue-500" />} />
-                        <BalanceCard label="Bonus Balance" amount={bonusBalance} icon={<Wallet className="h-5 w-5 text-purple-500" />} />
+                    {/* Funding Accounts */}
+                    <div className="space-y-3">
+                        <h2 className="text-sm font-medium text-gray-900 dark:text-white">Your Funding Accounts</h2>
+
+                        {funding_accounts.length > 0 ? (
+                            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                                {funding_accounts.map((account, index) => (
+                                    <FundingAccountCard key={`${account.account_number}-${index}`} account={account} />
+                                ))}
+                            </div>
+                        ) : (
+                            <Card>
+                                <CardContent className="p-4">
+                                    <AccountTabs />
+                                </CardContent>
+                            </Card>
+                        )}
                     </div>
 
                     {/* Actions */}
+
+                    <h2 className="text-sm font-medium text-gray-900 dark:text-white">Other Funding Options</h2>
                     <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
                         {methods.card_funding && (
                             <ActionButton
@@ -144,25 +138,6 @@ export default function Index() {
                             />
                         )}
                     </div>
-
-                    {/* Funding Accounts */}
-                    <div className="space-y-3">
-                        <h2 className="text-base font-medium text-gray-900 dark:text-white">Your Funding Accounts</h2>
-
-                        {funding_accounts.length > 0 ? (
-                            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                                {funding_accounts.map((account, index) => (
-                                    <FundingAccountCard key={`${account.account_number}-${index}`} account={account} />
-                                ))}
-                            </div>
-                        ) : (
-                            <Card>
-                                <CardContent className="p-4">
-                                    <AccountTabs />
-                                </CardContent>
-                            </Card>
-                        )}
-                    </div>
                 </div>
             </div>
 
@@ -179,25 +154,21 @@ export default function Index() {
     );
 }
 
-interface BalanceCardProps {
+interface BalancePillProps {
     label: string;
     amount: number;
     icon: React.ReactNode;
 }
 
-function BalanceCard({ label, amount, icon }: BalanceCardProps) {
+function BalancePill({ label, amount, icon }: BalancePillProps) {
     return (
-        <Card className="h-full">
-            <CardContent className="flex items-center justify-between p-4">
-                <div>
-                    <p className="text-xs font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400">{label}</p>
-                    <p className="mt-2 text-xl font-semibold text-gray-900 dark:text-white">₦{amount.toLocaleString()}</p>
-                </div>
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-100">
-                    {icon}
-                </div>
-            </CardContent>
-        </Card>
+        <div className="flex items-center justify-between gap-2 rounded-md border border-gray-200 bg-gray-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-900">
+            <div className="mr-2 flex items-center gap-2">
+                <div className="bg-theme-1/10 text-theme-1 flex h-7 w-7 items-center justify-center rounded-full">{icon}</div>
+                <span className="text-xs font-medium text-gray-700 dark:text-gray-200">{label}</span>
+            </div>
+            <span className="text-sm font-semibold text-gray-900 dark:text-white"> ₦{amount.toLocaleString()}</span>
+        </div>
     );
 }
 
@@ -219,20 +190,31 @@ function FundingAccountCard({ account }: FundingAccountCardProps) {
     const bankCode = getBankCodeFromName(account.bank_name);
 
     return (
-        <Card className="h-full">
-            <CardContent className="flex items-center gap-3 p-4">
-                <div className="shrink-0">
-                    <BankIcon bank={bankCode} />
+        <Card className="h-full p-0 shadow-none">
+            <CardContent className="flex flex-col gap-2 p-4">
+                <div className="flex items-center gap-3">
+                    <div className="shrink-0">
+                        <BankIcon bank={bankCode} />
+                    </div>
+                    <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-gray-900 dark:text-white">
+                            {account.bank_name}
+                        </p>
+                        <p className="mt-1 truncate text-xs text-gray-600 dark:text-gray-300">
+                            Name:{' '}
+                            <span className="font-semibold">{account.account_name}</span>
+                        </p>
+                    </div>
                 </div>
-                <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-gray-900 dark:text-white">{account.bank_name}</p>
-                    <p className="mt-1 truncate text-xs text-gray-600 dark:text-gray-300">
-                        Name: <span className="font-semibold">{account.account_name}</span>
-                    </p>
-                    <p className="truncate text-xs text-gray-600 dark:text-gray-300">
-                        Account Number: <span className="font-semibold">{account.account_number}</span>
-                    </p>
-                </div>
+
+                <button
+                    type="button"
+                    onClick={() => copyAccountNumber(account.account_number)}
+                    className="mt-1 inline-flex items-center justify-between rounded-md border border-gray-200 bg-gray-50 px-2.5 py-1.5 text-left text-xs font-semibold text-gray-900 hover:bg-gray-100 dark:border-slate-700 dark:bg-slate-900 dark:text-gray-100 dark:hover:bg-slate-800"
+                >
+                    <span className="truncate">{account.account_number}</span>
+                    <Copy className="ml-2 h-3.5 w-3.5 text-gray-500 dark:text-gray-400" />
+                </button>
             </CardContent>
         </Card>
     );
@@ -247,15 +229,13 @@ interface ActionButtonProps {
 
 function ActionButton({ label, description, icon, onClick }: ActionButtonProps) {
     return (
-        <Card className="h-full">
+        <Card className="h-full p-0 shadow-none">
             <button
                 type="button"
                 onClick={onClick}
-                className="flex h-full w-full flex-col items-start gap-2 rounded-lg p-4 text-left transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
+                className="flex h-full w-full items-start gap-2 rounded-lg p-4 text-left transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
             >
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-100">
-                    {icon}
-                </div>
+                <div className="bg-theme-1/10 text-theme-1 flex h-7 w-7 items-center justify-center rounded-full">{icon}</div>
                 <div>
                     <p className="text-sm font-medium text-gray-900 dark:text-white">{label}</p>
                     <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{description}</p>

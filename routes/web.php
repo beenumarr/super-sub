@@ -94,7 +94,9 @@ Route::middleware('auth')->group(function () {
 
 
 
-Route::get('/', [LandingPageController::class, 'index'])->middleware('guest')->name('home');
+Route::get('/', function () {
+    return redirect()->route('login');
+})->name('home');
 Route::get('/privacy-and-terms', [LandingPageController::class, 'privacyPage']);
 Route::get('/info', [LandingPageController::class, 'info']);
 Route::post('/monnify/transaction-completion', [TransactionWebhookController::class, 'handleTransactionCompletion']);
