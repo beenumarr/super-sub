@@ -85,7 +85,7 @@ export default function Index({ recent_transactions, wallet, funding_accounts, w
     const displayBalance = isBalanceVisible ? `₦${formatToThousands(wallet?.balance ?? 0)}` : '••••••';
     const displayBonus = isBalanceVisible ? `₦${formatToThousands(wallet?.bonus_balance ?? 0)}` : '••••••';
 
-    const historyHref = '/data-transactions/history/data';
+    const historyHref = '/transactions?transaction_type=DataTransaction';
 
     function getStatusColor(status: string) {
         const s = status?.toUpperCase() ?? '';
