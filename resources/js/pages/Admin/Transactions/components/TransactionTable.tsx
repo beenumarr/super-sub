@@ -111,6 +111,7 @@ const TransactionTable: FC<TransactionTableProps> = ({ data, setViewDetailModal 
                 </TableBody>
             </Table>
 
+            {/* Pagination */}
             {data.meta?.last_page > 1 && (
                 <div className="flex items-center justify-between border-t bg-white p-4 dark:bg-gray-800">
                     <div className="text-sm text-gray-500 dark:text-gray-400">

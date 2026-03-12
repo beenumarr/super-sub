@@ -53,8 +53,8 @@ interface User {
 
 interface PageProps extends Record<string, any> {
     auth: any;
-    transactions?: TransactionData;
-    total_amount?: number;
+    transactions: TransactionData;
+    total_amount: number;
     users?: User[];
 }
 
@@ -115,26 +115,7 @@ const TransactionType: FC<TransactionTypeProps> = ({ data, onChange, field_name,
 };
 
 const Index: FC = () => {
-    const { transactions, total_amount = 0, users = [] } = usePage<PageProps>().props;
-
-    const data: TransactionData = transactions ?? {
-        data: [],
-        meta: {
-            current_page: 1,
-            from: 0,
-            last_page: 1,
-            path: '',
-            per_page: 20,
-            to: 0,
-            total: 0,
-        },
-        links: {
-            first: '',
-            last: '',
-            prev: null,
-            next: null,
-        },
-    };
+    const { transactions: data, total_amount, users = [] } = usePage<PageProps>().props;
 
     const [viewDetailModal, setViewDetailModal] = useState<{ show: boolean; id: string | number }>(
         {
@@ -248,7 +229,7 @@ const Index: FC = () => {
 
             <ViewDetailModal
                 viewDetailModal={viewDetailModal}
-                setViewDetailModal={(v: { show: boolean; id: string | number }) => setViewDetailModal(v)}
+                setViewDetailModal={(v) => setViewDetailModal(v)}
             />
         </AppLayout>
     );
