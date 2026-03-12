@@ -21,6 +21,7 @@ use App\Http\Controllers\Admin\AdminTransactionController;
 use App\Http\Controllers\Admin\A2CTransactionController;
 use App\Http\Controllers\Admin\ServiceCardController;
 use App\Http\Controllers\Admin\StaffController;
+use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\AppConfigurationController;
 use App\Http\Controllers\Admin\PromoController;
 use App\Http\Controllers\Admin\ServiceManagementController;
@@ -47,6 +48,8 @@ Route::middleware(['auth', Admin::class])->prefix('admin')->group(function () {
     Route::get('/', [AdminDashboardController::class, 'index'])->name('admin.index');
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
     Route::get('/analytics', [AnalyticsController::class, 'users'])->name('admin.analytics');
+    Route::get('/analytics/users/{user}', [AnalyticsController::class, 'viewUser'])->name('admin.analytics.users.view');
+    Route::post('/users/{user}/generate-api-key', [UserController::class, 'generateApiKey'])->name('admin.users.generate-api-key');
     Route::get('/manual-funding', [ManualFundingController::class, 'index'])->name('admin.manual-funding');
     Route::post('/manual-funding', [ManualFundingController::class, 'store'])->name('manual-funding.store');
     Route::get('/transactions', [AdminTransactionController::class, 'index'])->name('admin.transactions');
@@ -68,11 +71,46 @@ Route::middleware(['auth', Admin::class])->prefix('admin')->group(function () {
         'update' => 'admin.staffs.update',
         'destroy' => 'admin.staffs.destroy',
     ]);
+    Route::resource('/roles', RoleController::class)->only(['index', 'store', 'update', 'destroy', 'show'])->names([
+        'index' => 'admin.roles.index',
+        'store' => 'admin.roles.store',
+        'update' => 'admin.roles.update',
+        'destroy' => 'admin.roles.destroy',
+        'show' => 'admin.roles.show',
+    ]);
     Route::post('/users/delete-virtual-acacounts/{user}', [UserController::class, 'deleteVirtualAccount'])->name('admin.users.delete-virtual-accounts');
     Route::delete('/users/delete-kyc/{user}', [UserController::class, 'deleteKyc'])->name('admin.users.delete-kyc');
     Route::post('/users/generate-virtual-acacounts/{user}', [UserController::class, 'generateVirtualAccount'])->name('admin.users.generate-virtual-accounts');
-    Route::resource('/app_configurations', AppConfigurationController::class);
-    Route::resource('/promo', PromoController::class)->middleware('feature');
+
+    // App Configuration Routes - View operations
+    Route::get('/app_configurations', [AppConfigurationController::class, 'index'])
+        ->middleware('permission:view_site_configurations')
+        ->name('app_configurations.index');
+    Route::get('/app_configurations/{app_configuration}', [AppConfigurationController::class, 'show'])
+        ->middleware('permission:view_site_configurations')
+        ->name('app_configurations.show');
+
+    // App Configuration Routes - Update operations
+    Route::post('/app_configurations', [AppConfigurationController::class, 'store'])
+        ->middleware('permission:update_site_configurations')
+        ->name('app_configurations.store');
+    Route::put('/app_configurations/{app_configuration}', [AppConfigurationController::class, 'update'])
+        ->middleware('permission:update_site_configurations')
+        ->name('app_configurations.update');
+    Route::patch('/app_configurations/{app_configuration}', [AppConfigurationController::class, 'update'])
+        ->middleware('permission:update_site_configurations')
+        ->name('app_configurations.patch');
+    Route::delete('/app_configurations/{app_configuration}', [AppConfigurationController::class, 'destroy'])
+        ->middleware('permission:update_site_configurations')
+        ->name('app_configurations.destroy');
+    Route::get('/app_configurations/create', [AppConfigurationController::class, 'create'])
+        ->middleware('permission:update_site_configurations')
+        ->name('app_configurations.create');
+    Route::get('/app_configurations/{app_configuration}/edit', [AppConfigurationController::class, 'edit'])
+        ->middleware('permission:update_site_configurations')
+        ->name('app_configurations.edit');
+
+    Route::resource('/promo', PromoController::class);
     Route::post('/update-site-images', [AppConfigurationController::class, 'updatePhotos'])->name('update-site-images');
     Route::post('/clear-images', [AppConfigurationController::class, 'clearImages'])->name('clear-images');
     Route::get('/services-management', [ServiceManagementController::class, 'index'])->name('services-management');

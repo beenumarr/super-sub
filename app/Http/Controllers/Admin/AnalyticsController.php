@@ -47,7 +47,7 @@ class AnalyticsController extends Controller
             $query = User::select(
                 'users.id',
                 'users.name',
-                'users.phone',
+                'users.phone_number as phone',
                 'users.referal_username',
                 'users.last_login',
                 'users.email',
@@ -80,6 +80,81 @@ class AnalyticsController extends Controller
                 'packages' => UserPackage::all(),
             ]);
         }
+
+    public function viewUser(User $user)
+    {
+        $transactionTypes = [
+            AirtimeTransaction::class,
+            DataTransaction::class,
+            ElectricityBillTransaction::class,
+            CableSubscriptionTransaction::class
+        ];
+
+        // Total Wallet Fund Sum and Count
+        $totalFund = Transaction::select(DB::raw('SUM(amount) as total_amount'), DB::raw('COUNT(*) as total_count'))
+            ->where('user_id', $user->id)
+            ->whereHasMorph('transactionable', WalletTransaction::class, function ($query) { $query->where('type', 'credit');})
+            ->first();
+
+        // Total Spend Sum
+        $totalSpend = Transaction::select(DB::raw('SUM(amount) as total_amount'), DB::raw('COUNT(*) as total_count'))
+            ->where('user_id', $user->id)
+            ->where('status', 'success')
+            ->whereHasMorph('transactionable', $transactionTypes)
+            ->first();
+
+        $user->load('wallet', 'fundingAccounts', 'package');
+
+        // Get transactions
+        $transactions = Transaction::where('user_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->limit(50)
+            ->get()
+            ->map(function ($transaction) {
+                return [
+                    'id' => $transaction->id,
+                    'transactionable_type' => class_basename($transaction->transactionable_type),
+                    'amount' => $transaction->amount,
+                    'status' => $transaction->status,
+                    'reference' => $transaction->reference,
+                    'created_at' => $transaction->created_at,
+                ];
+            });
+
+        $userData = [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'phone_number' => $user->phone_number,
+            'package_name' => $user->package?->name ?? '-',
+            'referal_username' => $user->referal_username ?? null,
+            'created_at' => $user->created_at,
+            'last_login' => $user->last_login,
+            'wallet_balance' => $user->wallet?->balance ?? 0,
+            'total_spending' => $totalSpend?->total_amount ?? 0,
+            'total_fundings' => $totalFund?->total_amount ?? 0,
+            'wallet_funding_count' => $totalFund?->total_count ?? 0,
+            'transactions_count' => $totalSpend?->total_count ?? 0,
+            'kyc_verified_at' => $user->kyc_verified_at,
+            'kyc_level' => $user->kyc_level,
+            'nin' => $user->nin,
+            'bvn' => $user->bvn,
+            'api_key' => $user->api_key,
+            'funding_accounts' => $user->fundingAccounts->map(function ($account) {
+                return [
+                    'id' => $account->id,
+                    'bank_name' => $account->bank_name,
+                    'account_number' => $account->account_number,
+                    'reference' => $account->reference,
+                ];
+            })->toArray(),
+            'transactions' => $transactions->toArray(),
+        ];
+
+        return Inertia::render('Admin/Analytics/Users/ViewUser', [
+            'user' => $userData,
+        ]);
+    }
 
     public function index()
     {

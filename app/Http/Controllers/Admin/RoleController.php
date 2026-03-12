@@ -15,21 +15,10 @@ use App\Http\Resources\Admin\RoleResource;
 
 class RoleController extends Controller
 {
-
-
-    function __construct()
-    {
-        $this->middleware('permission:view_role', ['only' => ['index','show']]);
-        $this->middleware('permission:create_role', ['only' => ['create','store']]);
-        $this->middleware('permission:edit_role', ['only' => ['edit','update']]);
-        $this->middleware('permission:delete_role', ['only' => ['destroy']]);
-    }
-
-
     public function index()
     {
-        $roles = auth()->user()->hasRole('Superadmin') ? Role::all() : Role::whereNotIn('name',['SuperAdmin'])->get();
-        return Inertia::render('Admin/Staff/Roles/Index', [
+        $roles = auth()->user()->hasRole('Superadmin') ? Role::all() : Role::whereNotIn('name',['Superadmin'])->get();
+        return Inertia::render('Admin/Roles/Index', [
             'permissions'=>Permission::all(),
             'roles' => RoleResource::collection($roles),
         ]);
@@ -39,12 +28,20 @@ class RoleController extends Controller
 
     public function store(RoleRequest $request)
     {
-        $validated = $request->validated();
-        $role = Role::create(['name' => $validated['name']]);
-        $role->syncPermissions($validated['permissions']);
-        return response()->json([
-            'status' => 'success'
-        ], 201);
+        try {
+            $validated = $request->validated();
+            $role = Role::create(['name' => $validated['name']]);
+            $role->syncPermissions($validated['permissions']);
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Role created successfully'
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 
 
@@ -61,10 +58,20 @@ class RoleController extends Controller
 
     public function update(RoleRequest $request, Role $role)
     {
-        $validated = $request->validated();
-        $role->update(['name'=>$validated['name']]);
-        $role->syncPermissions($validated['permissions']);
-        return response()->json(['status' => 'success'],201);
+        try {
+            $validated = $request->validated();
+            $role->update(['name' => $validated['name']]);
+            $role->syncPermissions($validated['permissions']);
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Role updated successfully'
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 
 

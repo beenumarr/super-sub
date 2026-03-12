@@ -79,7 +79,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/developer', [DeveloperApiController::class, 'index'])->name('developer.index');
     Route::get('/developer/api-documentation', [DeveloperApiController::class, 'docs'])->name('developer.documentation');
     Route::post('/developer/generate-api-token', [DeveloperApiController::class, 'generateApiToken'])->name('developer.generate-api-token');
-    Route::get('/referrals', [ReferralController::class, 'index'])->name('referrals.index')->middleware('feature');
+    Route::get('/referrals', [ReferralController::class, 'index'])->name('referrals.index');
     Route::post('/withdraw-bonus', [ReferralController::class, 'withdrawBonus'])->name('withdraw-bonus');
     Route::put('/claim-referral-bonus/{referral}', [ReferralController::class, 'claimReferralBonus'])->name('claim-referral-bonus');
     Route::get('/comin-soon', function () {return Inertia::render('Utils/CominSoon');})->name('coming-soon');

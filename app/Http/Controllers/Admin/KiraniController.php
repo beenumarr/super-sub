@@ -129,7 +129,7 @@ class KiraniController extends Controller
     public function storePlan(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'size' => ['required', 'string'],
+            'size' => ['required', 'numeric'],
             'amount' => ['required', 'numeric', 'min:0'],
             'smart_earner_amount' => ['nullable', 'numeric', 'min:0'],
             'affiliate_amount' => ['nullable', 'numeric', 'min:0'],
@@ -168,7 +168,7 @@ class KiraniController extends Controller
     public function updatePlan(Request $request, DataPlan $plan): RedirectResponse
     {
         $data = $request->validate([
-            'size' => ['required', 'string'],
+            'size' => ['required', 'numeric'],
             'amount' => ['required', 'numeric', 'min:0'],
             'smart_earner_amount' => ['nullable', 'numeric', 'min:0'],
             'affiliate_amount' => ['nullable', 'numeric', 'min:0'],

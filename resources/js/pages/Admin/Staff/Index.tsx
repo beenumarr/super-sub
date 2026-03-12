@@ -271,38 +271,72 @@ export default function Index({ data: staffs, roles, packages }: IndexProps) {
 
     // Export staff data to CSV
     const exportToCSV = () => {
-        const headers = ['Name', 'Email', 'Phone', 'Roles', 'Status', 'KYC Level', 'Created Date'];
-        const rows = filteredStaffs.map(staff => [
-            staff.name,
-            staff.email,
-            staff.phone_number || '',
-            staff.roles?.map(r => r.name).join('; ') || '',
-            staff.is_active ? 'Active' : 'Inactive',
-            staff.kyc_level || '',
-            new Date(staff.created_at).toLocaleDateString(),
-        ]);
+        try {
+            console.log('Starting export, filtered staffs count:', filteredStaffs?.length || 0);
 
-        let csvContent = headers.join(',') + '\n';
-        rows.forEach(row => {
-            const escapedRow = row.map(cell => {
-                const cellStr = String(cell);
-                return cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n')
-                    ? `"${cellStr.replace(/"/g, '""')}"`
-                    : cellStr;
+            if (!filteredStaffs || filteredStaffs.length === 0) {
+                toast.error('No staff data to export');
+                return;
+            }
+
+            const headers = ['Name', 'Email', 'Phone', 'Roles', 'Status', 'KYC Level', 'Created Date'];
+            const rows = filteredStaffs.map((staff, index) => {
+                try {
+                    const rolesStr = Array.isArray(staff.roles)
+                        ? staff.roles.map(r => String(r?.name || '')).join('; ')
+                        : '';
+
+                    const createdDate = staff.created_at
+                        ? new Date(staff.created_at).toLocaleDateString()
+                        : '';
+
+                    return [
+                        String(staff.name || ''),
+                        String(staff.email || ''),
+                        String(staff.phone_number || ''),
+                        rolesStr,
+                        staff.is_active ? 'Active' : 'Inactive',
+                        String(staff.kyc_level || ''),
+                        createdDate,
+                    ];
+                } catch (rowError) {
+                    console.error(`Error processing row ${index}:`, rowError);
+                    throw new Error(`Failed to process staff record at index ${index}: ${rowError instanceof Error ? rowError.message : 'Unknown error'}`);
+                }
             });
-            csvContent += escapedRow.join(',') + '\n';
-        });
 
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        const url = URL.createObjectURL(blob);
-        link.setAttribute('href', url);
-        link.setAttribute('download', `staff_${new Date().toISOString().split('T')[0]}.csv`);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        toast.success('Staff data exported successfully');
+            let csvContent = headers.join(',') + '\n';
+            rows.forEach((row, index) => {
+                try {
+                    const escapedRow = row.map(cell => {
+                        const cellStr = String(cell || '');
+                        return cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n')
+                            ? `"${cellStr.replace(/"/g, '""')}"`
+                            : cellStr;
+                    });
+                    csvContent += escapedRow.join(',') + '\n';
+                } catch (formatError) {
+                    console.error(`Error formatting row ${index}:`, formatError);
+                    throw new Error(`Failed to format row ${index}: ${formatError instanceof Error ? formatError.message : 'Unknown error'}`);
+                }
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `staff_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            toast.success('Staff data exported successfully');
+        } catch (error) {
+            console.error('Export error:', error);
+            const errorMsg = error instanceof Error ? error.message : String(error);
+            toast.error(`Export failed: ${errorMsg}`);
+        }
     };
 
     const assignRole = (staffId: number, roleId: string) => {
@@ -342,7 +376,9 @@ export default function Index({ data: staffs, roles, packages }: IndexProps) {
                 <div className="mx-auto w-full px-4 pt-10 sm:px-6 lg:px-6">
                     <div className="mb-6 space-y-3">
                         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                            <div />
+                            <div>
+                                <h1 className="text-3xl font-bold tracking-tight dark:text-white">Staff Management</h1>
+                            </div>
                             <Button onClick={() => setCreateModalOpen(true)}>Add Staff</Button>
                         </div>
 
@@ -363,7 +399,7 @@ export default function Index({ data: staffs, roles, packages }: IndexProps) {
 
                     {filteredStaffs.length === 0 ? (
                         <div className="py-10 text-center">
-                            <p className="mb-4 text-gray-500">{search ? 'No staff members match your search' : 'No staff members found'}</p>
+                            <p className="mb-4 text-gray-500 dark:text-gray-400">{search ? 'No staff members match your search' : 'No staff members found'}</p>
                             <Button onClick={() => setCreateModalOpen(true)}>Add Staff Member</Button>
                         </div>
                     ) : (
@@ -372,31 +408,31 @@ export default function Index({ data: staffs, roles, packages }: IndexProps) {
                                 <CardContent className="p-0">
                                     <div className="overflow-x-auto">
                                         <table className="w-full min-w-full">
-                                            <thead className="bg-accent/50">
-                                                <tr className="border-b">
-                                                    <th className="px-3 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase sm:px-6">
+                                            <thead className="bg-gray-50 dark:bg-gray-900/40">
+                                                <tr className="border-b border-gray-200 dark:border-gray-800">
+                                                    <th className="px-3 py-3 text-left text-xs font-medium tracking-wider text-gray-500 dark:text-gray-300 uppercase sm:px-6">
                                                         Name
                                                     </th>
-                                                    <th className="px-3 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase sm:px-6">
+                                                    <th className="px-3 py-3 text-left text-xs font-medium tracking-wider text-gray-500 dark:text-gray-300 uppercase sm:px-6">
                                                         Email
                                                     </th>
-                                                    <th className="hidden px-3 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase sm:px-6 lg:table-cell">
+                                                    <th className="hidden px-3 py-3 text-left text-xs font-medium tracking-wider text-gray-500 dark:text-gray-300 uppercase sm:px-6 lg:table-cell">
                                                         Roles
                                                     </th>
-                                                    <th className="hidden px-3 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase sm:px-6 lg:table-cell">
+                                                    <th className="hidden px-3 py-3 text-left text-xs font-medium tracking-wider text-gray-500 dark:text-gray-300 uppercase sm:px-6 lg:table-cell">
                                                         Status
                                                     </th>
-                                                    <th className="px-3 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase sm:px-6">
+                                                    <th className="px-3 py-3 text-left text-xs font-medium tracking-wider text-gray-500 dark:text-gray-300 uppercase sm:px-6">
                                                         Created
                                                     </th>
-                                                    <th className="px-3 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase sm:px-6">
+                                                    <th className="px-3 py-3 text-right text-xs font-medium tracking-wider text-gray-500 dark:text-gray-300 uppercase sm:px-6">
                                                         Actions
                                                     </th>
                                                 </tr>
                                             </thead>
-                                            <tbody className="bg-accent/50 divide-y divide-gray-200 dark:divide-gray-700">
+                                            <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
                                                 {filteredStaffs.map((staff) => (
-                                                    <tr key={staff.id} className="hover:bg-accent">
+                                                    <tr key={staff.id} className="bg-white dark:bg-gray-900/40 hover:bg-gray-50 dark:hover:bg-gray-900 transition">
                                                         <td className="px-3 py-4 whitespace-nowrap sm:px-6">
                                                             <div className="flex flex-col">
                                                                 <span className="font-medium text-gray-900 dark:text-white">
@@ -415,12 +451,12 @@ export default function Index({ data: staffs, roles, packages }: IndexProps) {
                                                                     {staff.email}
                                                                 </span>
                                                                 {staff.email_verified_at && staff.is_active && (
-                                                                    <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-800 dark:text-green-100">
+                                                                    <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/40 dark:text-green-200">
                                                                         ✓
                                                                     </span>
                                                                 )}
                                                                 {!staff.is_active && (
-                                                                    <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800 dark:bg-red-800 dark:text-red-100">
+                                                                    <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/40 dark:text-red-200">
                                                                         ✗
                                                                     </span>
                                                                 )}
@@ -432,13 +468,13 @@ export default function Index({ data: staffs, roles, packages }: IndexProps) {
                                                                     staff.roles.map((role) => (
                                                                         <span
                                                                             key={role.id}
-                                                                            className="inline-flex rounded-full bg-blue-100 px-2 py-1 text-xs font-semibold text-blue-800 dark:bg-blue-800 dark:text-blue-100"
+                                                                            className="inline-flex rounded-full bg-blue-100 px-2 py-1 text-xs font-semibold text-blue-800 dark:bg-blue-900/40 dark:text-blue-200"
                                                                         >
                                                                             {role.name}
                                                                         </span>
                                                                     ))
                                                                 ) : (
-                                                                    <span className="text-gray-500">No roles</span>
+                                                                    <span className="text-gray-500 dark:text-gray-400">No roles</span>
                                                                 )}
                                                             </div>
                                                         </td>
@@ -446,15 +482,15 @@ export default function Index({ data: staffs, roles, packages }: IndexProps) {
                                                             <span
                                                                 className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
                                                                     staff.is_active
-                                                                        ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100'
-                                                                        : 'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100'
+                                                                        ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200'
+                                                                        : 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200'
                                                                 }`}
                                                             >
                                                                 {staff.is_active ? 'Active' : 'Inactive'}
                                                             </span>
                                                         </td>
                                                         <td className="px-3 py-4 whitespace-nowrap sm:px-6">
-                                                            <div className="text-sm text-gray-900 dark:text-white">
+                                                            <div className="text-sm text-gray-900 dark:text-gray-100">
                                                                 {new Date(staff.created_at).toLocaleDateString()}
                                                             </div>
                                                         </td>
@@ -547,10 +583,10 @@ export default function Index({ data: staffs, roles, packages }: IndexProps) {
                     </DialogHeader>
 
                     {staffToDelete && (
-                        <div className="rounded-md bg-red-50 p-4 dark:bg-red-900/20">
+                        <div className="rounded-md bg-red-50 dark:bg-red-900/20 p-4">
                             <div className="flex items-center">
                                 <div className="flex-shrink-0">
-                                    <Trash2 className="h-5 w-5 text-red-400" />
+                                    <Trash2 className="h-5 w-5 text-red-400 dark:text-red-300" />
                                 </div>
                                 <div className="ml-3">
                                     <h3 className="text-sm font-medium text-red-800 dark:text-red-200">
@@ -595,7 +631,7 @@ export default function Index({ data: staffs, roles, packages }: IndexProps) {
 
             {/* Edit Staff Modal */}
             <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
-                <DialogContent className="max-w-lg">
+                <DialogContent className="sm:max-w-lg">
                     <DialogHeader>
                         <DialogTitle>Edit Staff Member</DialogTitle>
                         <DialogDescription>Update staff member information</DialogDescription>
@@ -614,7 +650,7 @@ export default function Index({ data: staffs, roles, packages }: IndexProps) {
                                     placeholder="Full name"
                                 />
                                 {editForm.errors.name && (
-                                    <p className="text-sm text-red-600">{editForm.errors.name}</p>
+                                    <p className="text-sm text-red-600 dark:text-red-400">{editForm.errors.name}</p>
                                 )}
                             </div>
 
@@ -629,7 +665,7 @@ export default function Index({ data: staffs, roles, packages }: IndexProps) {
                                     placeholder="Email address"
                                 />
                                 {editForm.errors.email && (
-                                    <p className="text-sm text-red-600">{editForm.errors.email}</p>
+                                    <p className="text-sm text-red-600 dark:text-red-400">{editForm.errors.email}</p>
                                 )}
                             </div>
 
@@ -664,14 +700,14 @@ export default function Index({ data: staffs, roles, packages }: IndexProps) {
                                         checked={editForm.data.is_active ? true : false}
                                         onChange={(e) => editForm.setData('is_active', e.target.checked)}
                                     />
-                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
                                         Active
                                     </span>
                                 </label>
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                                     KYC Level
                                 </label>
                                 <Select value={editForm.data.kyc_level} onValueChange={(value) => editForm.setData('kyc_level', value)}>
@@ -688,7 +724,7 @@ export default function Index({ data: staffs, roles, packages }: IndexProps) {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                                     Account Status
                                 </label>
                                 <div className="flex items-center gap-3">
@@ -703,7 +739,7 @@ export default function Index({ data: staffs, roles, packages }: IndexProps) {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                                     User Package
                                 </label>
                                 <Select value={editForm.data.user_package_id?.toString() || ''} onValueChange={(value) => editForm.setData('user_package_id', value)}>
@@ -747,7 +783,7 @@ export default function Index({ data: staffs, roles, packages }: IndexProps) {
 
             {/* Create Staff Modal */}
             <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
-                <DialogContent className="max-w-md">
+                <DialogContent className="sm:max-w-md">
                     <DialogHeader>
                         <DialogTitle>Create New Staff Member</DialogTitle>
                         <DialogDescription>Add a new staff member to your system</DialogDescription>
@@ -755,7 +791,7 @@ export default function Index({ data: staffs, roles, packages }: IndexProps) {
                     {createModalOpen && (
                         <form onSubmit={handleCreateSubmit} className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                                     Name
                                 </label>
                                 <Input
@@ -765,12 +801,12 @@ export default function Index({ data: staffs, roles, packages }: IndexProps) {
                                     placeholder="Staff member's full name"
                                 />
                                 {createForm.errors.name && (
-                                    <p className="text-sm text-red-600">{createForm.errors.name}</p>
+                                    <p className="text-sm text-red-600 dark:text-red-400">{createForm.errors.name}</p>
                                 )}
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                                     Email
                                 </label>
                                 <Input
@@ -780,12 +816,12 @@ export default function Index({ data: staffs, roles, packages }: IndexProps) {
                                     placeholder="staff@example.com"
                                 />
                                 {createForm.errors.email && (
-                                    <p className="text-sm text-red-600">{createForm.errors.email}</p>
+                                    <p className="text-sm text-red-600 dark:text-red-400">{createForm.errors.email}</p>
                                 )}
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                                     Phone Number
                                 </label>
                                 <Input
@@ -795,12 +831,12 @@ export default function Index({ data: staffs, roles, packages }: IndexProps) {
                                     placeholder="+234 123 456 7890"
                                 />
                                 {createForm.errors.phone_number && (
-                                    <p className="text-sm text-red-600">{createForm.errors.phone_number}</p>
+                                    <p className="text-sm text-red-600 dark:text-red-400">{createForm.errors.phone_number}</p>
                                 )}
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                                     Password
                                 </label>
                                 <Input
@@ -810,18 +846,18 @@ export default function Index({ data: staffs, roles, packages }: IndexProps) {
                                     placeholder="Enter a secure password"
                                 />
                                 {createForm.errors.password && (
-                                    <p className="text-sm text-red-600">{createForm.errors.password}</p>
+                                    <p className="text-sm text-red-600 dark:text-red-400">{createForm.errors.password}</p>
                                 )}
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                                     Role
                                 </label>
                                 <select
                                     value={createForm.data.role}
                                     onChange={(e) => createForm.setData('role', e.target.value)}
-                                    className="w-full px-3 py-2 border border-input rounded-md bg-background text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                    className="w-full px-3 py-2 border border-input rounded-md bg-background dark:bg-gray-800 text-sm text-foreground dark:text-gray-100 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                                 >
                                     <option value="">Select a role</option>
                                     {roles.map((role) => (
@@ -831,7 +867,7 @@ export default function Index({ data: staffs, roles, packages }: IndexProps) {
                                     ))}
                                 </select>
                                 {createForm.errors.role && (
-                                    <p className="text-sm text-red-600">{createForm.errors.role}</p>
+                                    <p className="text-sm text-red-600 dark:text-red-400">{createForm.errors.role}</p>
                                 )}
                             </div>
 

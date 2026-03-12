@@ -31,6 +31,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'phone_number',
         'api_token',
         'api_token_id',
+        'api_key',
         'user_category_id',
         'kyc_level',
         'webhook_url',
@@ -76,8 +77,42 @@ class User extends Authenticatable implements MustVerifyEmail
         'user_config' => 'json',
     ];
 
-
-
+    /**
+     * Filter the query based on request filters
+     *
+     * @param $query
+     * @param array $filters
+     * @return void
+     */
+    public function scopeFilter($query, array $filters)
+    {
+        $query->when($filters['search'] ?? null, function ($query, $search) {
+            $query->where('name', 'like', '%'.$search.'%')
+                ->orWhere('email', 'like', '%'.$search.'%')
+                ->orWhere('phone_number', 'like', '%'.$search.'%');
+        })
+        ->when($filters['user_id'] ?? null, function ($query, $user_id) {
+            $query->where('id', $user_id);
+        })
+        ->when($filters['status'] ?? null, function ($query, $status) {
+            $query->where('active', $status === 'active' ? 1 : 0);
+        })
+        ->when($filters['role'] ?? null, function ($query, $role) {
+            $query->whereHas('roles', function ($q) use ($role) {
+                $q->where('name', $role);
+            });
+        })
+        ->when($filters['package'] ?? null, function ($query, $package) {
+            $query->where('user_package_id', $package);
+        })
+        ->when($filters['trashed'] ?? null, function ($query, $trashed) {
+            if ($trashed === 'only') {
+                $query->onlyTrashed();
+            } elseif ($trashed === 'with') {
+                $query->withTrashed();
+            }
+        });
+    }
 
     /**
      * Get the count of phone numbers associated with the user.

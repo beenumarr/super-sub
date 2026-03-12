@@ -30,7 +30,7 @@ Route::middleware(['auth','admin'])->prefix('admin')->group(function () {
 
     Route::put('airtime_to_cash_services', [AirtimeToCashServicesController::class, 'updateNetworkSettings'])->name('airtime_to_cash_services.update');
     Route::get('airtime2cash-settings', [AirtimeToCashServicesController::class, 'settings'])->name('admin.airtime2cash.settings');
-    Route::post('config/update', [AppConfigurationController::class, 'apiUpdate'])->name('admin.config.update');
+    Route::post('config/update', [AppConfigurationController::class, 'apiUpdate'])->middleware('permission:update_site_configurations')->name('admin.config.update');
     Route::resource('roles', RoleController::class);
     Route::resource('staffs', StaffController::class);
 
