@@ -18,8 +18,13 @@ class UserResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'email' => $this->email,
-            'role' => $this->role,
-            'active' => (bool) ($this->active ?? false),
+            'roles' => $this->roles->map(function ($role) {
+                return [
+                    'id' => $role->id,
+                    'name' => $role->name,
+                ];
+            })->toArray(),
+            'is_active' => (bool) ($this->active ?? false),
             'phone_number' => $this->phone_number ?? $this->phone,
             'phone' => $this->phone,
             'wallet' => [
@@ -39,6 +44,9 @@ class UserResource extends JsonResource
             'transactions_count' => 0,
             'email_verified_at' => $this->email_verified_at,
             'kyc_level' => $this->kyc_level,
+            'account_status' => $this->account_status,
+            'address' => $this->address,
+            'user_package_id' => $this->user_package_id,
             'created_at' => $this->created_at,
             'user_config' => $this->user_config,
         ];

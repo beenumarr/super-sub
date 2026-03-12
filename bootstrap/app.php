@@ -5,6 +5,7 @@ use Illuminate\Foundation\Application;
 use App\Http\Middleware\ApiAuthenticate;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\Admin as AdminMiddleware;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use App\Http\Middleware\EnsureUserIsActive;
@@ -31,6 +32,10 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
             EnsureUserIsActive::class,
+        ]);
+
+        $middleware->alias([
+            'admin' => AdminMiddleware::class,
         ]);
 
         $middleware->priority([

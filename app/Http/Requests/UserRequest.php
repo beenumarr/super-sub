@@ -25,15 +25,16 @@ class UserRequest extends FormRequest
      */
     public function rules()
     {
-        $user = $this->route('user')?->id;
+        $staff = $this->route('staff');
+        $userId = $staff instanceof \App\Models\User ? $staff->id : $staff;
 
         return [
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user)],
+            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users', 'email')->ignore($userId)],
             'phone_number' => ['required', 'string'],
-            'password' => [Rule::requiredIf(function () use ($user) {
-                return ! $user;
-            }), 'confirmed', Rules\Password::default()],
+            'password' => [Rule::requiredIf(function () use ($userId) {
+                return ! $userId;
+            }), Rules\Password::default()],
         ];
     }
 

@@ -62,6 +62,12 @@ Route::middleware(['auth', Admin::class])->prefix('admin')->group(function () {
     Route::resource('users', UserController::class)->names('admin.users');
     Route::get('/users/view/{user}', [UserController::class, 'viewUser'])->name('admin.users.view');
     Route::post('/users/role/{user}', [StaffController::class, 'updateRole'])->name('admin.users.update-role');
+    Route::resource('/staffs', StaffController::class)->only(['index', 'store', 'update', 'destroy'])->names([
+        'index' => 'admin.staffs.index',
+        'store' => 'admin.staffs.store',
+        'update' => 'admin.staffs.update',
+        'destroy' => 'admin.staffs.destroy',
+    ]);
     Route::post('/users/delete-virtual-acacounts/{user}', [UserController::class, 'deleteVirtualAccount'])->name('admin.users.delete-virtual-accounts');
     Route::delete('/users/delete-kyc/{user}', [UserController::class, 'deleteKyc'])->name('admin.users.delete-kyc');
     Route::post('/users/generate-virtual-acacounts/{user}', [UserController::class, 'generateVirtualAccount'])->name('admin.users.generate-virtual-accounts');
