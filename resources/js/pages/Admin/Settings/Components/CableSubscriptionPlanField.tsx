@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useForm, usePage } from "@inertiajs/react";
 import TextInputRounded from "@/Components/TextInputRounded";
 import NormalButton from "@/Components/NormalButton";
@@ -7,16 +7,66 @@ import InputError from "@/Components/InputError";
 import * as Yup from "yup";
 import SelectInputRounded from "@/Components/SelectInputRounded";
 
-export default function CableSubscriptionPlanField({ handleClose, editData }) {
-    const { cable_networks, apis, isStl } = usePage().props;
+interface CableNetwork {
+    id: string | number;
+    name: string;
+}
+
+interface TransactionApi {
+    id: number;
+    name: string;
+}
+
+interface ApiPlanId {
+    id?: number;
+    transaction_api_id: number;
+    product_id: string | number;
+    product_code: string | number;
+}
+
+interface CablePlanFormData {
+    cable_network_id: string | number;
+    product_code: string | number;
+    validity: string | number;
+    amount: string | number;
+    package_name: string;
+    api_ids: ApiPlanId[];
+}
+
+interface CablePlan {
+    id?: string | number;
+    cable_network_id?: string | number;
+    product_code?: string | number;
+    validity?: string | number;
+    amount?: string | number;
+    package_name?: string;
+    api_ids?: ApiPlanId[];
+}
+
+interface PageProps {
+    cable_networks: CableNetwork[];
+    apis: TransactionApi[];
+    isStl: boolean;
+}
+
+interface CableSubscriptionPlanFieldProps {
+    handleClose: () => void;
+    editData: CablePlan | "";
+}
+
+export default function CableSubscriptionPlanField({
+    handleClose,
+    editData,
+}: CableSubscriptionPlanFieldProps) {
+    const { cable_networks, apis, isStl } = usePage<PageProps>().props;
 
     const validationSchema = Yup.object().shape({
         package_name: Yup.string().required("Package Name is required"),
         product_code: Yup.string().required("Product Code is required"),
     });
 
-    const { data, setData, post, put, processing, setError, errors, reset } =
-        useForm({
+    const { data, setData, post, put, processing, setError, errors } =
+        useForm<CablePlanFormData>({
             cable_network_id: editData?.cable_network_id ?? "",
             product_code: editData?.product_code ?? "",
             validity: editData?.validity ?? "",
@@ -25,7 +75,7 @@ export default function CableSubscriptionPlanField({ handleClose, editData }) {
             api_ids: editData?.api_ids ?? [],
         });
 
-    const submit = (e) => {
+    const submit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
         validationSchema
@@ -65,22 +115,26 @@ export default function CableSubscriptionPlanField({ handleClose, editData }) {
                     });
                 }
             })
-            .catch((err) => {
-                const formattedErrors = err?.inner?.reduce((acc, curr) => {
-                    acc[curr.path] = curr.message;
-                    return acc;
-                }, {});
+            .catch((err: any) => {
+                const formattedErrors =
+                    err?.inner?.reduce(
+                        (acc: Record<string, string>, curr: { path: string; message: string }) => {
+                            acc[curr.path] = curr.message;
+                            return acc;
+                        },
+                        {}
+                    ) ?? {};
                 setError(formattedErrors);
             });
     };
 
-    const getValue = (id, key) => {
+    const getValue = (id: number, key: keyof ApiPlanId) => {
         const api = data.api_ids.find((aid) => aid.transaction_api_id === id);
 
         return api ? api[key] : "";
     };
 
-    const handleChange = (e) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const updatedApiId = [...data.api_ids];
 
         const product_id = e.target.value;
@@ -93,7 +147,7 @@ export default function CableSubscriptionPlanField({ handleClose, editData }) {
         if (existingIndex !== -1) {
             updatedApiId[existingIndex] = {
                 ...updatedApiId[existingIndex],
-                product_id: isNaN(product_id) ? 1 : product_id,
+                product_id: Number.isNaN(Number(product_id)) ? 1 : product_id,
                 product_code: product_id,
             };
         } else {
@@ -124,8 +178,10 @@ export default function CableSubscriptionPlanField({ handleClose, editData }) {
             >
                 <option value="">Select Cable Type</option>
 
-                {cable_networks.map((network, i) => (
-                    <option value={network.id}>{network.name}</option>
+                {cable_networks.map((network) => (
+                    <option key={String(network.id)} value={network.id}>
+                        {network.name}
+                    </option>
                 ))}
             </SelectInputRounded>
 
@@ -147,7 +203,7 @@ export default function CableSubscriptionPlanField({ handleClose, editData }) {
                 error={errors.product_code && true}
                 onChange={(e) => setData("product_code", e.target.value)}
             />
-            <InputError message={errors.package_name} className="mt-2" />
+            <InputError message={errors.product_code} className="mt-2" />
 
             <TextInputRounded
                 id="amount"
@@ -171,10 +227,10 @@ export default function CableSubscriptionPlanField({ handleClose, editData }) {
             <InputError message={errors.validity} className="mt-2" />
 
             {isStl &&
-                apis.map((api, i) => (
-                    <div key={i}>
+                apis.map((api) => (
+                    <div key={api.id}>
                         <TextInputRounded
-                            id={api.id}
+                            id={String(api.id)}
                             label={api.name}
                             type="text"
                             value={getValue(api.id, "product_code")}

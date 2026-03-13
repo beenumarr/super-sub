@@ -3,39 +3,37 @@ import { type BreadcrumbItem } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
 import { memo, useEffect, useState } from 'react';
 import { usePrevious } from 'react-use';
-import DataPlanTable from './Components/DataPlanTable';
-import type { DataPlanRow } from './Components/DataPlanUtils';
+import CableSubscriptionPlanTable, {
+    type CablePlansResponse,
+} from './Components/CableSubscriptionPlanTable';
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Admin', href: '/admin/dashboard' },
-    { title: 'Data Plans', href: '/admin/data_plans' },
-];
+interface FilterValues {
+    page: number;
+    pageSize: number;
+    network: string;
+    [key: string]: any;
+}
 
-interface MobileNetwork {
-    id: string | number;
+interface CableNetwork {
+    id: string;
     name: string;
-    plan_types?: { id: string | number; name: string }[];
+}
+
+interface PaginationModel {
+    page: number;
+    pageSize: number;
 }
 
 interface PageProps {
-    theme?: string;
-    mobile_networks: MobileNetwork[];
-    data_plans: {
-        data: DataPlanRow[];
-        meta?: {
-            current_page: number;
-            from: number;
-            last_page: number;
-            path: string;
-            per_page: number;
-            to: number;
-            total: number;
-            links?: { url: string | null; label: string; active: boolean }[];
-        };
-        links?: { first: string; last: string; prev: string | null; next: string | null };
-    };
-    auth: { can?: { create_data_plan?: boolean; edit_data_plan?: boolean; delete_data_plan?: boolean } };
+    cable_subscription_plans: CablePlansResponse;
+    cable_networks: CableNetwork[];
+    [key: string]: unknown;
 }
+
+const breadcrumbs: BreadcrumbItem[] = [
+    { title: 'Admin', href: '/admin/dashboard' },
+    { title: 'Cable Plans', href: '/admin/cable_subscription_plans' },
+];
 
 function NetworkFilter({
     data,
@@ -62,18 +60,16 @@ function NetworkFilter({
     );
 }
 
-const Index = memo(function DataPlansIndex() {
-    const { theme, mobile_networks, data_plans: data, auth } = usePage().props as unknown as PageProps;
-    const can = auth?.can ?? {};
+const Index = memo(function CablePlansIndex() {
+    const { cable_subscription_plans: data, cable_networks } = usePage<PageProps>().props;
 
-    const [filterValues, setFilterValue] = useState<{ page: number; pageSize: number; network: string | number; planType: string | number; [key: string]: any }>({
+    const [filterValues, setFilterValue] = useState<FilterValues>({
         page: 1,
         pageSize: 20,
-        network: '',
-        planType: '',
+        network: "",
     });
 
-    const setPaginationModel = (val: { page: number; pageSize: number }) => {
+    const setPaginationModel = (val: PaginationModel): void => {
         setFilterValue({
             ...filterValues,
             page: Number(val.page) + 1,
@@ -81,11 +77,14 @@ const Index = memo(function DataPlansIndex() {
         });
     };
 
-    const prevValues = usePrevious(filterValues);
+    const prevValues = usePrevious<FilterValues>(filterValues);
 
     useEffect(() => {
         if (prevValues) {
-            const query = Object.keys(filterValues).length ? filterValues : { remember: 'forget' };
+            const query = Object.keys(filterValues).length
+                ? filterValues
+                : { remember: "forget" };
+
             const currentRoute = route().current();
             if (currentRoute) {
                 router.get(route(currentRoute), query, {
@@ -98,7 +97,7 @@ const Index = memo(function DataPlansIndex() {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Data Plans" />
+            <Head title="Cable Plans" />
             <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
                 <div className="mb-4 flex flex-wrap items-center gap-2 overflow-x-auto border-b pb-4">
                     <NetworkFilter
@@ -106,7 +105,7 @@ const Index = memo(function DataPlansIndex() {
                         valueSelected={filterValues.network}
                         onChange={() => setFilterValue({ ...filterValues, network: '' })}
                     />
-                    {mobile_networks.map((type) => (
+                    {cable_networks.map((type) => (
                         <NetworkFilter
                             key={String(type.id)}
                             data={type}
@@ -115,23 +114,13 @@ const Index = memo(function DataPlansIndex() {
                         />
                     ))}
                 </div>
-                <DataPlanTable
-                    filterValues={filterValues}
-                    setFilterValue={setFilterValue}
+                <CableSubscriptionPlanTable
                     data={data}
-                    planTypes={
-                        mobile_networks.find((it) => String(it.id) === String(filterValues.network))
-                            ?.plan_types ?? []
-                    }
-                    theme={theme}
                     paginationModel={{
                         page: filterValues.page - 1,
                         pageSize: filterValues.pageSize,
                     }}
                     setPaginationModel={setPaginationModel}
-                    canCreateDataPlan={can?.create_data_plan ?? false}
-                    canEditDataPlan={can?.edit_data_plan ?? false}
-                    canDeleteDataPlan={can?.delete_data_plan ?? false}
                 />
             </div>
         </AppLayout>

@@ -1,63 +1,78 @@
-import { Edit2, Trash2 } from "lucide-react";
-import { FC } from "react";
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import type { DataTableColumn } from '@/components/shared/data-table';
+import { Edit2, Trash2 } from 'lucide-react';
 
-interface DataTypeRow {
+export interface DataTypeRow {
     id: number;
     name: string;
     network: {
         name: string;
     };
     active: boolean;
+    [key: string]: unknown;
 }
 
-interface EditPlanProps {
-    onClick: (e: React.MouseEvent) => void;
+type ModalState = { show: boolean; id: string | number };
+
+export function getDataTypeColumns(
+    setEditFormModal: (state: ModalState) => void,
+    setDeleteModal: (state: ModalState) => void,
+): DataTableColumn<DataTypeRow>[] {
+    return [
+        {
+            key: 'name',
+            header: 'Name',
+            className: 'min-w-[180px]',
+        },
+        {
+            key: 'network',
+            header: 'Network',
+            className: 'min-w-[120px]',
+            render: (row) => <span className="uppercase text-sm">{row.network?.name ?? 'N/A'}</span>,
+        },
+        {
+            key: 'status',
+            header: 'Status',
+            className: 'min-w-[120px]',
+            render: (row) => (
+                <Badge className={row.active ? 'bg-green-600' : 'bg-gray-500'}>
+                    {row.active ? 'Active' : 'Disabled'}
+                </Badge>
+            ),
+        },
+        {
+            key: 'actions',
+            header: 'Actions',
+            className: 'w-[120px]',
+            render: (row) => (
+                <div className="flex items-center justify-end gap-2">
+                    <Button
+                        size="icon"
+                        variant="outline"
+                        className="h-8 w-8"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setEditFormModal({ show: true, id: row.id });
+                        }}
+                    >
+                        <Edit2 className="h-4 w-4" />
+                    </Button>
+                    <Button
+                        size="icon"
+                        variant="outline"
+                        className="h-8 w-8 text-destructive hover:text-destructive"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setDeleteModal({ show: true, id: row.id });
+                        }}
+                    >
+                        <Trash2 className="h-4 w-4" />
+                    </Button>
+                </div>
+            ),
+        },
+    ];
 }
-
-interface MobileNetworkProps {
-    row: DataTypeRow;
-}
-
-interface StatusProps {
-    row: DataTypeRow;
-}
-
-export const EditPlan: FC<EditPlanProps> = ({ onClick }) => {
-    return (
-        <button
-            onClick={onClick}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
-            title="Edit"
-        >
-            <Edit2 className="h-4 w-4" />
-        </button>
-    );
-};
-
-export const DeletePlan: FC<EditPlanProps> = ({ onClick }) => {
-    return (
-        <button
-            onClick={onClick}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded text-red-600"
-            title="Delete"
-        >
-            <Trash2 className="h-4 w-4" />
-        </button>
-    );
-};
-
-export const MobileNetwork: FC<MobileNetworkProps> = ({ row }) => {
-    return (
-        <div className="flex uppercase text-start p-2 flex-col">
-            {row.network?.name || "N/A"}
-        </div>
-    );
-};
-
-export const Status: FC<StatusProps> = ({ row }) => {
-    return (
-        <div className="flex uppercase text-start p-2 flex-col">
-            {row.active ? "Active" : "Disabled"}
-        </div>
-    );
-};

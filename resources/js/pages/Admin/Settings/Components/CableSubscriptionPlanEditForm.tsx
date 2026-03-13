@@ -4,11 +4,26 @@ import { useEffect, useState } from "react";
 import { CircularProgress } from "@mui/material";
 import CableSubscriptionPlanField from "./CableSubscriptionPlanField";
 
-const CableSubscriptionPlanEditForm = (props) => {
-    const { setFormModal, formModal } = props;
-    const [editData, setEditData] = useState("");
+interface EditFormModalState {
+    show: boolean;
+    id: string | number;
+}
+
+type CablePlan = Record<string, unknown>;
+
+interface CableSubscriptionPlanEditFormProps {
+    setFormModal: (state: EditFormModalState) => void;
+    formModal: EditFormModalState;
+}
+
+const CableSubscriptionPlanEditForm = ({
+    setFormModal,
+    formModal,
+}: CableSubscriptionPlanEditFormProps) => {
+    const [editData, setEditData] = useState<CablePlan | null>(null);
 
     const loadEditData = async () => {
+        if (!formModal.id) return;
         const response = await fetch(
             `/admin/cable_subscription_plans/${formModal.id}`
         );
@@ -19,12 +34,14 @@ const CableSubscriptionPlanEditForm = (props) => {
     };
 
     useEffect(() => {
-        loadEditData();
-    }, [formModal.id]);
+        if (formModal.show) {
+            loadEditData();
+        }
+    }, [formModal.id, formModal.show]);
 
     const handleClose = () => {
         setFormModal({ show: false, id: "" });
-        setEditData("");
+        setEditData(null);
     };
 
     return (

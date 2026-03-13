@@ -38,9 +38,11 @@ const DataPlanTypeEditForm: FC<DataPlanTypeEditFormProps> = ({ setFormModal, for
         }
     }, [formModal.id, formModal.show]);
 
-    const handleClose = () => {
-        setFormModal({ show: false, id: "" });
-        setEditData(null);
+    const handleClose = (open: boolean) => {
+        if (!open) {
+            setFormModal({ show: false, id: "" });
+            setEditData(null);
+        }
     };
 
     return (

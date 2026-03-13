@@ -24,7 +24,7 @@ interface PageProps {
 }
 
 interface DataPlanTypeFieldProps {
-    handleClose: (val: boolean) => void;
+    handleClose: (open: boolean) => void;
     editData: EditDataType | "";
 }
 
@@ -88,12 +88,16 @@ const DataPlanTypeField: FC<DataPlanTypeFieldProps> = ({ handleClose, editData }
         }
     };
 
+    const selectedNetwork = data.mobile_network_id
+        ? String(data.mobile_network_id)
+        : undefined;
+
     return (
         <form onSubmit={submit} className="flex flex-col gap-4 p-4 w-full">
             <div className="space-y-2">
                 <Label htmlFor="mobile_network_id">Select Network Type</Label>
                 <Select
-                    value={String(data.mobile_network_id)}
+                    value={selectedNetwork}
                     onValueChange={(value) =>
                         setData({
                             ...data,
@@ -105,7 +109,6 @@ const DataPlanTypeField: FC<DataPlanTypeFieldProps> = ({ handleClose, editData }
                         <SelectValue placeholder="Select Network" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="">Select Network</SelectItem>
                         {mobile_networks && mobile_networks.map((network) => (
                             <SelectItem key={network.id} value={String(network.id)}>
                                 {network.name}

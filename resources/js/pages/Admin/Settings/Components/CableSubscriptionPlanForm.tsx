@@ -2,20 +2,23 @@
 import Modal from "@/Components/Modal";
 import CableSubscriptionPlanField from "./CableSubscriptionPlanField";
 
-const CableSubscriptionPlanForm = (props) => {
-    const { setFormModal, formModal } = props;
+interface CableSubscriptionPlanFormProps {
+    setFormModal: (value: boolean) => void;
+    formModal: boolean;
+}
+
+const CableSubscriptionPlanForm = ({ setFormModal, formModal }: CableSubscriptionPlanFormProps) => {
+    const handleClose = () => setFormModal(false);
 
     return (
         <Modal
             title="Add Cable Plan"
             show={formModal}
-            handleClose={() => {
-                setFormModal(false);
-            }}
+            handleClose={handleClose}
         >
             <CableSubscriptionPlanField
                 editData={""}
-                handleClose={setFormModal}
+                handleClose={handleClose}
             />
         </Modal>
     );

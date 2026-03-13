@@ -1,21 +1,15 @@
-import React, { memo, useEffect, useState, FC, ChangeEvent } from "react";
-import { router, usePage, Head } from "@inertiajs/react";
-import AdminAuthenticatedLayout from "@/Layouts/AdminAuthenticatedLayout";
+import AppLayout from '@/layouts/app-layout';
+import { type BreadcrumbItem } from '@/types';
+import { Head, router, usePage } from '@inertiajs/react';
+import { memo, useEffect, useState, FC } from "react";
 import DataTypeTable from "./Components/DataTypeTable";
+import type { DataTypeRow } from "./Components/DataTypeUtils";
 import { usePrevious } from "react-use";
-import { BgColor, HoverBgColor, TextColor } from "@/utils/theme";
 
 interface MobileNetwork {
     id: number;
     name: string;
     plan_types?: any[];
-}
-
-interface DataType {
-    id: number;
-    name: string;
-    network: MobileNetwork;
-    active: boolean;
 }
 
 interface FilterValues {
@@ -32,51 +26,44 @@ interface PageProps {
     auth: {
         user: AuthUser;
     };
-    theme: string;
     mobile_networks: MobileNetwork[];
     enable_add_datatype: string;
-    data_types: DataType[];
+    data_types: DataTypeRow[];
     [key: string]: any;
 }
 
-interface NetworkProps {
-    data: MobileNetwork;
-    onChange: (data: MobileNetwork) => void;
-    field_name: string;
-    valueSelected: number;
-    theme: string;
-}
+const breadcrumbs: BreadcrumbItem[] = [
+    { title: 'Admin', href: '/admin/dashboard' },
+    { title: 'Data Types', href: '/admin/data_plan_types' },
+];
 
-const Network: FC<NetworkProps> = ({ data, onChange, field_name, valueSelected, theme }) => {
+function NetworkFilter({
+    data,
+    onChange,
+    valueSelected,
+}: {
+    data: { name: string; id: string | number };
+    onChange: () => void;
+    valueSelected: string | number;
+}) {
+    const isSelected = valueSelected === data.id;
     return (
-        <div>
-            <input
-                className="hidden"
-                type="radio"
-                name={field_name}
-                value={data.id}
-                id={data.name}
-                onChange={() => onChange(data)}
-            />
-            <label
-                htmlFor={data.name}
-                className={` ${HoverBgColor[theme as keyof typeof HoverBgColor]
-                    } hover:text-theme-1 shadow-sm   border text-center flex cursor-pointer  px-4 py-1  justify-center   ${
-                        valueSelected === data.id
-                            ? BgColor[theme as keyof typeof BgColor] + " text-theme-1"
-                            : TextColor[theme as keyof typeof TextColor] + " bg-theme-1"
-                    } `}
-            >
-                <span className="text-base capitalize  flex">{data.name}</span>
-            </label>
-        </div>
+        <button
+            type="button"
+            onClick={onChange}
+            className={`flex cursor-pointer justify-center rounded-md border px-4 py-2 text-center text-sm font-medium transition-colors ${
+                isSelected
+                    ? 'border-theme-1 bg-theme-1 text-white'
+                    : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700'
+            }`}
+        >
+            <span className="capitalize">{data.name}</span>
+        </button>
     );
-};
+}
 
 const Index: FC = () => {
     const {
-        auth,
-        theme,
         mobile_networks,
         enable_add_datatype,
         data_types: data,
@@ -105,23 +92,21 @@ const Index: FC = () => {
     }, [filterValues]);
 
     return (
-        <AdminAuthenticatedLayout auth={auth} title="Data Plans">
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Data Types" />
-            <div className=" w-full p-2">
-                <div className=" border-b py-2 mb-2 w-full items-center overflow-x-auto text-center justify-start flex   ">
-                    {mobile_networks.map((type, i) => (
-                        <Network
-                            key={i}
-                            theme={theme}
+            <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+                <div className="mb-4 flex flex-wrap items-center gap-2 overflow-x-auto border-b pb-4">
+                    {mobile_networks.map((type) => (
+                        <NetworkFilter
+                            key={String(type.id)}
+                            data={type}
+                            valueSelected={filterValues.network}
                             onChange={() =>
                                 setFilterValue({
                                     ...filterValues,
                                     network: type.id,
                                 })
                             }
-                            valueSelected={filterValues.network}
-                            field_name="network"
-                            data={type}
                         />
                     ))}
                 </div>
@@ -135,10 +120,9 @@ const Index: FC = () => {
                             (it) => it.id === filterValues.network
                         )?.plan_types ?? []
                     }
-                    theme={theme}
                 />
             </div>
-        </AdminAuthenticatedLayout>
+        </AppLayout>
     );
 };
 
