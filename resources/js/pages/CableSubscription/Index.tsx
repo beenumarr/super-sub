@@ -49,6 +49,7 @@ export default function CableSubscription({ cable_networks }: CableSubscriptionP
         cable_subscription_plan_id: '',
         amount: 0,
         payable_amount: 0,
+        name: '',
     });
 
     const handleNetworkChange = async (networkId: string) => {
@@ -58,10 +59,18 @@ export default function CableSubscription({ cable_networks }: CableSubscriptionP
             setData('cable_name', network.name);
 
             try {
-                const response = await fetch(`/cable_subscriptions/filter_plans?cable_network_id=${networkId}`);
+                const response = await fetch(`/cable_subscriptions/filter_plans?cable_network_id=${networkId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                });
                 const plans = await response.json();
                 setCablePlans(plans);
             } catch (error) {
+                console.error('Failed to load plans:', error);
                 toast.error('Failed to load plans');
             }
         }
@@ -91,18 +100,28 @@ export default function CableSubscription({ cable_networks }: CableSubscriptionP
                 cable_name: data.cable_name,
             });
 
-            const response = await fetch(`/validate_icu?${params.toString()}`);
-
-            if (!response.ok) {
-                throw new Error('Invalid smart card number');
-            }
+            const response = await fetch(`/validate_icu?${params.toString()}`, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+            });
 
             const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.name || 'Invalid smart card number');
+            }
+
             setValidatedName(result.name);
+            setData({ ...data, name: result.name });
             applyCharges();
             setConfirmDialogOpen(true);
         } catch (error: any) {
             toast.error(error.message || 'Invalid smart card number');
+            console.error('Validation error:', error);
         } finally {
             setValidating(false);
         }
@@ -241,7 +260,7 @@ export default function CableSubscription({ cable_networks }: CableSubscriptionP
 
                         {/* Amount Summary */}
                         {data.amount > 0 && (
-                            <div className="rounded-lg bg-gray-50 dark:bg-gray-900/50 p-4 space-y-2">
+                            <div className="rounded-lg bg-accent/40 p-4 space-y-2">
                                 <div className="flex justify-between text-sm">
                                     <span className="text-gray-600 dark:text-gray-400">Plan Cost:</span>
                                     <span className="font-medium text-gray-900 dark:text-gray-100">
@@ -271,7 +290,7 @@ export default function CableSubscription({ cable_networks }: CableSubscriptionP
                         <Button
                             onClick={validateSmartCard}
                             disabled={!selectedNetwork || !data.smart_card_number || !data.cable_subscription_plan_id || validating}
-                            className="w-full gap-2"
+                            className="w-full gap-2 bg-theme-1 hover:bg-theme-1/90 text-white"
                             size="lg"
                         >
                             {validating ? (
@@ -283,24 +302,6 @@ export default function CableSubscription({ cable_networks }: CableSubscriptionP
                                 'Next'
                             )}
                         </Button>
-                    </CardContent>
-                </Card>
-
-                {/* Support Info */}
-                <Card className="mt-6 bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900">
-                    <CardContent className="pt-6">
-                        <div className="flex gap-3">
-                            <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-                            <div className="space-y-1 text-sm">
-                                <p className="font-medium text-blue-900 dark:text-blue-100">Need Help?</p>
-                                <p className="text-blue-800 dark:text-blue-200">
-                                    DSTV/GOtv: 01-2703232, 08039003788, 07080630333, 09090630333
-                                </p>
-                                <p className="text-blue-800 dark:text-blue-200">
-                                    STARTIMES: 09-4618888, 01-4618888
-                                </p>
-                            </div>
-                        </div>
                     </CardContent>
                 </Card>
             </div>
