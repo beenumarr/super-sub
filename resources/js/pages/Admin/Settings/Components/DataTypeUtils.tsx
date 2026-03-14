@@ -1,5 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import type { DataTableColumn } from '@/components/shared/data-table';
 import { Edit2, Trash2 } from 'lucide-react';
 
@@ -37,16 +38,45 @@ export function getDataTypeColumns(
             className: 'min-w-[120px]',
             render: (row) => (
                 <Badge className={row.active ? 'bg-green-600' : 'bg-gray-500'}>
-                    {row.active ? 'Active' : 'Disabled'}
+                    {row.active ? 'Active' : 'Inactive'}
                 </Badge>
             ),
         },
         {
             key: 'actions',
             header: 'Actions',
-            className: 'w-[120px]',
+            className: 'w-[160px]',
             render: (row) => (
                 <div className="flex items-center justify-end gap-2">
+                    <Switch
+                        checked={Boolean(row.active)}
+                        onCheckedChange={async (checked) => {
+                            try {
+                                const token = document
+                                    .querySelector('meta[name="csrf-token"]')
+                                    ?.getAttribute('content') || '';
+
+                                const res = await fetch(`/admin/data_plan_types/${row.id}/toggle`, {
+                                    method: 'PUT',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRF-TOKEN': token,
+                                    },
+                                    body: JSON.stringify({ active: checked ? 1 : 0 }),
+                                });
+
+                                if (res.ok) {
+                                    // reload to refresh the table state
+                                    window.location.reload();
+                                } else {
+                                    console.error('Failed to toggle data type status');
+                                }
+                            } catch (err) {
+                                console.error('Error toggling data type status', err);
+                            }
+                        }}
+                        className="mr-2"
+                    />
                     <Button
                         size="icon"
                         variant="outline"
