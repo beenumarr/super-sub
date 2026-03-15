@@ -61,10 +61,9 @@ class DeveloperApiController extends Controller
     }
 
 
-    public function docs()
+    public function docs(): Response
     {
-        // Redirect to main developer page since documentation is now merged
-        return redirect()->route('developer.index');
+        return Inertia::render('DeveloperApi/Documentation');
     }
 
 

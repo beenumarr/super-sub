@@ -75,6 +75,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/buy_airtime', [BuyAirtimeController::class, 'store'])->name('buy_airtime.store')->middleware(['throttle:30,1']);;
     Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
     Route::get('/developer', [DeveloperApiController::class, 'index'])->name('developer.index');
+    Route::get('/api-documentation', [DeveloperApiController::class, 'docs'])->name('api-documentation');
     Route::get('/developer/api-documentation', [DeveloperApiController::class, 'docs'])->name('developer.documentation');
     Route::post('/developer/generate-api-token', [DeveloperApiController::class, 'generateApiToken'])->name('developer.generate-api-token');
     Route::get('/referrals', [ReferralController::class, 'index'])->name('referrals.index')->middleware('feature');
