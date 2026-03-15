@@ -15,6 +15,8 @@ class TransactionWebhookController extends Controller
     {
         $payload = json_decode($request->getContent(), true);
 
+        Log::info('Transaction Webhook Received', ['payload' => $payload]);
+
         $this->validateSignature($request);
 
         HandleTransactionCompletionWebhook::dispatch($payload['eventData']);

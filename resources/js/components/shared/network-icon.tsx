@@ -15,9 +15,9 @@ export const NetworkIcon = ({ network }: { network: string }) => {
             color: 'bg-green-500 dark:bg-green-600',
             logo: '/images/icons/glo.png',
         },
-        '9MOBILE': {
+        T2MOBILE: {
             color: 'bg-green-400 dark:bg-green-500',
-            logo: '/images/icons/9mobile.png',
+            logo: '/images/icons/t2mobile.jpg',
         },
         MOMO: {
             color: 'bg-green-400 dark:bg-green-500',
@@ -42,7 +42,7 @@ export const NetworkIcon = ({ network }: { network: string }) => {
                     <img
                         src={config.logo}
                         alt={network}
-                        className="h-6 w-6"
+                        className="h-10 w-10 rounded-full"
                         onError={(e) => {
                             const target = e.currentTarget as HTMLImageElement;
                             target.style.display = 'none';

@@ -26,7 +26,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
         $middleware->validateCsrfTokens(except: [
-            '/webhooks/paystack'
+            '/webhooks/paystack',
+            '/monnify/transaction-completion',
+            '/payvessel/transaction-completion',
+            '/paymentpoint/transaction-completion',
+            '/billStack/transaction-completion'
         ]);
 
         $middleware->web(append: [
@@ -45,6 +49,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->priority([
             ApiAuthenticate::class,
             'auth:sanctum'
+        ]);
+
+        $middleware->alias([
+            'feature' => \App\Http\Middleware\FeatureChecker::class,
+            'kyc' => \App\Http\Middleware\KycRedirect::class,
+            'kycCheck' => \App\Http\Middleware\KycCheck::class,
         ]);
 
     })

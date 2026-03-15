@@ -39,58 +39,26 @@ class BuyDataController extends Controller
 
     public function index(): Response
     {
-        // Load active networks (excluding KIRANI/SMILE) for the new TSX page
-        $networks = MobileNetwork::whereNotIn('name', ['KIRANI', 'SMILE'])->get();
-
-        // Load active data plan types and related data plans
+        // Eager load necessary relationships
         $dataPlanTypes = DataPlanType::where('active', 1)
-            ->with(['dataPlans', 'network'])
+            ->with([
+                'network.addon', // Load `addon` directly through the `network` relationship
+                'dataPlans.apis', // Load `apis` directly through the `dataPlans` relationship
+                'dataPlans.planType',
+                'dataPlans.planType.network',
+                'api'
+            ])
             ->get();
 
-        // Flatten data plans across all types
-        $dataPlans = $dataPlanTypes->flatMap(function (DataPlanType $type) {
-            return $type->dataPlans->map(function (DataPlan $plan) use ($type) {
-                return [
-                    'id' => $plan->id,
-                    'name' => $plan->name,
-                    'price' => $plan->useramount,
-                    'size' => $plan->size,
-                    'volume' => $plan->volume,
-                    'validity' => $plan->validity,
-                    'description' => null,
-                    'category' => [
-                        'id' => $type->id,
-                        'name' => $type->name,
-                        'network_id' => $type->mobile_network_id,
-                    ],
-                    'data_plan_category_id' => $type->id,
-                ];
-            });
-        })->values();
 
-        // Map networks into the shape expected by DataTransactions/Index.tsx
-        $networksPayload = $networks->map(function (MobileNetwork $network) {
-            return [
-                'id' => $network->id,
-                'name' => $network->name,
-                'status' => $network->data_active ? 'ACTIVE' : 'INACTIVE',
-            ];
-        })->values();
+        $mobile_network = MobileNetworkResource::collection(MobileNetwork::with([
+            'addon.package',
+            'dataPlanTypes.dataPlans.apis',
+        ])->whereNotIn('name', ['KIRANI', 'SMILE'])->get());
 
-        // Categories are mirrored from DataPlanType
-        $categories = $dataPlanTypes->map(function (DataPlanType $type) {
-            return [
-                'id' => $type->id,
-                'name' => $type->name,
-                'network_id' => $type->mobile_network_id,
-            ];
-        })->values();
-
-        return Inertia::render('DataTransactions/Index', [
-            'networks' => $networksPayload,
-            'categories' => $categories,
-            'dataPlans' => $dataPlans,
-            'message' => session('message'),
+        return Inertia::render('BuyData/Index', [
+            'mobile_networks' => $mobile_network,
+            'data_plan_types' => DataPlanTypeResource::collection($dataPlanTypes),
         ]);
     }
 

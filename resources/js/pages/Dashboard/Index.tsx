@@ -4,7 +4,7 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { formatToThousands } from '@/utils';
 import { Head, Link, usePage } from '@inertiajs/react';
-import { ChevronRight, Copy, Eye, EyeOff, Headset, History, Phone, Plus, Receipt, User, Wallet, Wifi } from 'lucide-react';
+import { AlertCircle, ChevronRight, Copy, Eye, EyeOff, Headset, History, Phone, Plus, Receipt, Settings2, User, Wallet, Wifi } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 
@@ -54,10 +54,12 @@ export default function Index({ recent_transactions, wallet, funding_accounts, w
                 feat_mtn_gifting?: boolean;
                 feat_mtn_datashare?: boolean;
                 feat_momo_airtime?: boolean;
+                kyc_verified_at?: string | null;
             };
+            isAdmin?: boolean;
+            can?: Record<string, boolean>;
         };
     }>().props;
-    const user = auth.user;
 
     const breadcrumbs: BreadcrumbItem[] = [{ title: 'Dashboard', href: '/dashboard' }];
 
@@ -98,6 +100,8 @@ export default function Index({ recent_transactions, wallet, funding_accounts, w
         return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
     }
 
+    console.log('auth.isAdmin', auth.isAdmin);
+
     return (
         <AppLayout
             breadcrumbs={breadcrumbs}
@@ -115,13 +119,24 @@ export default function Index({ recent_transactions, wallet, funding_accounts, w
         >
             <Head title="Dashboard" />
 
+            <div className="container mx-auto mt-3 flex max-w-2xl justify-end px-2 pt-3 pb-8 sm:px-4">
+                {auth.isAdmin && (
+                    <Link
+                        href="/admin/dashboard"
+                        className="inline-flex items-center gap-1 rounded-md bg-orange-500/10 px-2 py-1.5 text-sm font-medium text-orange-500 hover:bg-orange-500/20"
+                    >
+                        <Settings2 className="h-4 w-4 text-orange-500" />
+                        Admin Dashboard
+                    </Link>
+                )}
+            </div>
             <div className="container mx-auto max-w-2xl px-2 pt-3 pb-8 sm:px-4">
                 {/* Wallet card */}
                 <div className="bg-theme-1 mb-2.5 rounded-xl border border-gray-200 p-4 dark:border-gray-700">
                     <div className="flex items-center justify-between">
                         <span className="text-primary-foreground/90 text-sm">Wallet Balance</span>
                         <Link
-                            href="/wallet"
+                            href="/funding"
                             className="bg-primary-foreground text-primary inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-sm font-medium hover:opacity-90"
                         >
                             <Plus className="h-3.5 w-3.5" />
@@ -141,6 +156,28 @@ export default function Index({ recent_transactions, wallet, funding_accounts, w
                     </div>
                     <p className="text-primary-foreground/90 mt-1 text-sm">Bonus: {displayBonus}</p>
                 </div>
+
+                {/* KYC notice */}
+                {!auth.user.kyc_verified_at && (
+                    <div className="mb-3 flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-50">
+                        <div className="mt-0.5 shrink-0">
+                            <AlertCircle className="h-5 w-5 text-amber-500 dark:text-amber-300" />
+                        </div>
+                        <div className="flex-1">
+                            <p className="font-medium">Complete your KYC to keep your account active</p>
+                            <p className="mt-1 text-xs text-amber-800 dark:text-amber-100/80">
+                                In line with regulatory requirements, you need to complete your KYC to
+                                continue using all features and funding options.
+                            </p>
+                        </div>
+                        <Link
+                            href="/kyc"
+                            className="shrink-0 rounded-md bg-amber-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-amber-700"
+                        >
+                            Update KYC
+                        </Link>
+                    </div>
+                )}
 
                 {/* Funding Accounts */}
                 {funding_accounts && funding_accounts.length > 0 && (
@@ -180,9 +217,9 @@ export default function Index({ recent_transactions, wallet, funding_accounts, w
                 <h3 className="mb-2 px-1 text-sm font-semibold text-gray-800 dark:text-gray-200">Services</h3>
                 <div className="bg-card rounded-xl border border-gray-200 p-2.5 dark:border-gray-700">
                     <div className="grid grid-cols-3 gap-0">
-                        <ServiceItem icon={Wifi} label="Data" href="/send-data" />
-                        <ServiceItem icon={Phone} label="Airtime" href="/send-airtime" borderLeft={true} borderRight={true} />
-                        <ServiceItem icon={Wallet} label="Fund Wallet" href="/wallet" />
+                        <ServiceItem icon={Wifi} label="Data" href="/buy_data" />
+                        <ServiceItem icon={Phone} label="Airtime" href="/buy_airtime" borderLeft={true} borderRight={true} />
+                        <ServiceItem icon={Wallet} label="Fund Wallet" href="/funding" />
                     </div>
                     <div className="my-1 border-t border-gray-200 dark:border-gray-600" />
                     <div className="grid grid-cols-3 gap-0">
