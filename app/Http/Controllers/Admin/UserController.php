@@ -19,6 +19,7 @@ use App\Jobs\CreatePayvesselVirtualAccount;
 use App\Http\Resources\Admin\UserSearchResource;
 use App\Models\FundingAccount;
 use Illuminate\Support\Facades\Request as FilterRequest;
+use Illuminate\Support\Str;
 
 class UserController extends Controller
 {
@@ -114,7 +115,7 @@ class UserController extends Controller
     {
         $user = new UserResource($user);
 
-        return Inertia::render('Admin/Users/ViewUser', [
+        return Inertia::render('Admin/Analytics/Users/ViewUser', [
             'user' => $user,
 
         ]);
@@ -297,7 +298,32 @@ class UserController extends Controller
 
         }
 
-
         return [];
+    }
+
+    public function generateApiKey(User $user)
+    {
+        try {
+            // Generate a random 40-character token
+            $plainToken = Str::random(40);
+
+            // Hash the token
+            $hashedToken = hash('sha256', $plainToken);
+
+            // Save the hashed token to the database
+            $user->update(['api_key' => $hashedToken]);
+
+            // Return the plain token (only time it will be visible)
+            return response()->json([
+                'success' => true,
+                'api_key' => $plainToken,
+                'message' => 'API Key generated successfully'
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to generate API Key: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

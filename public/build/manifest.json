@@ -276,7 +276,12 @@
     "file": "assets/index-CTmoeHQr.js",
     "name": "index",
     "imports": [
-      "resources/js/app.tsx"
+      "_createLucideIcon-CnlNSQrg.js",
+      "resources/js/app.tsx",
+      "_index-D8mSi0-4.js",
+      "_index-DrCS0TIv.js",
+      "_index-DOKKzH7u.js",
+      "_index-Cgu2Ot6o.js"
     ]
   },
   "_index-D2snq8Bm.js": {
@@ -439,6 +444,7 @@
     "file": "assets/pagination-BPxkKsoI.js",
     "name": "pagination",
     "imports": [
+      "_createLucideIcon-CnlNSQrg.js",
       "resources/js/app.tsx",
       "_button-CN9fMcO8.js",
       "_utils-jAU0Cazi.js",
@@ -694,6 +700,7 @@
       "resources/js/pages/DataPlans/Index.tsx",
       "resources/js/pages/DataTransactions/History.tsx",
       "resources/js/pages/DataTransactions/Index.tsx",
+      "resources/js/pages/ElectricityBill/Index.tsx",
       "resources/js/pages/Errors/Forbidden.tsx",
       "resources/js/pages/Profile/Kyc/Bvn.tsx",
       "resources/js/pages/Profile/Kyc/Index.tsx",

@@ -18,14 +18,6 @@ use Illuminate\Support\Facades\Request as FilterRequest;
 
 class StaffController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('permission:view_staff', ['only' => ['index', 'show']]);
-        $this->middleware('permission:create_staff', ['only' => ['create', 'store']]);
-        $this->middleware('permission:edit_staff', ['only' => ['edit', 'update']]);
-        $this->middleware('permission:delete_staff', ['only' => ['destroy']]);
-    }
-
     /**
      * Display a listing of the resource.
      *
@@ -33,7 +25,6 @@ class StaffController extends Controller
      */
     public function index()
     {
-
         $pageSize = request('pageSize', 100);
         $currentPage = request('page', 1);
 
@@ -42,28 +33,56 @@ class StaffController extends Controller
         if (auth()->user()->hasRole('Masteradmin')) {
             $roles = Role::all();
         } elseif (auth()->user()->hasRole('Superadmin')) {
-            Role::whereNotIn('name', ['Masteradmin'])->get();
+            $roles = Role::whereNotIn('name', ['Masteradmin'])->get();
         } else {
             $roles = Role::whereNotIn('name', ['Superadmin', 'Masteradmin'])->get();
         }
 
-        $staffs = User::latest();
+        // Get all staff members (users with non-User roles)
+        $query = User::whereHas('roles', function($q) {
+            $q->whereNotIn('name', ['User']);
+        });
 
-
-
-            $data = $staffs->orWhereHas('roles', function($query) {
-                $query->whereNotIn('name', ['User']);
+        // Apply search filter if provided
+        if (request('search')) {
+            $search = request('search');
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('phone_number', 'like', "%{$search}%");
             });
+        }
 
-
-        $data->filter(FilterRequest::only('search', 'trashed', 'user_id', 'status','role', 'package'));
+        $data = $query->latest();
+        $paginated = $data->paginate($pageSize, ['*'], 'page', $currentPage)->appends(FilterRequest::all());
 
         return Inertia::render('Admin/Staff/Index', [
-            'data' => UserResource::collection($data->paginate($pageSize, ['*'], 'page', $currentPage)->appends(FilterRequest::all())),
+            'data' => UserResource::collection($paginated->items()),
             'roles' => $roles,
             'packages' => UserPackage::all(),
         ]);
+    }
 
+    /**
+     * Show the form for creating a new resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function create()
+    {
+        $roles = [];
+
+        if (auth()->user()->hasRole('Masteradmin')) {
+            $roles = Role::all();
+        } elseif (auth()->user()->hasRole('Superadmin')) {
+            $roles = Role::whereNotIn('name', ['Masteradmin'])->get();
+        } else {
+            $roles = Role::whereNotIn('name', ['Superadmin', 'Masteradmin'])->get();
+        }
+
+        return Inertia::render('Admin/Staff/Create', [
+            'roles' => $roles,
+        ]);
     }
 
     /**
@@ -87,7 +106,11 @@ class StaffController extends Controller
 
         event(new Registered($user));
 
-        $user->assignRole($request->role);
+        // Get the role by ID and assign it by name
+        $role = Role::findById($request->role);
+        if ($role) {
+            $user->assignRole($role->name);
+        }
 
         return back();
     }
@@ -119,18 +142,6 @@ class StaffController extends Controller
 
         ]);
     }
-
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show(User $user)
-    {
-        return new UserResource($user);
-    }
-
     /**
      * Update the specified resource in storage.
      *
@@ -138,33 +149,35 @@ class StaffController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(UserRequest $request, User $user)
+    public function update(UserRequest $request, $id)
     {
-        $fields = $request->except('email');
+        try {
+            $user = User::findOrFail($id);
 
-        $request->password && $fields['password'] = Hash::make($request->password);
+            $fields = $request->only(['name', 'email', 'phone_number', 'is_active', 'kyc_level', 'account_status', 'address', 'user_package_id']);
 
-        if($request->kyc_level){
-            $fields['kyc_verified_at'] = now();
+            // Map is_active to active if provided
+            if (isset($fields['is_active'])) {
+                $fields['active'] = $fields['is_active'];
+                unset($fields['is_active']);
+            }
+
+            if ($request->kyc_level) {
+                $fields['kyc_verified_at'] = now();
+            }
+
+            \Log::info('Updating user', ['user_id' => $user->id, 'fields' => $fields]);
+
+            $user->update($fields);
+
+            \Log::info('User updated successfully', ['user_id' => $user->id]);
+
+            return back()->with('success', 'Staff member updated successfully');
+        } catch (\Exception $e) {
+            \Log::error('Error updating user', ['error' => $e->getMessage()]);
+            return back()->with('error', 'Failed to update staff member: ' . $e->getMessage());
         }
-
-        $user->update($fields);
-
-
-        if(!$request->password_reset){
-
-            DB::table('model_has_roles')->where('model_id', $user->id)->delete();
-
-            $user->assignRole($request->role);
-
-        }
-
-
-        return back();
-
     }
-
-
 
     /**
      * Remove the specified resource from storage.
@@ -172,11 +185,27 @@ class StaffController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy(User $user)
+    public function destroy($id)
     {
-        $user->delete();
+        try {
+            $user = User::findOrFail($id);
 
-        return response()->noContent();
+            \Log::info('Attempting to delete user', ['user_id' => $user->id, 'user_name' => $user->name]);
+
+            // Clear related records first
+            $user->roles()->detach();
+            $user->permissions()->detach();
+
+            // Delete the user
+            $deleted = $user->delete();
+
+            \Log::info('User deleted', ['user_id' => $user->id, 'deleted' => $deleted]);
+
+            return back()->with('success', 'Staff member deleted successfully');
+        } catch (\Exception $e) {
+            \Log::error('Error deleting user', ['error' => $e->getMessage()]);
+            return back()->with('error', 'Failed to delete staff member: ' . $e->getMessage());
+        }
     }
 
     public function search()
