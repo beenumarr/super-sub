@@ -107,16 +107,23 @@ class CableSubscriptionController extends Controller
 
     function validateIcu(HttpRequest $request, ValidateICU $validateICU) {
 
-        $response = $validateICU->handle($request->smart_card_number, $request->cable_name);
+        try {
+            $response = $validateICU->handle($request->smart_card_number, $request->cable_name);
 
-        if($response['status'] === 'failed'){
-            throw ValidationException::withMessages([
-                'status' => $response['name']
-            ]);
+            if($response['status'] === 'failed'){
+                return response()->json([
+                    'status' => 'failed',
+                    'name' => $response['name'] ?? 'Validation failed'
+                ], 422);
+            }
 
+            return response()->json($response);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'failed',
+                'name' => $e->getMessage() ?? 'Validation failed'
+            ], 422);
         }
-
-        return $response;
 
     }
 
@@ -127,12 +134,8 @@ class CableSubscriptionController extends Controller
         if($cable_network_id = request('cable_network_id')){
                 $response =  CableSubscriptionPlan::where('cable_network_id', $cable_network_id )->orderBy('id')->get();
         }
-      return $response;
-
+      return response()->json($response);
     }
-
-
-
 
     function performTransaction(Request $request, $user, $data) {
 

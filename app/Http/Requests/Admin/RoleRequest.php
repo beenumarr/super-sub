@@ -24,12 +24,13 @@ class RoleRequest extends FormRequest
      */
     public function rules()
     {
-        $role = request()->input('role');
+        $roleId = $this->route('role') instanceof \Spatie\Permission\Models\Role
+            ? $this->route('role')->id
+            : $this->route('role');
+
         return [
-        'name' => ['required ', 'max:255',
-            Rule::unique('roles')->ignore($role)
-        ],
-        'permissions' => 'required',
+            'name' => ['required', 'max:255', Rule::unique('roles')->ignore($roleId)],
+            'permissions' => 'required|array|min:1',
         ];
     }
 }

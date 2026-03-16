@@ -18,8 +18,6 @@ class AppConfigurationController extends Controller
 {
     private $encConfigs = ApiUtils::ENCRCONFIGS;
 
-
-
     public function index(): Response
     {
         $enable_payvessel = config('settings.feat_enable_payvessel');
@@ -115,6 +113,11 @@ class AppConfigurationController extends Controller
         foreach ($data as $key => $value) {
             // Skip masked values
             if ($this->isDataMasked($value)) {
+                continue;
+            }
+
+            // Skip null values - they cannot be stored in NOT NULL column
+            if ($value === null) {
                 continue;
             }
 

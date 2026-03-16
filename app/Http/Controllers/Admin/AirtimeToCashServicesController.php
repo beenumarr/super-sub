@@ -125,6 +125,7 @@ class AirtimeToCashServicesController extends Controller
             'a2c_convertion_rate',
         ];
 
+        // Read directly from database to get the latest values
         $configs = AppConfiguration::whereIn('key', $configKeys)
             ->get()
             ->pluck('value', 'key')
@@ -132,11 +133,12 @@ class AirtimeToCashServicesController extends Controller
 
         $networks = MobileNetwork::all();
 
+        // Get phone numbers directly from database
         $phoneNumbers = [
-            'a2c_mtn_phone_number' => config('settings.a2c_mtn_phone_number'),
-            'a2c_glo_phone_number' => config('settings.a2c_glo_phone_number'),
-            'a2c_ninemoble_phone_number' => config('settings.a2c_ninemoble_phone_number'),
-            'a2c_airtel_phone_number' => config('settings.a2c_airtel_phone_number'),
+            'a2c_mtn_phone_number' => AppConfiguration::where('key', 'a2c_mtn_phone_number')->value('value') ?? '',
+            'a2c_glo_phone_number' => AppConfiguration::where('key', 'a2c_glo_phone_number')->value('value') ?? '',
+            'a2c_ninemoble_phone_number' => AppConfiguration::where('key', 'a2c_ninemoble_phone_number')->value('value') ?? '',
+            'a2c_airtel_phone_number' => AppConfiguration::where('key', 'a2c_airtel_phone_number')->value('value') ?? '',
         ];
 
         return Inertia::render('Admin/Airtime2CashSettings/Index', [
