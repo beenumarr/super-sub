@@ -1,3 +1,4 @@
+import { branding } from '@/config/branding';
 import { Head, Link } from '@inertiajs/react';
 
 export default function RegistrationClosed() {
@@ -43,7 +44,7 @@ export default function RegistrationClosed() {
                                 </a> */}
 
                                 <a
-                                    href="mailto:support@vtuapp.com.ng?subject=Registration Access Request"
+                                    href={`mailto:${branding.supportEmail}?subject=Registration Access Request`}
                                     className="flex w-full items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
                                 >
                                     <svg className="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -54,7 +55,7 @@ export default function RegistrationClosed() {
                                             d="M3 8l7.89 7.89a2 2 0 002.82 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
                                         />
                                     </svg>
-                                    Send Email Request (support@vtuapp.com.ng)
+                                    Send Email Request ({branding.supportEmail})
                                 </a>
                             </div>
 

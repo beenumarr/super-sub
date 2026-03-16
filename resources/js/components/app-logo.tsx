@@ -1,3 +1,4 @@
+import { branding } from '@/config/branding';
 import AppLogoIcon from './app-logo-icon';
 
 export default function AppLogo() {
@@ -7,7 +8,7 @@ export default function AppLogo() {
                 <AppLogoIcon />
             </div>
             <div className="ml-1 grid flex-1 text-left text-lg">
-                <span className="mb-0.5 truncate leading-none font-semibold">VTU App</span>
+                <span className="mb-0.5 truncate leading-none font-semibold">{branding.appName}</span>
             </div>
         </>
     );

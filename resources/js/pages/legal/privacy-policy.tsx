@@ -1,3 +1,4 @@
+import { branding } from '@/config/branding';
 import AppLayout from '@/layouts/app-layout';
 import { Head } from '@inertiajs/react';
 
@@ -15,7 +16,7 @@ export default function PrivacyPolicy() {
                 <h2 className="mt-8 text-xl font-semibold">How We Use Information</h2>
                 <p className="text-gray-600">To deliver services, prevent fraud, improve reliability, and comply with legal obligations.</p>
                 <h2 className="mt-8 text-xl font-semibold">Contact</h2>
-                <p className="text-gray-600">Questions? Email support@vtuapp.com.ng.</p>
+                <p className="text-gray-600">Questions? Email {branding.supportEmail}.</p>
             </div>
         </AppLayout>
     );

@@ -2,6 +2,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { branding } from '@/config/branding';
 import { Check, Copy } from 'lucide-react';
 import React from 'react';
 import { toast } from 'react-hot-toast';
@@ -54,8 +55,8 @@ const ApiDocumentation = ({ networks, sampleDataPlans }: ApiDocumentationProps) 
         }
     };
 
-    const dataEndpoint = 'https://vtuapp.com.ng/api/data/';
-    const topupEndpoint = 'https://vtuapp.com.ng/api/topup/';
+    const dataEndpoint = `${branding.apiBaseUrl.replace(/\/$/, '')}/data/`;
+    const topupEndpoint = `${branding.apiBaseUrl.replace(/\/$/, '')}/topup/`;
 
     const dataPayload = {
         network: 1,

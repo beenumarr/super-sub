@@ -1,3 +1,4 @@
+import { branding } from '@/config/branding';
 import AppLayout from '@/layouts/app-layout';
 import { Head } from '@inertiajs/react';
 
@@ -14,7 +15,7 @@ export default function TermsOfUse() {
                     <li>We may suspend or terminate accounts that violate policies.</li>
                 </ul>
                 <h2 className="mt-8 text-xl font-semibold">Contact</h2>
-                <p className="text-gray-600">Questions? Email support@vtuapp.com.ng.</p>
+                <p className="text-gray-600">Questions? Email {branding.supportEmail}.</p>
             </div>
         </AppLayout>
     );
