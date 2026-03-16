@@ -1,0 +1,1 @@
+import{j as a}from"./app-BAkWjvqj.js";import{D as i,a as x,b as m,c as t}from"./dialog-6o54G3-N.js";function d({title:o,show:s,handleClose:e,children:n,className:l}){return a.jsx(i,{open:s,onOpenChange:r=>!r&&e(),children:a.jsxs(x,{className:l??"max-h-[90vh] overflow-y-auto sm:max-w-2xl",children:[o?a.jsx(m,{children:a.jsx(t,{children:o})}):null,n]})})}export{d as M};

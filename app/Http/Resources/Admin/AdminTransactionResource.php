@@ -18,6 +18,7 @@ class AdminTransactionResource extends JsonResource
             'id' => $this->id,
             'user' => $this->user->only('id','name','phone'),
             'reference' => $this->reference,
+            'reference_id' => $this->reference,
             'amount' => number_format((int)$this->amount, 2),
             'api_response' => $this->api_response,
             'description' => $this->description,
