@@ -4,6 +4,7 @@ import { Head, router, usePage } from '@inertiajs/react';
 import { memo, useEffect, useState } from 'react';
 import { usePrevious } from 'react-use';
 import DataPlanTable from './Components/DataPlanTable';
+import type { DataPlanRow } from './Components/DataPlanUtils';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Admin', href: '/admin/dashboard' },
@@ -20,7 +21,7 @@ interface PageProps {
     theme?: string;
     mobile_networks: MobileNetwork[];
     data_plans: {
-        data: Record<string, unknown>[];
+        data: DataPlanRow[];
         meta?: {
             current_page: number;
             from: number;
@@ -65,11 +66,11 @@ const Index = memo(function DataPlansIndex() {
     const { theme, mobile_networks, data_plans: data, auth } = usePage().props as unknown as PageProps;
     const can = auth?.can ?? {};
 
-    const [filterValues, setFilterValue] = useState({
+    const [filterValues, setFilterValue] = useState<{ page: number; pageSize: number; network: string | number; planType: string | number; [key: string]: any }>({
         page: 1,
         pageSize: 20,
-        network: '' as string | number,
-        planType: '' as string | number,
+        network: '',
+        planType: '',
     });
 
     const setPaginationModel = (val: { page: number; pageSize: number }) => {
@@ -85,10 +86,13 @@ const Index = memo(function DataPlansIndex() {
     useEffect(() => {
         if (prevValues) {
             const query = Object.keys(filterValues).length ? filterValues : { remember: 'forget' };
-            router.get(route(route().current() ?? ''), query as Record<string, unknown>, {
-                replace: false,
-                preserveState: true,
-            });
+            const currentRoute = route().current();
+            if (currentRoute) {
+                router.get(route(currentRoute), query, {
+                    replace: false,
+                    preserveState: true,
+                });
+            }
         }
     }, [filterValues]);
 

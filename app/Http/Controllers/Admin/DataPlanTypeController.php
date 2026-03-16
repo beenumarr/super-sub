@@ -87,4 +87,15 @@ class DataPlanTypeController extends Controller
 		return response()->json(['success'=>'Deleted']);
     }
 
+    /**
+     * Toggle active status for the data plan type.
+     */
+    public function toggle(DataPlanType $data_plan_type)
+    {
+        $data_plan_type->active = !$data_plan_type->active;
+        $data_plan_type->save();
+
+        return response()->json(['active' => $data_plan_type->active]);
+    }
+
 }

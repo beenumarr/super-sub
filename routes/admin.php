@@ -71,6 +71,7 @@ Route::middleware(['auth', Admin::class])->prefix('admin')->group(function () {
     Route::post('/clear-images', [AppConfigurationController::class, 'clearImages'])->name('clear-images');
     Route::get('/services-management', [ServiceManagementController::class, 'index'])->name('services-management');
     Route::resource('/data_plan_types', DataPlanTypeController::class);
+    Route::put('/data_plan_types/{data_plan_type}/toggle', [DataPlanTypeController::class, 'toggle'])->name('data_plan_types.toggle');
     Route::resource('/mobile_networks', MobileNetworkController::class)->only('show','update');
     Route::resource('/user_packages', PackageController::class)->only('index','show','update');
     Route::resource('/transaction_apis', TransactionApiController::class)->only('show','update', 'store');
