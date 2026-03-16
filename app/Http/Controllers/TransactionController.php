@@ -33,8 +33,9 @@ class TransactionController extends Controller
         }
 
 
-        if( $type){
-            $data->where('type', $type);
+        if ($type) {
+            $modelType = str_contains($type, '\\') ? $type : "App\\Models\\{$type}";
+            $data->where('transactionable_type', $modelType);
         }
 
 
@@ -85,7 +86,7 @@ class TransactionController extends Controller
             'reference_id' => ['required', 'string'],
         ]);
 
-        $transaction = Transaction::where('reference_id', $request->reference_id)
+        $transaction = Transaction::where('reference', $request->reference_id)
             ->first();
 
         if (!$transaction) {
@@ -117,7 +118,7 @@ class TransactionController extends Controller
      */
     public function status(string $referenceId)
     {
-        $transaction = Transaction::where('reference_id', $referenceId)
+        $transaction = Transaction::where('reference', $referenceId)
             ->first();
 
         if (!$transaction) {
@@ -133,9 +134,9 @@ class TransactionController extends Controller
             'success' => true,
             'message' => 'Transaction status retrieved successfully',
             'data' => [
-                'reference_id' => $transaction->reference_id,
+                'reference_id' => $transaction->reference,
                 'status' => $transaction->status,
-                'type' => $transaction->type,
+                'type' => class_basename($transaction->transactionable_type),
                 'amount' => $transaction->amount,
                 'description' => $transaction->description,
                 'provider_name' => $transaction->provider_name,
