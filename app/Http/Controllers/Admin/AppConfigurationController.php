@@ -41,6 +41,20 @@ class AppConfigurationController extends Controller
         }
 
 
+        $logoPath = isset($configs['site_logo']) && Storage::disk('public')->exists("images/" . $configs['site_logo'])
+            ? Storage::url("images/" . $configs['site_logo'])
+            : asset('images/logo.png');
+
+        $bg0Path = isset($configs['site_background_0']) && Storage::disk('public')->exists("images/" . $configs['site_background_0'])
+            ? Storage::url("images/" . $configs['site_background_0'])
+            : null;
+        $bg1Path = isset($configs['site_background_1']) && Storage::disk('public')->exists("images/" . $configs['site_background_1'])
+            ? Storage::url("images/" . $configs['site_background_1'])
+            : null;
+        $bg2Path = isset($configs['site_background_2']) && Storage::disk('public')->exists("images/" . $configs['site_background_2'])
+            ? Storage::url("images/" . $configs['site_background_2'])
+            : null;
+
         return Inertia::render('Admin/AppConfigurations/Index', [
             'data' =>$data,
             'enable_payvessel'=> $enable_payvessel,
@@ -49,10 +63,10 @@ class AppConfigurationController extends Controller
             'monnify_charges_options' => AppConfiguration::where('key', 'monnify_funding_charges')->first()->options,
             'configs_values'=> $configs,
             'site_images'=> [
-                'logo' => isset($configs['site_logo']) ? Storage::url("/images/" . $configs['site_logo']) : Storage::url("/images/logo.png"),
-                'bg_0' => isset($configs['site_background_0']) ? Storage::url("/images/" . $configs['site_background_0']) : Storage::url("/images/bg1.jpg"),
-                'bg_1' => isset($configs['site_background_1']) ? Storage::url("/images/" . $configs['site_background_1']) : Storage::url("/images/bg2.jpg"),
-                'bg_2' => isset($configs['site_background_2']) ? Storage::url("/images/" . $configs['site_background_2']) : Storage::url("/images/bg3.jpg"),
+                'logo' => $logoPath,
+                'bg_0' => $bg0Path,
+                'bg_1' => $bg1Path,
+                'bg_2' => $bg2Path,
             ]
 
         ]);
@@ -223,5 +237,3 @@ function isDataMasked($data)
 
 
 }
-
-

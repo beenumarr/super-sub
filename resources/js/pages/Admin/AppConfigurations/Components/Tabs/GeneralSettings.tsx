@@ -13,6 +13,7 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Trash2 } from 'lucide-react';
 import { router } from '@inertiajs/react';
+import { useEffect } from 'react';
 import toast from 'react-hot-toast';
 
 interface SiteImages {
@@ -63,6 +64,24 @@ export default function GeneralSettings({
     processing2,
     setProcessing2,
 }: GeneralSettingsProps) {
+    const primaryRaw = data['site_primary_color'] as string | undefined;
+    const secondaryRaw = data['site_secondary_color'] as string | undefined;
+
+    const isHexColor = (value?: string) =>
+        typeof value === 'string' && /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(value);
+
+    const normalizedPrimary = isHexColor(primaryRaw) ? primaryRaw : '#3b82f6';
+    const normalizedSecondary = isHexColor(secondaryRaw) ? secondaryRaw : '#8b5cf6';
+
+    useEffect(() => {
+        if (primaryRaw !== normalizedPrimary) {
+            setData('site_primary_color', normalizedPrimary);
+        }
+        if (secondaryRaw !== normalizedSecondary) {
+            setData('site_secondary_color', normalizedSecondary);
+        }
+    }, [primaryRaw, normalizedPrimary, secondaryRaw, normalizedSecondary, setData]);
+
     return (
         <div className="space-y-6">
             <ConfigItem
@@ -136,10 +155,42 @@ export default function GeneralSettings({
                 handleOnChange={handleOnChange as (e: React.ChangeEvent<HTMLInputElement>) => void}
             />
             <ColorInput
-                label="Website Theme Color"
-                value={(data['site_primary_color'] as string) ?? ''}
+                label="Primary Color"
+                value={normalizedPrimary}
                 onValueChange={(value) => setData('site_primary_color', value)}
             />
+            <ColorInput
+                label="Secondary Color"
+                value={normalizedSecondary}
+                onValueChange={(value) => setData('site_secondary_color', value)}
+            />
+            <p className="text-xs text-muted-foreground mb-3">These colors will be applied throughout the entire site.</p>
+
+            {/* Color Preview */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-lg border bg-muted/30">
+                <div>
+                    <p className="text-sm font-medium mb-2">Primary Color Preview</p>
+                    <div
+                        className="h-24 rounded-lg border-2 flex items-center justify-center text-white font-medium"
+                        style={{
+                            backgroundColor: normalizedPrimary,
+                        }}
+                    >
+                        {normalizedPrimary}
+                    </div>
+                </div>
+                <div>
+                    <p className="text-sm font-medium mb-2">Secondary Color Preview</p>
+                    <div
+                        className="h-24 rounded-lg border-2 flex items-center justify-center text-white font-medium"
+                        style={{
+                            backgroundColor: normalizedSecondary,
+                        }}
+                    >
+                        {normalizedSecondary}
+                    </div>
+                </div>
+            </div>
 
             <div className="pt-3">
                 <div className="rounded-t-md bg-muted px-4 py-2">
@@ -147,11 +198,17 @@ export default function GeneralSettings({
                 </div>
                 <div className="flex flex-wrap gap-4 rounded-b-md border border-t-0 p-4">
                     <div className="rounded-md border-2 p-3 text-center">
-                        <img
-                            src={`${site_images?.bg_0 ?? ''}?v=${Date.now()}`}
-                            className="h-40 w-64 rounded-md border object-cover"
-                            alt="Background"
-                        />
+                        {site_images?.bg_0 ? (
+                            <img
+                                src={`${site_images.bg_0}?v=${Date.now()}`}
+                                className="h-40 w-64 rounded-md border object-cover"
+                                alt="Background"
+                            />
+                        ) : (
+                            <div className="flex h-40 w-64 items-center justify-center rounded-md border border-dashed text-sm text-muted-foreground">
+                                No background image uploaded
+                            </div>
+                        )}
                         <Button
                             type="button"
                             variant="outline"
@@ -162,11 +219,17 @@ export default function GeneralSettings({
                         </Button>
                     </div>
                     <div className="rounded-md border-2 p-3 text-center">
-                        <img
-                            src={`${site_images?.logo ?? ''}?v=${Date.now()}`}
-                            className="h-40 w-64 rounded-md border object-cover"
-                            alt="Site Logo"
-                        />
+                        {site_images?.logo ? (
+                            <img
+                                src={`${site_images.logo}?v=${Date.now()}`}
+                                className="h-40 w-64 rounded-md border object-cover"
+                                alt="Site Logo"
+                            />
+                        ) : (
+                            <div className="flex h-40 w-64 items-center justify-center rounded-md border border-dashed text-sm text-muted-foreground">
+                                No logo uploaded
+                            </div>
+                        )}
                         <div className="mt-2 space-y-2">
                             <Select
                                 value={(data['logo_type'] as string) || 'none'}

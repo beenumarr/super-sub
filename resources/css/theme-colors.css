@@ -1,0 +1,61 @@
+:root {
+    /* Default Theme Colors - These will be overridden by JavaScript */
+    --color-primary: #3b82f6;
+    --color-secondary: #8b5cf6;
+}
+
+/* Helper classes to use theme colors */
+.bg-primary {
+    background-color: var(--color-primary);
+}
+
+.bg-secondary {
+    background-color: var(--color-secondary);
+}
+
+.text-primary {
+    color: var(--color-primary);
+}
+
+.text-secondary {
+    color: var(--color-secondary);
+}
+
+.border-primary {
+    border-color: var(--color-primary);
+}
+
+.border-secondary {
+    border-color: var(--color-secondary);
+}
+
+/* Button with primary color */
+.btn-primary {
+    background-color: var(--color-primary);
+    color: white;
+    transition: opacity 0.2s ease;
+}
+
+.btn-primary:hover {
+    opacity: 0.9;
+}
+
+/* Button with secondary color */
+.btn-secondary {
+    background-color: var(--color-secondary);
+    color: white;
+    transition: opacity 0.2s ease;
+}
+
+.btn-secondary:hover {
+    opacity: 0.9;
+}
+
+/* Accent classes */
+.accent-primary {
+    accent-color: var(--color-primary);
+}
+
+.accent-secondary {
+    accent-color: var(--color-secondary);
+}
