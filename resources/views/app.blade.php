@@ -34,9 +34,30 @@
 
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <link rel="icon" href="/logo-icon.png" sizes="any">
-        <link rel="icon" href="/logo-icon.png" type="image/svg+xml">
-        <link rel="apple-touch-icon" href="/logo-icon.png">
+        {{-- Use uploaded favicon when available, fallback to logo then static icon --}}
+        @php
+            $siteLogo = config('settings.site_logo');
+            $siteFavicon = config('settings.site_favicon');
+            $faviconFile = $siteFavicon ?: $siteLogo;
+            $favicon = $faviconFile ? asset('storage/uploads/' . $faviconFile) . '?t=' . time() : '/logo-icon.png';
+            $faviconExt = $faviconFile ? strtolower(pathinfo($faviconFile, PATHINFO_EXTENSION)) : '';
+            $faviconType = match ($faviconExt) {
+                'ico' => 'image/x-icon',
+                'png' => 'image/png',
+                'jpg', 'jpeg' => 'image/jpeg',
+                'webp' => 'image/webp',
+                'gif' => 'image/gif',
+                default => null,
+            };
+        @endphp
+
+        <link rel="icon" href="{{ $favicon }}" sizes="any">
+        @if($faviconType)
+            <link rel="icon" href="{{ $favicon }}" type="{{ $faviconType }}">
+        @else
+            <link rel="icon" href="{{ $favicon }}">
+        @endif
+        <link rel="apple-touch-icon" href="{{ $favicon }}">
 
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />

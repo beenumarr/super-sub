@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import { Activity, Globe, Mail, Settings, CreditCard } from 'lucide-react';
 import SitePhotosForm from './Components/SitePhotosForm';
 import SiteLogoForm from './Components/SiteLogoForm';
+import SiteFaviconForm from './Components/SiteFaviconForm';
 import GeneralSettings from './Components/Tabs/GeneralSettings';
 import PaymentGateway from './Components/Tabs/PaymentGateway';
 import TransactionApi from './Components/Tabs/TransactionApi';
@@ -38,7 +39,7 @@ interface PageProps {
     monnify_charges_options?: unknown[];
     data?: unknown;
     configs_values: Record<string, unknown>;
-    site_images: { bg_0?: string; logo?: string };
+    site_images: { bg_0?: string; logo?: string; favicon?: string };
     theme?: string;
     enable_payvessel?: string;
     enable_Bill_Stack?: string;
@@ -48,6 +49,7 @@ interface PageProps {
 export default function Index() {
     const [formModal, setFormModal] = useState(false);
     const [formModal2, setFormModal2] = useState(false);
+    const [faviconModal, setFaviconModal] = useState(false);
     const [currentTab, setCurrentTab] = useState<TabValue>('general_settings');
     const [processing2, setProcessing2] = useState(false);
 
@@ -76,6 +78,8 @@ export default function Index() {
         put(route('app_configurations.update', { app_configuration: 1 }), {
             onSuccess: () => {
                 toast.success('Configuration Updated Successfully');
+                // Reload page to refresh Inertia props with updated config
+                setTimeout(() => reloadPage(), 1000);
             },
             onError: (errors) => {
                 Object.values(errors)
@@ -113,6 +117,7 @@ export default function Index() {
                 setData={setData}
                 setFormModal={setFormModal}
                 setFormModal2={setFormModal2}
+                setFaviconModal={setFaviconModal}
                 site_images={site_images ?? {}}
                 processing2={processing2}
                 setProcessing2={setProcessing2}
@@ -180,6 +185,8 @@ export default function Index() {
 
                     <div className="flex-1 overflow-y-auto p-4">
                         <form onSubmit={submit} className="w-full">
+                            {/* Ensure logo_type is included in the form data as a safety fallback */}
+                            <input type="hidden" name="logo_type" value={(data as any)['logo_type'] ?? ''} />
                             <Card>
                                 <CardContent className="pt-6">{tabContent[currentTab]}</CardContent>
                             </Card>
@@ -202,6 +209,11 @@ export default function Index() {
                 reloadPage={reloadPage}
                 formModal={formModal2}
                 setFormModal={setFormModal2}
+            />
+            <SiteFaviconForm
+                reloadPage={reloadPage}
+                formModal={faviconModal}
+                setFormModal={setFaviconModal}
             />
         </AppLayout>
     );

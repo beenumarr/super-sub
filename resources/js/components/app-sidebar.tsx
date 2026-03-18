@@ -116,7 +116,7 @@ export function AppSidebar() {
             <SidebarHeader>
                 <SidebarMenu>
                     <SidebarMenuItem>
-                        <SidebarMenuButton className="bg-sidebar-primary/5" size="lg" asChild>
+                        <SidebarMenuButton className="bg-sidebar-primary/5 flex items-center justify-center" size="lg" asChild>
                             <AppLogoIcon />
                         </SidebarMenuButton>
                     </SidebarMenuItem>

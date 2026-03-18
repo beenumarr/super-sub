@@ -19,6 +19,7 @@ import toast from 'react-hot-toast';
 interface SiteImages {
     bg_0?: string;
     logo?: string;
+    favicon?: string;
 }
 
 interface GeneralSettingsProps {
@@ -27,6 +28,7 @@ interface GeneralSettingsProps {
     setData: (keyOrData: string | Record<string, unknown>, value?: unknown) => void;
     setFormModal: (value: boolean) => void;
     setFormModal2: (value: boolean) => void;
+    setFaviconModal: (value: boolean) => void;
     site_images: SiteImages;
     processing2: boolean;
     setProcessing2: (value: boolean) => void;
@@ -60,6 +62,7 @@ export default function GeneralSettings({
     setData,
     setFormModal,
     setFormModal2,
+    setFaviconModal,
     site_images,
     processing2,
     setProcessing2,
@@ -196,16 +199,16 @@ export default function GeneralSettings({
                 <div className="rounded-t-md bg-muted px-4 py-2">
                     <h3 className="text-lg font-medium">Website Background Images</h3>
                 </div>
-                <div className="flex flex-wrap gap-4 rounded-b-md border border-t-0 p-4">
-                    <div className="rounded-md border-2 p-3 text-center">
+                <div className="flex flex-col gap-4 rounded-b-md border border-t-0 p-4 md:flex-row">
+                    <div className="min-w-0 flex-1 rounded-md border-2 p-3 text-center">
                         {site_images?.bg_0 ? (
                             <img
                                 src={`${site_images.bg_0}?v=${Date.now()}`}
-                                className="h-40 w-64 rounded-md border object-cover"
+                                className="h-40 w-full rounded-md border object-cover"
                                 alt="Background"
                             />
                         ) : (
-                            <div className="flex h-40 w-64 items-center justify-center rounded-md border border-dashed text-sm text-muted-foreground">
+                            <div className="flex h-40 w-full items-center justify-center rounded-md border border-dashed text-sm text-muted-foreground">
                                 No background image uploaded
                             </div>
                         )}
@@ -218,15 +221,15 @@ export default function GeneralSettings({
                             Change background
                         </Button>
                     </div>
-                    <div className="rounded-md border-2 p-3 text-center">
+                    <div className="min-w-0 flex-1 rounded-md border-2 p-3 text-center">
                         {site_images?.logo ? (
                             <img
                                 src={`${site_images.logo}?v=${Date.now()}`}
-                                className="h-40 w-64 rounded-md border object-cover"
+                                className="h-40 w-full rounded-md border object-cover"
                                 alt="Site Logo"
                             />
                         ) : (
-                            <div className="flex h-40 w-64 items-center justify-center rounded-md border border-dashed text-sm text-muted-foreground">
+                            <div className="flex h-40 w-full items-center justify-center rounded-md border border-dashed text-sm text-muted-foreground">
                                 No logo uploaded
                             </div>
                         )}
@@ -251,6 +254,32 @@ export default function GeneralSettings({
                                 onClick={() => setFormModal2(true)}
                             >
                                 Change site logo
+                            </Button>
+                            <p className="text-center text-xs text-muted-foreground">
+                                Recommended: square PNG (512×512 or 1024×1024), transparent background.
+                            </p>
+                        </div>
+                    </div>
+                    <div className="min-w-0 flex-1 rounded-md border-2 p-3 text-center">
+                        {site_images?.favicon ? (
+                            <img
+                                src={`${site_images.favicon}?v=${Date.now()}`}
+                                className="h-40 w-full rounded-md border object-contain"
+                                alt="Favicon"
+                            />
+                        ) : (
+                            <div className="flex h-40 w-full items-center justify-center rounded-md border border-dashed text-sm text-muted-foreground">
+                                No favicon uploaded
+                            </div>
+                        )}
+                        <div className="mt-2 space-y-2">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="mt-2 w-full"
+                                onClick={() => setFaviconModal(true)}
+                            >
+                                Change favicon
                             </Button>
                         </div>
                     </div>
