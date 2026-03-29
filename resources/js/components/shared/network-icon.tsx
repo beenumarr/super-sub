@@ -8,7 +8,7 @@ export const NetworkIcon = ({ network }: { network: string }) => {
             logo: '/images/icons/mtn.png', // Path to your logo
         },
         AIRTEL: {
-            color: 'bg-red-500 dark:bg-red-600',
+            color: '',
             logo: '/images/icons/airtel.png',
         },
         GLO: {
@@ -38,7 +38,7 @@ export const NetworkIcon = ({ network }: { network: string }) => {
     if (config.logo) {
         try {
             return (
-                <div className={cn('flex items-center justify-center rounded-full', config.color)}>
+                <div className={cn('flex items-center justify-center rounded-full shadow-sm', '')}>
                     <img
                         src={config.logo}
                         alt={network}
