@@ -8,13 +8,12 @@ use App\Models\Wallet;
 use Illuminate\Http\Request;
 use App\Models\MobileNetwork;
 use App\Models\AppConfiguration;
-use App\Models\WalletTransaction;
-use App\Models\AirtimeTransaction;
 use App\Services\AutoPilotService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use App\Models\AirtimeToCashTransaction;
+use App\Models\Transaction;
 use App\Utils\Transaction\TransactionHelper;
 use App\Http\Resources\MobileNetworkResource;
 use App\Http\Resources\A2CTransactionResource;
@@ -332,17 +331,15 @@ class AirtimeToCashController extends Controller
      */
     public function checkStatus(Request $request, $reference)
     {
-        $transaction = AirtimeTransaction::where('reference', $reference)->firstOrFail();
-        // $response = $this->autoPilotService->checkStatus($reference);
+        $transaction = Transaction::where('reference_id', $reference)->firstOrFail();
 
         return response()->json([
             'status' => $transaction->status,
-            'api_status' => $response['status'] ?? 'Unknown',
             'amount' => $transaction->amount,
-            'network' => $transaction->network,
-            'phone' => $transaction->phone,
-            'reference' => $transaction->reference,
-            'api_response' => $response['message'] ?? 'No response',
+            'type' => $transaction->type,
+            'reference_id' => $transaction->reference_id,
+            'api_response' => $transaction->api_response ?? 'No response',
+            'metadata' => $transaction->metadata,
         ]);
     }
 

@@ -5,7 +5,6 @@ namespace App\Services\PaymentGateway\Payvessel;
 use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
-use App\Models\WalletTransaction;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -44,7 +43,7 @@ class HandleTransactionCompletionWebhook implements ShouldQueue
 
 
         // Check if reference already exists in your payment transaction table
-        if (Transaction::where('api_reference', $reference)->exists()) {
+        if (Transaction::where('provider_reference', $reference)->exists()) {
             Log::warning('Reference Exist', ['reference' => $reference]);
             throw new \RuntimeException('Reference Exist, Duplicate Transaction');
 
@@ -70,26 +69,25 @@ class HandleTransactionCompletionWebhook implements ShouldQueue
                 $balance_after = $wallet->balance;
 
                  // Store Transaction Records
-                $transactionable = WalletTransaction::create([
+                Transaction::create([
+                    'reference_id' => $helpers->generateTransactionRef('WT'),
                     'user_id' => $user->id,
-                    'wallet_id' => $user->wallet->id,
-                    'amount' => $settlementAmount,
-                    'type'=> 'credit',
-                    'method'=> 'Transfer',
-                    'payment_gateway'=> 'Payvessel'
-                ]);
-
-                // Store General Transaction
-                $transactionable->transaction()->create([
-                    'reference'=> $helpers->generateTransactionRef('WT'),
-                    'user_id' => $user->id,
+                    'type' => 'WALLET',
                     'amount' => $amount,
-                    'status' => 'success',
-                    'api_response'=> $description,
-                    'description'=> $description,
-                    'api_reference'=> $reference,
-                    'balance_before'=> $balance_before,
-                    'balance_after'=> $balance_after,
+                    'status' => 'SUCCESS',
+                    'provider_name' => 'Payvessel',
+                    'provider_reference' => $reference,
+                    'api_response' => $description,
+                    'description' => $description,
+                    'balance_before' => $balance_before,
+                    'balance_after' => $balance_after,
+                    'metadata' => [
+                        'ledger_type' => 'credit',
+                        'method' => 'TRANSFER',
+                        'payment_gateway' => 'Payvessel',
+                        'settlement_amount' => $settlementAmount,
+                        'funded_amount' => $funded_amount,
+                    ],
                 ]);
 
                 Log::channel('payvessel_transactions')

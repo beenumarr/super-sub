@@ -24,7 +24,7 @@ class PurchaseMinutes
             $reverseTransaction->handle($transaction, [
                 'api_response' => $tokenResult['message'] ?? 'Unable to obtain Kirani token',
             ]);
-            return 'failed';
+            return 'FAILED';
         }
 
         $idToken = $tokenResult['token'];
@@ -74,7 +74,7 @@ class PurchaseMinutes
                     'api_reference' => $res['reference'] ?? null,
                 ]);
 
-                return 'success';
+                return 'SUCCESS';
             }
 
             // Handle failed response
@@ -83,7 +83,7 @@ class PurchaseMinutes
                 'api_response' => $errorMessage,
             ]);
 
-            return 'failed';
+            return 'FAILED';
 
         } catch (\GuzzleHttp\Exception\ClientException $e) {
             $response = $e->getResponse();
@@ -98,7 +98,7 @@ class PurchaseMinutes
                 'api_response' => $this->normalizeError($message),
             ]);
 
-            return 'failed';
+            return 'FAILED';
 
         } catch (\GuzzleHttp\Exception\ServerException $e) {
             $response = $e->getResponse();
@@ -117,14 +117,14 @@ class PurchaseMinutes
                     'api_response' => 'Your transaction is being processed. Thank you for your patience.',
                 ]);
 
-                return 'pending';
+                return 'PENDING';
             }
 
             $reverseTransaction->handle($transaction, [
                 'api_response' => $this->normalizeError($message),
             ]);
 
-            return 'failed';
+            return 'FAILED';
 
         } catch (\Exception $e) {
             Log::error('Kirani Purchase Exception: ' . $e->getMessage());
@@ -133,7 +133,7 @@ class PurchaseMinutes
                 'api_response' => 'An unexpected error occurred. Please try again.',
             ]);
 
-            return 'failed';
+            return 'FAILED';
         }
     }
 
@@ -164,4 +164,3 @@ class PurchaseMinutes
         return $message;
     }
 }
-

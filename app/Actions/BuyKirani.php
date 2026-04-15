@@ -22,12 +22,11 @@ class BuyKirani
             Log::error('BuyKirani Error: ' . $e->getMessage());
             
             $transaction->update([
-                'status' => 'failed',
+                'status' => 'FAILED',
                 'api_response' => 'Something went wrong. Please try again later.',
             ]);
             
-            return 'failed';
+            return 'FAILED';
         }
     }
 }
-

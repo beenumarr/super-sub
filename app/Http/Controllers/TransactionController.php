@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use App\Http\Resources\TransactionResource;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Request as FilterRequest;
+use Illuminate\Support\Str;
 
 class TransactionController extends Controller
 {
@@ -21,21 +22,33 @@ class TransactionController extends Controller
         $type = request('transaction_type');
 
 
-        if(isset($from)){
-
-
-            $data = Transaction::where('user_id', auth()->user()->id)->whereBetween('updated_at', [$from.' 00:00:00',$to.' 23:59:59'])->orderBy('created_at', 'desc');
-
-        }else{
-
-             $data = Transaction::where('user_id', auth()->user()->id)->latest()->orderBy('created_at', 'desc');
-
+        if (isset($from)) {
+            $data = Transaction::where('user_id', auth()->user()->id)
+                ->whereBetween('updated_at', [$from.' 00:00:00', $to.' 23:59:59'])
+                ->orderBy('created_at', 'desc');
+        } else {
+            $data = Transaction::where('user_id', auth()->user()->id)
+                ->latest()
+                ->orderBy('created_at', 'desc');
         }
 
-
         if ($type) {
-            $modelType = str_contains($type, '\\') ? $type : "App\\Models\\{$type}";
-            $data->where('transactionable_type', $modelType);
+            $normalized = Str::upper($type);
+            $legacyModel = str_contains($type, '\\') ? class_basename($type) : $type;
+
+            $mapped = [
+                'DATATRANSACTION' => 'DATA',
+                'AIRTIME_TRANSACTION' => 'AIRTIME',
+                'AIRTIMETRANSACTION' => 'AIRTIME',
+                'CABLESUBSCRIPTIONTRANSACTION' => 'CABLE',
+                'ELECTRICITYBILLTRANSACTION' => 'ELECTRICITY',
+                'ELECTRICITYTRANSACTION' => 'ELECTRICITY',
+                'RESULTCHECKERTRANSACTION' => 'RESULT_CHECKER',
+                'WALLETTRANSACTION' => 'WALLET',
+                'BONUSWALLETTRANSACTION' => 'BONUS_WALLET',
+            ][Str::upper($legacyModel)] ?? null;
+
+            $data->where('type', $mapped ?: $normalized);
         }
 
 
@@ -86,7 +99,7 @@ class TransactionController extends Controller
             'reference_id' => ['required', 'string'],
         ]);
 
-        $transaction = Transaction::where('reference', $request->reference_id)
+        $transaction = Transaction::where('reference_id', $request->reference_id)
             ->first();
 
         if (!$transaction) {
@@ -118,7 +131,7 @@ class TransactionController extends Controller
      */
     public function status(string $referenceId)
     {
-        $transaction = Transaction::where('reference', $referenceId)
+        $transaction = Transaction::where('reference_id', $referenceId)
             ->first();
 
         if (!$transaction) {
@@ -134,9 +147,9 @@ class TransactionController extends Controller
             'success' => true,
             'message' => 'Transaction status retrieved successfully',
             'data' => [
-                'reference_id' => $transaction->reference,
+                'reference_id' => $transaction->reference_id,
                 'status' => $transaction->status,
-                'type' => class_basename($transaction->transactionable_type),
+                'type' => $transaction->type,
                 'amount' => $transaction->amount,
                 'description' => $transaction->description,
                 'provider_name' => $transaction->provider_name,

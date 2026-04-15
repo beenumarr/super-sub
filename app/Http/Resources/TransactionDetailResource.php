@@ -22,22 +22,26 @@ class TransactionDetailResource extends JsonResource
      */
     public function toArray($request)
     {
+        $metadata = $this->transaction->metadata ?? [];
+
         return [
             'id' => $this->transaction->id,
             'user_id' => $this->transaction->user_id,
             // 'user' => $this->transaction->user->only('id','name','phone'),
-            'reference' => $this->transaction->reference,
+            'reference_id' => $this->transaction->reference_id,
             'amount' => number_format((int)$this->transaction->amount, 2),
             'api_response' => $this->transaction->api_response,
             'description' => $this->transaction->description,
             'status' => $this->transaction->status,
-            'token' => $this->transaction->transactionable->token?? '',
+            'type' => $this->transaction->type,
+            'provider_name' => $this->transaction->provider_name,
+            'provider_reference' => $this->transaction->provider_reference,
+            'token' => $metadata['token'] ?? '',
             'balance_before' => number_format((int)$this->transaction->balance_before, 2),
             'balance_after' => number_format((int)$this->transaction->balance_after, 2),
-            'transactionable_type' => $this->transaction->transactionable_type,
-            'transactionable' => $this->when($this->withTransactionable, fn()=> $this->transaction->transactionable),
+            'metadata' => $this->when($this->withTransactionable, fn () => $metadata),
             'date' => $this->transaction->created_at->format('d/m/Y h:m A'),
-            'pins' => $this->when($this->transaction->transactionable->pins, fn()=> $this->transaction->transactionable->pins),
+            'pins' => $this->when(isset($metadata['pins']), fn () => $metadata['pins']),
         ];
     }
 }

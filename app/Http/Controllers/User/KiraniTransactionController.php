@@ -9,7 +9,7 @@ use App\Models\DataPlan;
 use App\Models\DataPlanType;
 use Illuminate\Http\Request;
 use App\Models\MobileNetwork;
-use App\Models\DataTransaction;
+use App\Models\Transaction;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
@@ -116,7 +116,7 @@ class KiraniTransactionController extends Controller
         // Process the transaction using the Kirani API
         $status = $this->buyKirani->handle($transaction);
 
-        if ($status !== 'success') {
+        if ($status !== 'SUCCESS') {
             $error = $transaction->api_response;
 
             throw ValidationException::withMessages([
@@ -152,7 +152,7 @@ class KiraniTransactionController extends Controller
 
         $status = $this->buyKirani->handle($transaction);
 
-        if ($status === 'success') {
+        if ($status === 'SUCCESS') {
             return response(new ApiTransactionResource($transaction), 200);
         }
 
@@ -190,26 +190,35 @@ class KiraniTransactionController extends Controller
 
             $balance = $this->helpers->validateBalanceAndDeductAmount($user->id, $amount);
 
-            $transactionable = DataTransaction::create([
-                'phone_number' => $data['phone_number'],
-                'mobile_network_id' => $kiraniNetwork->id,
-                'data_plan_id' => $plan->id,
-            ]);
-
             $transactionData = [
-                'reference' => $this->helpers->generateTransactionRef('KR'),
+                'reference_id' => $this->helpers->generateTransactionRef('KR'),
                 'user_id' => $user->id,
                 'amount' => $amount,
+                'type' => 'DATA',
+                'provider_name' => $kiraniNetwork->name,
+                'provider_id' => (string) $kiraniNetwork->id,
+                'product_category' => 'DATA',
+                'product_id' => (string) $plan->id,
+                'status' => 'PENDING',
                 'description' => $description,
                 'balance_before' => (float) $balance['before'],
                 'balance_after' => (float) $balance['after'],
+                'api_process_started_at' => now(),
+                'metadata' => [
+                    'beneficiary' => $data['phone_number'],
+                    'network_id' => $kiraniNetwork->id,
+                    'network' => $kiraniNetwork->name,
+                    'plan_id' => $plan->id,
+                    'plan_name' => $plan->name ?? null,
+                    'plan_category' => 'KIRANI',
+                ],
             ];
 
             if (Schema::hasColumn('transactions', 'request_ip')) {
                 $transactionData['request_ip'] = $request->ip();
             }
 
-            $transaction = $transactionable->transaction()->create($transactionData);
+            $transaction = Transaction::create($transactionData);
 
             DB::commit();
 
@@ -238,4 +247,3 @@ class KiraniTransactionController extends Controller
     }
 
 }
-

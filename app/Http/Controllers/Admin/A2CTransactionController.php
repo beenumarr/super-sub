@@ -8,7 +8,7 @@ use Inertia\Response;
 use App\Models\Wallet;
 use App\Jobs\DisburseFund;
 use Illuminate\Http\Request;
-use App\Models\WalletTransaction;
+use App\Models\Transaction;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
@@ -153,26 +153,26 @@ class A2CTransactionController extends Controller
         DB::beginTransaction();
         $wallet->increment('balance', $transaction->amount);
         $balance_after = $wallet->balance;
-        $transactionable = WalletTransaction::create([
-            'user_id' => $user->id,
-            'wallet_id' => $user->wallet->id,
-            'amount' => $transaction->amount,
-            'type'=> 'credit',
-            'method'=> 'AIRTIME_TO_CASH',
-            'payment_gateway'=> 'auto-pilot'
+        $reference = $this->helpers->generateTransactionRef('ATC');
 
-        ]);
-
-        // Store General Transaction
-        $transactionable->transaction()->create([
-            'reference'=> $this->helpers->generateTransactionRef('ATC'),
+        Transaction::create([
+            'reference_id' => $reference,
             'user_id' => $user->id,
-            'amount' => $transaction->amount,
-            'status' => 'success',
-            'description'=> "Airtime to Cash". $transaction->phone_number. " ". $transaction->network->name. " ". $transaction->amount. " ". $transaction->reference,
-            'api_response'=> "Airtime to Cash",
-            'balance_before'=> $balance_before,
-            'balance_after'=> $balance_after,
+            'type' => 'WALLET',
+            'amount' => (float) $transaction->amount,
+            'status' => 'SUCCESS',
+            'provider_name' => 'SYSTEM',
+            'provider_reference' => $reference,
+            'description' => "Airtime to Cash {$transaction->phone_number} {$transaction->network->name} {$transaction->amount} {$transaction->reference}",
+            'api_response' => 'Airtime to Cash',
+            'balance_before' => $balance_before,
+            'balance_after' => $balance_after,
+            'metadata' => [
+                'ledger_type' => 'credit',
+                'method' => 'AIRTIME_TO_CASH',
+                'payment_gateway' => 'auto-pilot',
+                'source_reference' => $transaction->reference,
+            ],
         ]);
 
         DB::commit();

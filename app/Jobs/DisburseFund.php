@@ -5,7 +5,6 @@ namespace App\Jobs;
 use App\Models\User;
 use GuzzleHttp\Client;
 use Illuminate\Bus\Queueable;
-use App\Models\WalletTransaction;
 use App\Models\Transaction;
 use App\Actions\Utils\MonnifyUtils;
 use App\Utils\Transaction\TransactionHelper;
@@ -110,31 +109,23 @@ class DisburseFund implements ShouldQueue
         try {
             DB::beginTransaction();
 
-            // Create wallet transaction
-            $walletTransaction = WalletTransaction::create([
-                'user_id' => $this->user->id,
-                'wallet_id' => $this->user->wallet->id,
-                'amount' => $this->amount,
-                'type' => 'debit',
-                'method' => 'AIRTIME_TO_CASH_DISBURSEMENT',
-                'payment_gateway' => 'Monnify',
-                'status' => 'processing',
-                'reference' => $transactionData['transactionReference'],
-            ]);
-
-            // Create general transaction
             Transaction::create([
-                'reference' => $this->reference,
+                'reference_id' => $this->reference,
                 'user_id' => $this->user->id,
+                'type' => 'WALLET',
                 'amount' => $this->amount,
-                'status' => 'processing',
-                'api_reference' => $transactionData['transactionReference'],
+                'status' => 'PENDING',
                 'api_response' => json_encode($transactionData),
                 'description' => "Airtime to Cash Disbursement",
                 'balance_before' => $this->user->wallet->balance,
                 'balance_after' => $this->user->wallet->balance - $this->amount,
-                'transactionable_id' => $walletTransaction->id,
-                'transactionable_type' => get_class($walletTransaction),
+                'provider_name' => 'Monnify',
+                'provider_reference' => $transactionData['transactionReference'],
+                'metadata' => [
+                    'ledger_type' => 'debit',
+                    'method' => 'AIRTIME_TO_CASH_DISBURSEMENT',
+                    'payment_gateway' => 'Monnify',
+                ],
             ]);
 
             DB::commit();
@@ -153,30 +144,23 @@ class DisburseFund implements ShouldQueue
         try {
             DB::beginTransaction();
 
-            // Create wallet transaction
-            $walletTransaction = WalletTransaction::create([
-                'user_id' => $this->user->id,
-                'wallet_id' => $this->user->wallet->id,
-                'amount' => $this->amount,
-                'type' => 'debit',
-                'method' => 'AIRTIME_TO_CASH_DISBURSEMENT',
-                'payment_gateway' => 'Monnify',
-                'status' => 'failed',
-                'reference' => $this->reference,
-            ]);
-
-            // Create general transaction
             Transaction::create([
-                'reference' => $this->reference,
+                'reference_id' => $this->reference,
                 'user_id' => $this->user->id,
+                'type' => 'WALLET',
                 'amount' => $this->amount,
-                'status' => 'failed',
+                'status' => 'FAILED',
                 'api_response' => $errorMessage,
                 'description' => "Failed Airtime to Cash Disbursement",
                 'balance_before' => $this->user->wallet->balance,
                 'balance_after' => $this->user->wallet->balance - $this->amount,
-                'transactionable_id' => $walletTransaction->id,
-                'transactionable_type' => get_class($walletTransaction),
+                'provider_name' => 'Monnify',
+                'provider_reference' => $this->reference,
+                'metadata' => [
+                    'ledger_type' => 'debit',
+                    'method' => 'AIRTIME_TO_CASH_DISBURSEMENT',
+                    'payment_gateway' => 'Monnify',
+                ],
             ]);
 
             DB::commit();

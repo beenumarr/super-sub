@@ -4,7 +4,6 @@ namespace App\Actions\Promo;
 
 use App\Models\User;
 use App\Models\Transaction;
-use App\Models\BonusWalletTransaction;
 
 class FundBonusWallet
 {
@@ -23,24 +22,23 @@ class FundBonusWallet
         $balance_after = $wallet->bonus_balance;
 
 
-         // Store Transaction Records
-        $transactionable = BonusWalletTransaction::create([
+        $transaction = Transaction::create([
+            'reference_id' => $this->generateRef(),
             'user_id' => $user->id,
-            'wallet_id' => $wallet->id,
+            'type' => 'BONUS_WALLET',
             'amount' => $data['amount'],
-            'type'=> 'credit',
-            'method'=> 'SINGUP_BONUS_AND_REFERRAL',
-        ]);
-
-        // Store General Transaction
-       $transaction = $transactionable->transaction()->create([
-            'reference'=> $this->generateRef(),
-            'user_id' => $user->id,
-            'amount' => $data['amount'],
-            'status' => 'success',
-            'api_response'=> $desc,
-            'balance_before'=> $balance_before,
-            'balance_after'=> $balance_after,
+            'status' => 'SUCCESS',
+            'provider_name' => 'SYSTEM',
+            'provider_reference' => 'BONUS',
+            'api_response' => $desc,
+            'description' => $desc,
+            'balance_before' => $balance_before,
+            'balance_after' => $balance_after,
+            'metadata' => [
+                'ledger_type' => 'credit',
+                'method' => 'SIGNUP_BONUS_AND_REFERRAL',
+                'wallet_type' => 'bonus_balance',
+            ],
         ]);
 
 
@@ -51,11 +49,10 @@ class FundBonusWallet
 
     private function generateRef() {
         $number = 'BWT'.now()->month.now()->year.mt_rand(100000, 999999);
-        if (Transaction::wherereference($number)->exists()){
+        if (Transaction::where('reference_id', $number)->exists()){
             return $this->generateRef();
         }
         return $number;
     }
 
 }
-

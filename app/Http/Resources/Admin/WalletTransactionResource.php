@@ -14,18 +14,22 @@ class WalletTransactionResource extends JsonResource
      */
     public function toArray($request)
     {
+        $metadata = $this->metadata ?? [];
+
         return [
             'id' => $this->id,
-            'reference' => $this->transaction->reference,
-            'user' => $this->transaction->user,
-            'funded_by' => $this->user->only('id','name'),
+            'reference_id' => $this->reference_id,
+            'user' => $this->user,
+            'funded_by_user_id' => $metadata['funded_by_user_id'] ?? null,
             'amount' => number_format((int)$this->amount, 2),
-            'balance_before' => number_format((int)$this->transaction->balance_before, 2),
-            'balance_after' => number_format((int)$this->transaction->balance_after, 2),
-            'api_response' => $this->transaction->api_response,
-            'description' => $this->transaction->description,
-            'status' => $this->transaction->status,
-            'type' => $this->type,
+            'balance_before' => number_format((int)$this->balance_before, 2),
+            'balance_after' => number_format((int)$this->balance_after, 2),
+            'api_response' => $this->api_response,
+            'description' => $this->description,
+            'status' => $this->status,
+            'ledger_type' => $metadata['ledger_type'] ?? null,
+            'method' => $metadata['method'] ?? null,
+            'payment_gateway' => $metadata['payment_gateway'] ?? null,
             'date' => $this->created_at->format('d/m/Y h:m A'),
         ];
     }
