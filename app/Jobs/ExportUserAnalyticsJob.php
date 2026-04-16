@@ -5,19 +5,14 @@ namespace App\Jobs;
 use App\Models\User;
 use App\Models\Transaction;
 use Illuminate\Bus\Queueable;
-use App\Models\DataTransaction;
-use App\Models\WalletTransaction;
-use App\Models\AirtimeTransaction;
 use Illuminate\Support\Facades\DB;
 use App\Exports\UserAnalyticExport;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Queue\InteractsWithQueue;
-use App\Models\ElectricityBillTransaction;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use App\Models\CableSubscriptionTransaction;
 
 // class ExportUserJob implements ShouldQueue
 
@@ -50,23 +45,18 @@ class ExportUserAnalyticsJob implements ShouldQueue
     public function handle()
     {
         // Fetch the data for export
-        $transactionTypes = [
-            AirtimeTransaction::class,
-            DataTransaction::class,
-            ElectricityBillTransaction::class,
-            CableSubscriptionTransaction::class
-        ];
-
         // Total Wallet Fund Sum and Count
         $totalFund = Transaction::select('user_id', DB::raw('SUM(amount) as total_amount'), DB::raw('COUNT(*) as total_count'))
-        ->whereHasMorph('transactionable', WalletTransaction::class, function ($query) { $query->where('type', 'credit');})
+        ->where('type', 'WALLET')
+        ->where('status', 'SUCCESS')
+        ->where('metadata->ledger_type', 'credit')
         ->groupBy('user_id');
 
 
         // Total Spend Sum
         $totalSpend = Transaction::select('user_id', DB::raw('SUM(amount) as total_amount'), DB::raw('COUNT(*) as total_count'))
-        ->where('status', 'success')
-        ->whereHasMorph('transactionable', $transactionTypes)
+        ->where('status', 'SUCCESS')
+        ->whereNotIn('type', ['WALLET', 'BONUS_WALLET'])
         ->groupBy('user_id');
 
 

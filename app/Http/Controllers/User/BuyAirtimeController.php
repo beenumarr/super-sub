@@ -9,6 +9,7 @@ use App\Actions\BuyAirtime;
 use Illuminate\Http\Request;
 use App\Models\MobileNetwork;
 use App\Models\AirtimeTransaction;
+use App\Models\Transaction;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
@@ -54,7 +55,7 @@ class BuyAirtimeController extends Controller
         $status = $this->buyAirtime->handle($transaction);
 
 
-       if($status != 'success'){
+       if($status !== 'SUCCESS'){
 
            $error = $transaction->api_response;
 
@@ -89,7 +90,7 @@ class BuyAirtimeController extends Controller
         $status = $this->buyAirtime->handle($transaction);
 
 
-        if($status != 'success'){
+        if($status !== 'SUCCESS'){
                 $error = $transaction->api_response;
 
                 throw ValidationException::withMessages([
@@ -117,30 +118,37 @@ class BuyAirtimeController extends Controller
             DB::beginTransaction();
 
             $balance = $this->helpers->validateBalanceAndDeductAmount($user->id, $data['amount'] - $discount);
+            $network = MobileNetwork::findOrFail($data['mobile_network']);
 
-            $transactionable = AirtimeTransaction::create([
-                'phone_number' => $data['phone_number'],
-                'mobile_network_id' => $data['mobile_network'],
-                'amount' => $data['amount'],
-            ]);
-
-
-          $description = $data['amount']." ".$transactionable->network->name." Airtime to ". $data['phone_number'];
+            $description = $data['amount']." ".$network->name." Airtime to ". $data['phone_number'];
 
             $transactionData = [
-                'reference' => $this->helpers->generateTransactionRef('AT'),
+                'reference_id' => $this->helpers->generateTransactionRef('AT'),
                 'user_id' => $user->id,
+                'type' => 'AIRTIME',
+                'provider_name' => $network->name,
+                'provider_id' => (string) $network->id,
+                'product_category' => 'AIRTIME',
                 'amount' => $data['amount'] - $discount,
-                'description'=> $description,
-                'balance_before' => (float) $balance['before'],
-                'balance_after' => (float) $balance['after'],
+                'status' => 'PENDING',
+                'description' => $description,
+                'balance_before' => (float)$balance['before'],
+                'balance_after' => (float)$balance['after'],
+                'api_process_started_at' => now(),
+                'metadata' => [
+                    'beneficiary' => $data['phone_number'],
+                    'network_id' => $network->id,
+                    'network' => $network->name,
+                    'requested_amount' => (float) $data['amount'],
+                    'discount' => (float) $discount,
+                ],
             ];
 
             if (Schema::hasColumn('transactions', 'request_ip')) {
                 $transactionData['request_ip'] = $request->ip();
             }
 
-            $transaction = $transactionable->transaction()->create($transactionData);
+            $transaction = Transaction::create($transactionData);
 
             DB::commit();
 

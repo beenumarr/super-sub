@@ -23,7 +23,7 @@ class ApiTransactionResource extends JsonResource
             'api_response' => $this->api_response,
             'description' => $this->description ?? "N/A",
             'plan_network' => "N/A",
-            'Status' => $this->status === 'success' ? 'successful' : $this->status,
+            'Status' => strtolower((string) $this->status) === 'success' ? 'successful' : $this->status,
             'balance_before' => number_format((int)$this->balance_before, 2),
             'balance_after' => number_format((int)$this->balance_after, 2),
             'create_date' => $this->created_at->format('d/m/Y h:i A'),

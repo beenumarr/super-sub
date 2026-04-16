@@ -2,21 +2,15 @@
 
 namespace Database\Seeders;
 
-use App\Models\AirtimeTransaction;
 use App\Models\CableNetwork;
 use App\Models\CableSubscriptionPlan;
-use App\Models\CableSubscriptionTransaction;
 use App\Models\DataPlan;
-use App\Models\DataTransaction;
-use App\Models\ElectricityBillTransaction;
 use App\Models\ElectricityDistributor;
 use App\Models\ExamType;
 use App\Models\MobileNetwork;
-use App\Models\ResultCheckerTransaction;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Models\Wallet;
-use App\Models\WalletTransaction;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -24,7 +18,7 @@ use Illuminate\Support\Str;
 class TransactionSeeder extends Seeder
 {
     /**
-     * Seed 20 transactions across all supported types for testing.
+     * Seed sample centralized transactions for testing.
      */
     public function run(): void
     {
@@ -60,12 +54,12 @@ class TransactionSeeder extends Seeder
         $examTypes = ExamType::all();
 
         $types = [
-            'data',
-            'airtime',
-            'cable',
-            'electricity',
-            'result_checker',
-            'wallet',
+            'DATA',
+            'AIRTIME',
+            'CABLE',
+            'ELECTRICITY',
+            'RESULT_CHECKER',
+            'WALLET',
         ];
 
         for ($i = 0; $i < 20; $i++) {
@@ -78,148 +72,172 @@ class TransactionSeeder extends Seeder
             $balanceBefore = (float) $wallet->balance;
             $balanceAfter = $balanceBefore;
 
-            $transactionType = $faker->randomElement($types);
-            $status = $faker->randomElement(['success', 'failed', 'pending']);
+            $type = $faker->randomElement($types);
+            $status = $faker->randomElement(['SUCCESS', 'FAILED', 'PENDING']);
 
             $amount = $faker->randomFloat(2, 100, 5000);
-            $transactionable = null;
-            $description = 'Test transaction';
-            $reference = 'TX-' . Str::uuid();
-            $apiReference = 'API-' . Str::uuid();
-            $apiResponse = $status === 'success' ? 'Transaction successful' : 'Transaction ' . $status;
+            $referenceId = 'TX-' . Str::uuid();
 
-            switch ($transactionType) {
-                case 'data':
+            $providerName = null;
+            $providerId = null;
+            $productId = null;
+            $productCategory = null;
+            $metadata = [];
+            $description = 'Test transaction';
+
+            switch ($type) {
+                case 'DATA':
                     if (empty($mobileNetworkIds) || empty($dataPlanIds)) {
                         continue 2;
                     }
 
-                    $transactionable = DataTransaction::create([
-                        'mobile_network_id' => $faker->randomElement($mobileNetworkIds),
-                        'data_plan_id' => $faker->randomElement($dataPlanIds),
-                        'phone_number' => $faker->numerify('080########'),
-                        'beneficiary_name' => $faker->name(),
-                    ]);
-                    $description = $transactionable->description;
+                    $providerId = (string) $faker->randomElement($mobileNetworkIds);
+                    $productId = (string) $faker->randomElement($dataPlanIds);
+                    $network = MobileNetwork::find($providerId);
+                    $plan = DataPlan::find($productId);
+                    $providerName = $network?->name;
+                    $productCategory = 'DATA';
+                    $beneficiary = $faker->numerify('080########');
+                    $description = ($plan?->size ? ($plan->size . Str::upper($plan->volume)) : 'Data') . " {$providerName} to {$beneficiary}";
+                    $metadata = [
+                        'beneficiary' => $beneficiary,
+                        'network_id' => (int) $providerId,
+                        'network' => $providerName,
+                        'plan_id' => (int) $productId,
+                    ];
                     break;
 
-                case 'airtime':
+                case 'AIRTIME':
                     if (empty($mobileNetworkIds)) {
                         continue 2;
                     }
 
-                    $transactionable = AirtimeTransaction::create([
-                        'mobile_network_id' => $faker->randomElement($mobileNetworkIds),
-                        'amount' => $amount,
-                        'phone_number' => $faker->numerify('080########'),
-                    ]);
-                    $description = $transactionable->description;
+                    $providerId = (string) $faker->randomElement($mobileNetworkIds);
+                    $network = MobileNetwork::find($providerId);
+                    $providerName = $network?->name;
+                    $productCategory = 'AIRTIME';
+                    $beneficiary = $faker->numerify('080########');
+                    $description = "{$amount} {$providerName} Airtime to {$beneficiary}";
+                    $metadata = [
+                        'beneficiary' => $beneficiary,
+                        'network_id' => (int) $providerId,
+                        'network' => $providerName,
+                        'requested_amount' => $amount,
+                    ];
                     break;
 
-                case 'cable':
+                case 'CABLE':
                     if (empty($cableNetworkIds) || empty($cablePlanIds)) {
                         continue 2;
                     }
 
-                    $cableNetworkId = $faker->randomElement($cableNetworkIds);
-                    $cablePlanId = $faker->randomElement($cablePlanIds);
+                    $providerId = (string) $faker->randomElement($cableNetworkIds);
+                    $productId = (string) $faker->randomElement($cablePlanIds);
+                    $network = CableNetwork::find($providerId);
+                    $plan = CableSubscriptionPlan::find($productId);
+                    $providerName = $network?->name;
+                    $productCategory = 'CABLE';
                     $smartCard = $faker->numerify('##########');
                     $customerName = $faker->name();
-
-                    $transactionable = CableSubscriptionTransaction::create([
-                        'cable_network_id' => $cableNetworkId,
-                        'cable_subscription_plan_id' => $cablePlanId,
+                    $description = ($plan?->package_name ?? 'Cable') . " ({$amount}) {$providerName} to {$smartCard} ({$customerName})";
+                    $metadata = [
+                        'beneficiary' => $smartCard,
                         'smart_card_number' => $smartCard,
                         'name' => $customerName,
-                        'phone_number' => $faker->numerify('080########'),
-                    ]);
-                    $planName = CableSubscriptionPlan::find($cablePlanId)?->package_name ?? 'Cable Plan';
-                    $networkName = CableNetwork::find($cableNetworkId)?->name ?? 'Cable Network';
-                    $description = "{$planName} ({$amount}) {$networkName} Cable Subscription to {$smartCard} ({$customerName})";
+                        'network_id' => (int) $providerId,
+                        'network' => $providerName,
+                        'plan_id' => (int) $productId,
+                        'plan_name' => $plan?->package_name,
+                        'product_code' => $plan?->product_code,
+                    ];
                     break;
 
-                case 'electricity':
+                case 'ELECTRICITY':
                     if (empty($electricityDistributorIds)) {
                         continue 2;
                     }
 
-                    $distributorId = $faker->randomElement($electricityDistributorIds);
-                    $meterNumber = $faker->numerify('##########');
+                    $providerId = (string) $faker->randomElement($electricityDistributorIds);
+                    $distributor = ElectricityDistributor::find($providerId);
+                    $providerName = $distributor?->name;
+                    $productCategory = 'ELECTRICITY';
+                    $meter = $faker->numerify('##########');
                     $customerName = $faker->name();
-
-                    $transactionable = ElectricityBillTransaction::create([
-                        'electricity_distributor_id' => $distributorId,
-                        'meter_number' => $meterNumber,
+                    $description = "{$amount} {$providerName} Bill Payment to {$meter} ({$customerName})";
+                    $metadata = [
+                        'beneficiary' => $meter,
+                        'electricity_distributor_id' => (int) $providerId,
+                        'distributor' => $providerName,
+                        'meter_number' => $meter,
                         'meter_type' => $faker->randomElement(['prepaid', 'postpaid']),
                         'name' => $customerName,
                         'phone_number' => $faker->numerify('080########'),
                         'address' => $faker->address(),
-                        'token' => $faker->optional()->numerify('################'),
-                    ]);
-                    $distributorName = ElectricityDistributor::find($distributorId)?->name ?? 'Distributor';
-                    $description = "{$amount} {$distributorName} Bill Payment to {$meterNumber} ({$customerName})";
+                    ];
                     break;
 
-                case 'result_checker':
+                case 'RESULT_CHECKER':
                     if ($examTypes->isEmpty()) {
                         continue 2;
                     }
 
                     $examType = $examTypes->random();
-                    $transactionable = ResultCheckerTransaction::create([
+                    $providerId = (string) $examType->id;
+                    $providerName = $examType->name;
+                    $productCategory = 'RESULT_CHECKER';
+                    $qty = $faker->numberBetween(1, 3);
+                    $amount = (float) ($examType->amount * $qty);
+                    $description = "{$examType->name} Pin Purchase";
+                    $metadata = [
                         'exam_type_id' => $examType->id,
                         'exam_type' => $examType->name,
-                        'quantity' => $faker->numberBetween(1, 3),
-                        'pins' => json_encode([
-                            $faker->numerify('############'),
-                            $faker->numerify('############'),
-                        ]),
-                    ]);
-                    $description = 'Result checker purchase';
+                        'quantity' => $qty,
+                    ];
                     break;
 
-                case 'wallet':
+                case 'WALLET':
                 default:
-                    $walletType = $faker->randomElement(['credit', 'debit']);
-                    $transactionable = WalletTransaction::create([
-                        'user_id' => $user->id,
-                        'wallet_id' => $wallet->id,
-                        'type' => $walletType,
-                        'amount' => $amount,
-                        'note' => $faker->sentence(6),
-                        'method' => $faker->randomElement(['card', 'bank', 'transfer']),
-                        'payment_gateway' => $faker->randomElement(['paystack', 'flutterwave', 'monnify']),
-                    ]);
-                    $description = ucfirst($walletType) . ' wallet test transaction';
+                    $ledgerType = $faker->randomElement(['credit', 'debit']);
+                    $providerName = $faker->randomElement(['Paystack', 'Monnify', 'SYSTEM']);
+                    $productCategory = 'WALLET';
+                    $description = ucfirst($ledgerType) . " wallet transaction ({$providerName})";
+                    $metadata = [
+                        'ledger_type' => $ledgerType,
+                        'method' => $providerName === 'SYSTEM' ? 'MANUAL' : 'WALLET_FUNDING',
+                        'payment_gateway' => $providerName,
+                    ];
+
+                    if ($status === 'SUCCESS') {
+                        $balanceAfter = $ledgerType === 'credit'
+                            ? $balanceBefore + $amount
+                            : max(0, $balanceBefore - $amount);
+                        $wallet->update(['balance' => $balanceAfter]);
+                    }
                     break;
             }
 
-            if ($status === 'success') {
-                if ($transactionType === 'wallet' && isset($walletType)) {
-                    $balanceAfter = $walletType === 'credit'
-                        ? $balanceBefore + $amount
-                        : max(0, $balanceBefore - $amount);
-                } else {
-                    $balanceAfter = max(0, $balanceBefore - $amount);
-                }
-
+            if ($type !== 'WALLET' && $status === 'SUCCESS') {
+                $balanceAfter = max(0, $balanceBefore - $amount);
                 $wallet->update(['balance' => $balanceAfter]);
             }
 
-            $transactionable->transaction()->create([
+            Transaction::create([
+                'reference_id' => $referenceId,
                 'user_id' => $user->id,
-                'description' => $description,
-                'transactionable_id' => $transactionable->id,
-                'transactionable_type' => $transactionable::class,
-                'balance_before' => (string) $balanceBefore,
-                'balance_after' => (string) $balanceAfter,
-                'api_response' => $apiResponse,
-                'reference' => $reference,
-                'api_reference' => $apiReference,
-                'request_ip' => $faker->ipv4(),
-                'status' => $status,
+                'type' => $type,
+                'provider_name' => $providerName,
+                'provider_id' => $providerId,
+                'product_id' => $productId,
+                'product_category' => $productCategory,
                 'amount' => $amount,
+                'status' => $status,
+                'description' => $description,
+                'api_response' => $status === 'SUCCESS' ? 'Transaction successful' : "Transaction {$status}",
+                'balance_before' => (string) $balanceBefore,
+                'balance_after' => (string) ($wallet->fresh()->balance ?? $balanceBefore),
+                'metadata' => $metadata,
             ]);
         }
     }
 }
+

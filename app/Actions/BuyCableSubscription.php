@@ -13,8 +13,8 @@ class BuyCableSubscription
     {
 
         if(config('app.test_mode')){
-            $transaction->update(['status'=> 'success','api_response' => 'Success Test Mode']);
-            return 'success';
+            $transaction->update(['status'=> 'SUCCESS','api_response' => 'Success Test Mode']);
+            return 'SUCCESS';
         }
 
         $apiModel = null;

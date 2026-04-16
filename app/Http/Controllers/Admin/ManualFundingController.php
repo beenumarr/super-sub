@@ -6,7 +6,6 @@ use App\Models\User;
 use Inertia\Inertia;
 use Inertia\Response;
 use App\Models\Transaction;
-use App\Models\WalletTransaction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ManualFundingRequest;
 use App\Http\Resources\Admin\WalletTransactionResource;
@@ -26,27 +25,26 @@ class ManualFundingController extends Controller
         $method = request('method');
 
 
-        $data = WalletTransaction::with('transaction','user')->orderBy('updated_at', 'desc');
+        $data = Transaction::with('user')
+            ->where('type', 'WALLET')
+            ->orderBy('updated_at', 'desc');
 
         if ($from && $to) {
             $data->whereBetween('updated_at', [$from . ' 00:00:00', $to . ' 23:59:59']);
         }
 
-        if($method && $method === 'monnify'){
-            $data->whereNotIn('method', ['MANUAL_FUNDING_AND_DEBIT', 'WALLET_TRANSFER']);
-        }else if($method && $method === 'manual-funding'){
-            $data->where('method', 'MANUAL_FUNDING_AND_DEBIT');
-
-        }else if($method && $method === 'wallet-transfer'){
-            $data->where('method', 'WALLET_TRANSFER');
-
-        }else{
-            $data->where('method', 'MANUAL_FUNDING_AND_DEBIT');
-
+        if ($method && $method === 'monnify') {
+            $data->whereNotIn('metadata->method', ['MANUAL_FUNDING_AND_DEBIT', 'WALLET_TRANSFER']);
+        } else if ($method && $method === 'manual-funding') {
+            $data->where('metadata->method', 'MANUAL_FUNDING_AND_DEBIT');
+        } else if ($method && $method === 'wallet-transfer') {
+            $data->where('metadata->method', 'WALLET_TRANSFER');
+        } else {
+            $data->where('metadata->method', 'MANUAL_FUNDING_AND_DEBIT');
         }
 
-        if($type){
-            $data->where('type', $type);
+        if ($type) {
+            $data->where('metadata->ledger_type', $type);
         }
 
 
@@ -78,28 +76,30 @@ class ManualFundingController extends Controller
 
         $balance_after = $wallet->balance;
 
+        $walletType = $data['wallet_type'] ?? 'balance';
 
          // Store Transaction Records
-        $transactionable = WalletTransaction::create([
-            'user_id' => auth()->user()->id,
-            'wallet_id' => $user->wallet->id,
-            'amount' => $data['type'] === 'debit'? - $data['amount'] : $data['amount'],
-            'type'=> $data['type'],
-            'method'=> 'MANUAL_FUNDING_AND_DEBIT',
-            'payment_gateway'=> 'admin-manual'
+        $reference = $this->generateRef();
 
-        ]);
-
-        // Store General Transaction
-        $transactionable->transaction()->create([
-            'reference'=> $this->generateRef(),
+        Transaction::create([
+            'reference_id' => $reference,
             'user_id' => $user->id,
-            'amount' => $data['type'] === 'debit'? - $data['amount'] : $data['amount'],
-            'status' => 'success',
-            'api_response'=> "Manual Funding / Debit ". $data['wallet_type']?? 'Balance' . " " . $data['amount'],
-            'description'=> "Manual Funding / Debit ". $data['wallet_type']?? "Balance" . " " . $data['amount'],
-            'balance_before'=> $balance_before,
-            'balance_after'=> $balance_after,
+            'type' => 'WALLET',
+            'amount' => (float) $data['amount'],
+            'status' => 'SUCCESS',
+            'provider_name' => 'SYSTEM',
+            'provider_reference' => $reference,
+            'api_response' => "Manual {$data['type']} {$walletType} {$data['amount']}",
+            'description' => "Manual {$data['type']} {$walletType} {$data['amount']}",
+            'balance_before' => $balance_before,
+            'balance_after' => $balance_after,
+            'metadata' => [
+                'ledger_type' => $data['type'],
+                'method' => 'MANUAL_FUNDING_AND_DEBIT',
+                'payment_gateway' => 'admin-manual',
+                'wallet_type' => $walletType,
+                'funded_by_user_id' => auth()->id(),
+            ],
         ]);
 
 
@@ -111,7 +111,7 @@ class ManualFundingController extends Controller
 
     private function generateRef() {
         $number = 'WT'.now()->month.now()->year.mt_rand(100000, 999999);
-        if (Transaction::wherereference($number)->exists()){
+        if (Transaction::where('reference_id', $number)->exists()){
             return $this->generateRef();
         }
         return $number;

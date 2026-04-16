@@ -6,9 +6,6 @@ use DateTimeZone;
 use Carbon\Carbon;
 use App\Models\Transaction;
 
-
-
-
 class TransactionHelpers
 {
 
@@ -33,13 +30,18 @@ class TransactionHelpers
     {
 
         $transaction->update([
-            'status'=> 'failed',
-            'api_response'=> $response ?? 'No Response'
+            'status' => 'FAILED',
+            'api_response' => $response ?? 'No Response',
         ]);
 
-        $wallet = auth()->user()->wallet;
-        $wallet->increment('balance', $transaction->amount);
-        $transaction->increment('balance_after', floatval($transaction->amount));
+        $wallet = $transaction->user?->wallet;
+        if ($wallet) {
+            $wallet->increment('balance', (float) $transaction->amount);
+        }
+
+        if (!is_null($transaction->balance_after)) {
+            $transaction->increment('balance_after', (float) $transaction->amount);
+        }
 
     }
 

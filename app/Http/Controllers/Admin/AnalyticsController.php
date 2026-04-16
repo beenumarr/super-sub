@@ -4,14 +4,9 @@ namespace App\Http\Controllers\Admin;
 use App\Models\User;
 use Inertia\Inertia;
 use App\Models\UserPackage;
-use App\Models\WalletTransaction;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Admin\UserAnalyticsResource;
-use App\Models\AirtimeTransaction;
-use App\Models\CableSubscriptionTransaction;
-use App\Models\DataTransaction;
-use App\Models\ElectricityBillTransaction;
 use App\Models\Transaction;
 use Illuminate\Support\Facades\Request as FilterRequest;
 
@@ -22,24 +17,18 @@ class AnalyticsController extends Controller
             $pageSize = request('pageSize', 50);
             $currentPage = request('page', 1);
 
-            $transactionTypes = [
-                AirtimeTransaction::class,
-                DataTransaction::class,
-                ElectricityBillTransaction::class,
-                CableSubscriptionTransaction::class
-            ];
-
-
             // Total Wallet Fund Sum and Count
             $totalFund = Transaction::select('user_id', DB::raw('SUM(amount) as total_amount'), DB::raw('COUNT(*) as total_count'))
-            ->whereHasMorph('transactionable', WalletTransaction::class, function ($query) { $query->where('type', 'credit');})
+            ->where('type', 'WALLET')
+            ->where('status', 'SUCCESS')
+            ->where('metadata->ledger_type', 'credit')
             ->groupBy('user_id');
 
 
             // Total Spend Sum
             $totalSpend = Transaction::select('user_id', DB::raw('SUM(amount) as total_amount'), DB::raw('COUNT(*) as total_count'))
-            ->where('status', 'success')
-            ->whereHasMorph('transactionable', $transactionTypes)
+            ->where('status', 'SUCCESS')
+            ->whereNotIn('type', ['WALLET', 'BONUS_WALLET'])
             ->groupBy('user_id');
 
 
@@ -83,24 +72,19 @@ class AnalyticsController extends Controller
 
     public function viewUser(User $user)
     {
-        $transactionTypes = [
-            AirtimeTransaction::class,
-            DataTransaction::class,
-            ElectricityBillTransaction::class,
-            CableSubscriptionTransaction::class
-        ];
-
         // Total Wallet Fund Sum and Count
         $totalFund = Transaction::select(DB::raw('SUM(amount) as total_amount'), DB::raw('COUNT(*) as total_count'))
             ->where('user_id', $user->id)
-            ->whereHasMorph('transactionable', WalletTransaction::class, function ($query) { $query->where('type', 'credit');})
+            ->where('type', 'WALLET')
+            ->where('status', 'SUCCESS')
+            ->where('metadata->ledger_type', 'credit')
             ->first();
 
         // Total Spend Sum
         $totalSpend = Transaction::select(DB::raw('SUM(amount) as total_amount'), DB::raw('COUNT(*) as total_count'))
             ->where('user_id', $user->id)
-            ->where('status', 'success')
-            ->whereHasMorph('transactionable', $transactionTypes)
+            ->where('status', 'SUCCESS')
+            ->whereNotIn('type', ['WALLET', 'BONUS_WALLET'])
             ->first();
 
         $user->load('wallet', 'fundingAccounts', 'package');
@@ -113,10 +97,10 @@ class AnalyticsController extends Controller
             ->map(function ($transaction) {
                 return [
                     'id' => $transaction->id,
-                    'transactionable_type' => class_basename($transaction->transactionable_type),
+                    'type' => $transaction->type,
                     'amount' => $transaction->amount,
                     'status' => $transaction->status,
-                    'reference' => $transaction->reference,
+                    'reference_id' => $transaction->reference_id,
                     'created_at' => $transaction->created_at,
                 ];
             });

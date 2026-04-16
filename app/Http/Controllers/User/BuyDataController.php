@@ -11,7 +11,7 @@ use Illuminate\Support\Str;
 use App\Models\DataPlanType;
 use Illuminate\Http\Request;
 use App\Models\MobileNetwork;
-use App\Models\DataTransaction;
+use App\Models\Transaction;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
@@ -105,7 +105,7 @@ class BuyDataController extends Controller
 
         $status = $this->buyData->handle($transaction);
 
-       if($status != 'success'){
+       if($status !== 'SUCCESS'){
 
            $error = $transaction->api_response;
 
@@ -144,7 +144,7 @@ class BuyDataController extends Controller
 
         $status = $this->buyData->handle($transaction);
 
-        if($status === 'success'){
+        if($status === 'SUCCESS'){
 
             return response(new ApiTransactionResource($transaction), 200);
 
@@ -205,26 +205,36 @@ class BuyDataController extends Controller
 
             $balance = $this->helpers->validateBalanceAndDeductAmount($user->id, $plan->useramount);
 
-            $transactionable = DataTransaction::create([
-                'phone_number' => $data['phone_number'],
-                'mobile_network_id' => $data['mobile_network'],
-                'data_plan_id' => $plan->id,
-            ]);
-
             $transactionData = [
-                'reference' => $this->helpers->generateTransactionRef('DT'),
+                'reference_id' => $this->helpers->generateTransactionRef('DT'),
                 'user_id' => $user->id,
+                'type' => 'DATA',
+                'provider_name' => $plan->network,
+                'provider_id' => (string) $data['mobile_network'],
+                'product_id' => (string) $plan->id,
+                'product_category' => 'DATA',
                 'amount' => $plan->useramount,
-                'description'=>  $description,
-                'balance_before' => (float)$balance['before'],
-                'balance_after' => (float)$balance['after'],
+                'status' => 'PENDING',
+                'description' => $description,
+                'balance_before' => (float) $balance['before'],
+                'balance_after' => (float) $balance['after'],
+                'api_process_started_at' => now(),
+                'metadata' => [
+                    'beneficiary' => $data['phone_number'],
+                    'network_id' => $data['mobile_network'],
+                    'network' => $plan->network,
+                    'plan_id' => $plan->id,
+                    'plan_name' => $plan->name ?? null,
+                    'plan_category' => $plan->planType?->name ?? null,
+                    'dispense_channel' => $data['dispense_channel'] ?? null,
+                ],
             ];
 
             if (Schema::hasColumn('transactions', 'request_ip')) {
                 $transactionData['request_ip'] = $request->ip();
             }
 
-            $transaction = $transactionable->transaction()->create($transactionData);
+            $transaction = Transaction::create($transactionData);
 
             DB::commit();
 

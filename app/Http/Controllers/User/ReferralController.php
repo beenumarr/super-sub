@@ -7,7 +7,6 @@ use Inertia\Inertia;
 use App\Models\Referral;
 use App\Models\Transaction;
 use Illuminate\Http\Request;
-use App\Models\WalletTransaction;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ReferralResource;
 use Illuminate\Validation\ValidationException;
@@ -81,24 +80,26 @@ class ReferralController extends Controller
         $balance_after = $wallet->balance;
 
 
-         // Store Transaction Records
-        $transactionable = WalletTransaction::create([
-            'user_id' => $user->id,
-            'wallet_id' => $user->wallet->id,
-            'amount' => $data['amount'],
-            'type'=> 'credit',
-            'method'=> 'BONUS WELLET WITHDRAWAL',
-        ]);
+        $reference = $this->generateRef();
 
-        // Store General Transaction
-        $transactionable->transaction()->create([
-            'reference'=> $this->generateRef(),
+        Transaction::create([
+            'reference_id' => $reference,
             'user_id' => $user->id,
-            'amount' => $data['amount'],
-            'status' => 'success',
-            'api_response'=> "Bonus wallet withdrawal",
-            'balance_before'=> $balance_before,
-            'balance_after'=> $balance_after,
+            'type' => 'WALLET',
+            'amount' => (float) $data['amount'],
+            'status' => 'SUCCESS',
+            'provider_name' => 'SYSTEM',
+            'provider_reference' => $reference,
+            'description' => 'Bonus wallet withdrawal',
+            'api_response' => 'Bonus wallet withdrawal',
+            'balance_before' => $balance_before,
+            'balance_after' => $balance_after,
+            'metadata' => [
+                'ledger_type' => 'credit',
+                'method' => 'BONUS_WALLET_WITHDRAWAL',
+                'wallet_type' => 'balance',
+                'source' => 'bonus_balance',
+            ],
         ]);
 
 
@@ -110,7 +111,7 @@ class ReferralController extends Controller
 
     private function generateRef() {
         $number = 'WT'.now()->month.now()->year.mt_rand(100000, 999999);
-        if (Transaction::wherereference($number)->exists()){
+        if (Transaction::where('reference_id', $number)->exists()){
             return $this->generateRef();
         }
         return $number;

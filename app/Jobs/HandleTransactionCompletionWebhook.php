@@ -6,7 +6,6 @@ use Exception;
 use App\Models\User;
 use App\Models\Transaction;
 use Illuminate\Bus\Queueable;
-use App\Models\WalletTransaction;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Queue\SerializesModels;
@@ -82,32 +81,24 @@ class HandleTransactionCompletionWebhook implements ShouldQueue
             $wallet->increment('balance', $data['amount']);
             $balance_after = $wallet->balance;
 
-            // Insert Wallet Transaction
-            $transactionable = WalletTransaction::create([
+            Transaction::create([
+                'reference_id' => $this->transactionHelpers->generateTransactionRef('WT'),
                 'user_id' => $user->id,
-                'wallet_id' => $wallet->id,
+                'type' => 'WALLET',
                 'amount' => $data['amount'],
-                'type' => 'credit',
-                'method' => $data['paymentMethod'],
-                'payment_gateway' => 'Monnify',
+                'status' => 'SUCCESS',
+                'provider_name' => 'Monnify',
+                'provider_reference' => $data['transactionReference'],
+                'api_response' => $data['description'],
+                'description' => $data['description'],
+                'balance_before' => $balance_before,
+                'balance_after' => $balance_after,
+                'metadata' => [
+                    'ledger_type' => 'credit',
+                    'method' => $data['paymentMethod'],
+                    'payment_gateway' => 'Monnify',
+                ],
             ]);
-
-
-                Transaction::insert([
-                    'reference' => $this->transactionHelpers->generateTransactionRef('WT'),
-                    'user_id' => $user->id,
-                    'amount' => $data['amount'],
-                    'status' => 'success',
-                    'api_reference' => $data['transactionReference'],
-                    'api_response' => $data['description'],
-                    'description' => $data['description'],
-                    'balance_before' => $balance_before,
-                    'balance_after' => $balance_after,
-                    'transactionable_id' => $transactionable->id,
-                    'transactionable_type' => get_class($transactionable),
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
 
 
             DB::commit();

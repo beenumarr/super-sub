@@ -8,7 +8,7 @@ use Inertia\Response;
 use App\Models\DataPlan;
 use Illuminate\Http\Request;
 use App\Models\MobileNetwork;
-use App\Models\DataTransaction;
+use App\Models\Transaction;
 use App\Models\TransactionApi;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -120,7 +120,7 @@ class SmileTransactionController extends Controller
         // Process the transaction using the ArewaGlobal API
         $status = $this->buySmile->handle($transaction, $api, $request->actype);
 
-        if ($status !== 'success') {
+        if ($status !== 'SUCCESS') {
             $error = $transaction->api_response;
 
             throw ValidationException::withMessages([
@@ -158,7 +158,7 @@ class SmileTransactionController extends Controller
 
         $status = $this->buySmile->handle($transaction, $api, $data['actype']);
 
-        if ($status === 'success') {
+        if ($status === 'SUCCESS') {
             return response(new ApiTransactionResource($transaction), 200);
         }
 
@@ -198,26 +198,36 @@ class SmileTransactionController extends Controller
 
             $balance = $this->helpers->validateBalanceAndDeductAmount($user->id, $amount);
 
-            $transactionable = DataTransaction::create([
-                'phone_number' => $data['phone_number'],
-                'mobile_network_id' => $smileNetwork->id,
-                'data_plan_id' => $plan->id,
-            ]);
-
             $transactionData = [
-                'reference' => $this->helpers->generateTransactionRef('SM'),
+                'reference_id' => $this->helpers->generateTransactionRef('SM'),
                 'user_id' => $user->id,
                 'amount' => $amount,
+                'type' => 'DATA',
+                'provider_name' => $smileNetwork->name,
+                'provider_id' => (string) $smileNetwork->id,
+                'product_category' => 'DATA',
+                'product_id' => (string) $plan->id,
+                'status' => 'PENDING',
                 'description' => $description,
                 'balance_before' => (float) $balance['before'],
                 'balance_after' => (float) $balance['after'],
+                'api_process_started_at' => now(),
+                'metadata' => [
+                    'beneficiary' => $data['phone_number'],
+                    'network_id' => $smileNetwork->id,
+                    'network' => $smileNetwork->name,
+                    'plan_id' => $plan->id,
+                    'plan_name' => $plan->name ?? null,
+                    'plan_category' => 'SMILE',
+                    'actype' => $data['actype'] ?? null,
+                ],
             ];
 
             if (Schema::hasColumn('transactions', 'request_ip')) {
                 $transactionData['request_ip'] = $request->ip();
             }
 
-            $transaction = $transactionable->transaction()->create($transactionData);
+            $transaction = Transaction::create($transactionData);
 
             DB::commit();
 

@@ -95,6 +95,8 @@ class ProcessDailyBilling implements ShouldQueue
                         ? "Billed ₦{$todayUsageFee}. Insufficient balance. ₦" . abs($newBalance) . " moved to outstanding balance."
                         : "Billed ₦{$todayUsageFee}. Balance: ₦{$newBalance}",
                     'metadata' => [
+                        'ledger_type' => 'debit',
+                        'method' => 'BILLING',
                         'billing_date' => now()->toDateString(),
                         'previous_balance' => $currentBalance,
                         'amount_billed' => $todayUsageFee,
