@@ -58,7 +58,11 @@ class TransactionHelper
     public function validateUserSpendingLimit(User $user, $amount)
     {
         // Sum all transactions of today for the user
-        $totalSpentToday = $user->transactions()->whereToday()->whereNot('transactionable_type', "App\\Models\\WalletTransaction")->sum('amount');
+        $totalSpentToday = $user->transactions()
+            ->whereToday()
+            ->whereNotIn('type', ['WALLET', 'BONUS_WALLET'])
+            ->where('status', 'SUCCESS')
+            ->sum('amount');
 
         // Get the user's daily spending limit from the package
         $dailySpendingLimit = $user->package->daily_spending_limit;

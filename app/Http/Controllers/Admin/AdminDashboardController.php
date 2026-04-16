@@ -8,18 +8,9 @@ use Inertia\Inertia;
 use Inertia\Response;
 use App\Models\Wallet;
 use App\Models\Transaction;
-use App\Models\DataTransaction;
-use App\Models\AirtimeTransaction;
-use App\Models\WalletTransaction;
-use App\Models\CableSubscriptionTransaction;
-use App\Models\ElectricityBillTransaction;
-use App\Models\ResultCheckerTransaction;
-use App\Models\MobileNetwork;
-use App\Models\CableNetwork;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\DB;
 
 class AdminDashboardController extends Controller
 {
@@ -118,12 +109,12 @@ class AdminDashboardController extends Controller
         $transactionsQuery = Transaction::whereBetween('created_at', [$startDate, $endDate]);
 
         $transactionStats = [
-            'success' => $transactionsQuery->clone()->where('status', 'success')->count(),
-            'failed' => $transactionsQuery->clone()->where('status', 'failed')->count(),
-            'pending' => $transactionsQuery->clone()->where('status', 'pending')->count(),
-            'success_amount' => $transactionsQuery->clone()->where('status', 'success')->sum('amount'),
-            'failed_amount' => $transactionsQuery->clone()->where('status', 'failed')->sum('amount'),
-            'data_transactions' => $transactionsQuery->clone()->where('transactionable_type', 'App\Models\DataTransaction')->count(),
+            'success' => $transactionsQuery->clone()->where('status', 'SUCCESS')->count(),
+            'failed' => $transactionsQuery->clone()->where('status', 'FAILED')->count(),
+            'pending' => $transactionsQuery->clone()->where('status', 'PENDING')->count(),
+            'success_amount' => $transactionsQuery->clone()->where('status', 'SUCCESS')->sum('amount'),
+            'failed_amount' => $transactionsQuery->clone()->where('status', 'FAILED')->sum('amount'),
+            'data_transactions' => $transactionsQuery->clone()->where('type', 'DATA')->count(),
         ];
 
         // Wallet statistics
@@ -197,78 +188,74 @@ class AdminDashboardController extends Controller
         $breakdown = [];
 
         $dataTransactions = Transaction::whereBetween('created_at', [$startDate, $endDate])
-            ->where('transactionable_type', 'App\Models\DataTransaction')
-            ->with(['transactionable.network'])
+            ->where('type', 'DATA')
             ->get()
-            ->groupBy(function($transaction) {
-                return $transaction->transactionable->network->name ?? 'Unknown';
+            ->groupBy(function ($transaction) {
+                return ($transaction->metadata['network'] ?? null) ?: ($transaction->provider_name ?? 'Unknown');
             });
 
         $dataStats = [];
         foreach ($dataTransactions as $networkName => $transactions) {
             $dataStats[$networkName] = [
-                'success' => $transactions->where('status', 'success')->count(),
-                'failed' => $transactions->where('status', 'failed')->count(),
-                'pending' => $transactions->where('status', 'pending')->count(),
-                'total_amount' => $transactions->where('status', 'success')->sum('amount'),
+                'success' => $transactions->where('status', 'SUCCESS')->count(),
+                'failed' => $transactions->where('status', 'FAILED')->count(),
+                'pending' => $transactions->where('status', 'PENDING')->count(),
+                'total_amount' => $transactions->where('status', 'SUCCESS')->sum('amount'),
             ];
         }
         $breakdown['data'] = $dataStats;
 
         $airtimeTransactions = Transaction::whereBetween('created_at', [$startDate, $endDate])
-            ->where('transactionable_type', 'App\Models\AirtimeTransaction')
-            ->with(['transactionable.network'])
+            ->where('type', 'AIRTIME')
             ->get()
-            ->groupBy(function($transaction) {
-                return $transaction->transactionable->network->name ?? 'Unknown';
+            ->groupBy(function ($transaction) {
+                return ($transaction->metadata['network'] ?? null) ?: ($transaction->provider_name ?? 'Unknown');
             });
 
         $airtimeStats = [];
         foreach ($airtimeTransactions as $networkName => $transactions) {
             $airtimeStats[$networkName] = [
-                'success' => $transactions->where('status', 'success')->count(),
-                'failed' => $transactions->where('status', 'failed')->count(),
-                'pending' => $transactions->where('status', 'pending')->count(),
-                'total_amount' => $transactions->where('status', 'success')->sum('amount'),
+                'success' => $transactions->where('status', 'SUCCESS')->count(),
+                'failed' => $transactions->where('status', 'FAILED')->count(),
+                'pending' => $transactions->where('status', 'PENDING')->count(),
+                'total_amount' => $transactions->where('status', 'SUCCESS')->sum('amount'),
             ];
         }
         $breakdown['airtime'] = $airtimeStats;
 
         $cableTransactions = Transaction::whereBetween('created_at', [$startDate, $endDate])
-            ->where('transactionable_type', 'App\Models\CableSubscriptionTransaction')
-            ->with(['transactionable.network'])
+            ->where('type', 'CABLE')
             ->get()
-            ->groupBy(function($transaction) {
-                return $transaction->transactionable->network->name ?? 'Unknown';
+            ->groupBy(function ($transaction) {
+                return ($transaction->metadata['network'] ?? null) ?: ($transaction->provider_name ?? 'Unknown');
             });
 
         $cableStats = [];
         foreach ($cableTransactions as $networkName => $transactions) {
             $cableStats[$networkName] = [
-                'success' => $transactions->where('status', 'success')->count(),
-                'failed' => $transactions->where('status', 'failed')->count(),
-                'pending' => $transactions->where('status', 'pending')->count(),
-                'total_amount' => $transactions->where('status', 'success')->sum('amount'),
+                'success' => $transactions->where('status', 'SUCCESS')->count(),
+                'failed' => $transactions->where('status', 'FAILED')->count(),
+                'pending' => $transactions->where('status', 'PENDING')->count(),
+                'total_amount' => $transactions->where('status', 'SUCCESS')->sum('amount'),
             ];
         }
         $breakdown['cable'] = $cableStats;
 
 
         $walletTransactions = Transaction::whereBetween('created_at', [$startDate, $endDate])
-            ->where('transactionable_type', 'App\Models\WalletTransaction')
-            ->with(['transactionable'])
+            ->where('type', 'WALLET')
             ->get()
-            ->groupBy(function($transaction) {
-                return $transaction->transactionable->payment_gateway ?? 'Unknown';
+            ->groupBy(function ($transaction) {
+                return $transaction->metadata['payment_gateway'] ?? $transaction->provider_name ?? 'Unknown';
             });
 
         $walletStats = [];
         foreach ($walletTransactions as $gatewayName => $transactions) {
             $walletStats[$gatewayName] = [
-                'success' => $transactions->where('status', 'success')->count(),
-                'failed' => $transactions->where('status', 'failed')->count(),
-                'pending' => $transactions->where('status', 'pending')->count(),
-                'total_amount' => $transactions->where('status', 'success')->sum('amount'),
+                'success' => $transactions->where('status', 'SUCCESS')->count(),
+                'failed' => $transactions->where('status', 'FAILED')->count(),
+                'pending' => $transactions->where('status', 'PENDING')->count(),
+                'total_amount' => $transactions->where('status', 'SUCCESS')->sum('amount'),
             ];
         }
         $breakdown['wallet'] = $walletStats;
@@ -279,43 +266,36 @@ class AdminDashboardController extends Controller
     private function getWalletFundingStats($startDate, $endDate)
     {
         $fundingTransactions = Transaction::whereBetween('created_at', [$startDate, $endDate])
-            ->where('transactionable_type', 'App\Models\WalletTransaction')
-            ->with('transactionable')
+            ->where('type', 'WALLET')
+            ->where('metadata->ledger_type', 'credit')
             ->get();
 
         return [
-            'total_funded' => $fundingTransactions->where('status', 'success')->sum('amount'),
-            'funding_count' => $fundingTransactions->where('status', 'success')->count(),
-            'unique_users_funded' => $fundingTransactions->where('status', 'success')->pluck('user_id')->unique()->count(),
-            'average_funding' => $fundingTransactions->where('status', 'success')->avg('amount') ?? 0,
+            'total_funded' => $fundingTransactions->where('status', 'SUCCESS')->sum('amount'),
+            'funding_count' => $fundingTransactions->where('status', 'SUCCESS')->count(),
+            'unique_users_funded' => $fundingTransactions->where('status', 'SUCCESS')->pluck('user_id')->unique()->count(),
+            'average_funding' => $fundingTransactions->where('status', 'SUCCESS')->avg('amount') ?? 0,
         ];
     }
 
     private function getRecentTransactions($limit = 10)
     {
-        return Transaction::with(['user', 'transactionable'])
-            ->whereNot('transactionable_type', 'App\Models\BonusWalletTransaction')
+        return Transaction::with(['user'])
+            ->whereNot('type', 'BONUS_WALLET')
             ->latest()
             ->limit($limit)
             ->get()
             ->map(function ($transaction) {
-                $networkName = 'N/A';
-
-                if ($transaction->transactionable_type === 'App\Models\DataTransaction' && $transaction->transactionable->network) {
-                    $networkName = $transaction->transactionable->network->name;
-                } elseif ($transaction->transactionable_type === 'App\Models\AirtimeTransaction' && $transaction->transactionable->network) {
-                    $networkName = $transaction->transactionable->network->name;
-                } elseif ($transaction->transactionable_type === 'App\Models\CableSubscriptionTransaction' && $transaction->transactionable->network) {
-                    $networkName = $transaction->transactionable->network->name;
-                }
+                $metadata = $transaction->metadata ?? [];
+                $networkName = $metadata['network'] ?? $transaction->provider_name ?? 'N/A';
 
                 return [
                     'id' => $transaction->id,
-                    'reference_id' => $transaction->reference,
+                    'reference_id' => $transaction->reference_id,
                     'user' => $transaction->user->name,
-                    'description' => $transaction->description ?? $transaction->transactionable->description ?? 'Transaction',
+                    'description' => $transaction->description ?? 'Transaction',
                     'date' => $transaction->created_at->toISOString(),
-                    'status' => strtoupper($transaction->status),
+                    'status' => $transaction->status,
                     'amount' => $transaction->amount,
                     'network' => $networkName,
                     'api_response' => $transaction->api_response ?? '',

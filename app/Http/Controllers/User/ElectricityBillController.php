@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use App\Models\ElectricityDistributor;
 use Illuminate\Support\Facades\Schema;
-use App\Models\ElectricityBillTransaction;
+use App\Models\Transaction;
 use Illuminate\Http\Request as HttpRequest;
 use App\Utils\Transaction\TransactionHelper;
 use Illuminate\Validation\ValidationException;
@@ -57,7 +57,7 @@ class ElectricityBillController extends Controller
 
         $status = $this->payElectricityBill->handle($transaction);
 
-       if($status != 'success'){
+       if($status !== 'SUCCESS'){
 
            $error = $transaction->api_response;
 
@@ -112,30 +112,34 @@ class ElectricityBillController extends Controller
             DB::beginTransaction();
 
             $balance = $this->helpers->validateBalanceAndDeductAmount($user->id, $amount);
-
-
-            $transactionable = ElectricityBillTransaction::create([
-                'electricity_distributor_id'=> $data['electricity_distributor_id'],
-                'meter_number' => $data['meter_number'],
-                'meter_type' => $data['meter_type'],
-                // 'amount' => $amount,
-                'name' => $data['name'],
-                'address' => $data['address'] ?? 'Nill',
-                'phone_number' => auth()->user()->phone,
-            ]);
-
-
-            $description = "{$data['amount']} {$transactionable->distributor->name} Bill Payment  to {$data['meter_number']} {$data['meter_type']} ({$data['name']})";
+            $description = "{$data['amount']} {$distributor->name} Bill Payment to {$data['meter_number']} {$data['meter_type']} ({$data['name']})";
 
 
 
             $transactionData = [
-                'reference' => $this->helpers->generateTransactionRef('EB'),
+                'reference_id' => $this->helpers->generateTransactionRef('EB'),
                 'user_id' => $user->id,
-                'amount' => $data['amount'],
-                'description'=>  $description,
+                'type' => 'ELECTRICITY',
+                'provider_name' => $distributor->name,
+                'provider_id' => (string) $distributor->id,
+                'product_category' => 'ELECTRICITY',
+                'amount' => $amount,
+                'status' => 'PENDING',
+                'description' => $description,
                 'balance_before' => (float)$balance['before'],
                 'balance_after' => (float)$balance['after'],
+                'api_process_started_at' => now(),
+                'metadata' => [
+                    'electricity_distributor_id' => $distributor->id,
+                    'distributor' => $distributor->name,
+                    'meter_number' => $data['meter_number'],
+                    'meter_type' => $data['meter_type'],
+                    'name' => $data['name'],
+                    'address' => $data['address'] ?? 'Nill',
+                    'phone_number' => $user->phone ?? null,
+                    'beneficiary' => $data['meter_number'],
+                    'requested_amount' => (float) $data['amount'],
+                ],
             ];
 
 
@@ -145,7 +149,7 @@ class ElectricityBillController extends Controller
                 $transactionData['request_ip'] = $request->ip();
             }
 
-            $transaction = $transactionable->transaction()->create($transactionData);
+            $transaction = Transaction::create($transactionData);
 
 
             DB::commit();

@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ExamResource;
 use App\Models\ResultCheckerTransaction;
+use App\Models\Transaction;
 use App\Utils\Transaction\TransactionHelper;
 use App\Http\Resources\ApiTransactionResource;
 use Illuminate\Validation\ValidationException;
@@ -46,7 +47,7 @@ class ResultCheckerController extends Controller
 
         $status = $this->buyResultChecker->handle($transaction);
 
-       if($status != 'success'){
+       if($status !== 'SUCCESS'){
 
            $error = $transaction->api_response;
 
@@ -85,7 +86,7 @@ class ResultCheckerController extends Controller
         $status = $this->buyResultChecker->handle($transaction);
 
 
-        if($status != 'success'){
+        if($status !== 'SUCCESS'){
                 $error = $transaction->api_response;
 
                 throw ValidationException::withMessages([
@@ -112,24 +113,30 @@ class ResultCheckerController extends Controller
 
                 $balance = $this->helpers->validateBalanceAndDeductAmount($user->id, $amount);
 
-                $transactionable = ResultCheckerTransaction::create([
-                    'exam_type_id' => $examType->id,
-                    'exam_type' => $examType->name,
-                    "quantity" => $data['quantity']
-                ]);
-
             $description = "$examType->name Pin  Purchase";
 
             $transactionData = [
-                'reference' => $this->helpers->generateTransactionRef('RC'),
+                'reference_id' => $this->helpers->generateTransactionRef('RC'),
                 'user_id' => $user->id,
+                'type' => 'RESULT_CHECKER',
+                'provider_name' => $examType->name,
+                'provider_id' => (string) $examType->id,
+                'product_category' => 'RESULT_CHECKER',
                 'amount' => $amount,
+                'status' => 'PENDING',
                 'description'=>  $description,
                 'balance_before' => (float)$balance['before'],
                 'balance_after' => (float)$balance['after'],
+                'api_process_started_at' => now(),
+                'metadata' => [
+                    'exam_type_id' => $examType->id,
+                    'exam_type' => $examType->name,
+                    'quantity' => (int) $data['quantity'],
+                    'beneficiary' => $user->phone ?? null,
+                ],
             ];
 
-            $transaction = $transactionable->transaction()->create($transactionData);
+            $transaction = Transaction::create($transactionData);
 
             DB::commit();
 

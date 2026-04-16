@@ -12,6 +12,7 @@ use App\Http\Resources\TransactionResource;
 use App\Http\Resources\A2CTransactionResource;
 use App\Http\Resources\Admin\AdminTransactionResource;
 use Illuminate\Support\Facades\Request as FilterRequest;
+use Illuminate\Support\Str;
 
 class AdminTransactionController extends Controller
 {
@@ -23,14 +24,28 @@ class AdminTransactionController extends Controller
         $to = request('to');
         $type = request('transaction_type');
 
-            $data = Transaction::whereNot('transactionable_type', "App\\Models\\BonusWalletTransaction")->with('user','transactionable');
+        $data = Transaction::whereNot('type', 'BONUS_WALLET')->with('user');
 
         if ($from && $to) {
             $data->whereBetween('updated_at', [$from . ' 00:00:00', $to . ' 23:59:59']);
         }
 
         if ($type) {
-            $data->where('transactionable_type', "App\\Models\\" . $type);
+            $normalized = Str::upper($type);
+            $legacyModel = str_contains($type, '\\') ? class_basename($type) : $type;
+
+            $mapped = [
+                'DATATRANSACTION' => 'DATA',
+                'AIRTIMETRANSACTION' => 'AIRTIME',
+                'CABLESUBSCRIPTIONTRANSACTION' => 'CABLE',
+                'ELECTRICITYBILLTRANSACTION' => 'ELECTRICITY',
+                'ELECTRICITYTRANSACTION' => 'ELECTRICITY',
+                'RESULTCHECKERTRANSACTION' => 'RESULT_CHECKER',
+                'WALLETTRANSACTION' => 'WALLET',
+                'BONUSWALLETTRANSACTION' => 'BONUS_WALLET',
+            ][Str::upper($legacyModel)] ?? null;
+
+            $data->where('type', $mapped ?: $normalized);
         }
 
         if (!auth()->user()->isAdmin) {
@@ -63,77 +78,45 @@ class AdminTransactionController extends Controller
     {
 
         $request->validate([
-            'status'=> 'required|in:failed,success,refunded'
+            'status' => 'required|in:FAILED,SUCCESS,REFUNDED'
         ]);
 
-        if($request->status === 'refunded'){ // validate transactiontype in: Airtime, Data,
-
+        if ($request->status === 'REFUNDED') {
             $user = $transaction->user;
             $wallet = $user->wallet;
 
-            $balance_before = $wallet->balance;
+            $balanceBefore = (float) ($wallet->balance ?? 0);
+            $wallet->increment('balance', (float) $transaction->amount);
+            $balanceAfter = (float) $wallet->fresh()->balance;
 
-            $wallet->increment('balance', $transaction->amount);
-
-
-            $balance_after = $wallet->balance;
-
-            $newTransaction = $transaction->transactionable_type::create([
-                ...collect($transaction->transactionable)
+            Transaction::create([
+                'reference_id' => $this->generateRef(),
+                'user_id' => $user->id,
+                'type' => 'WALLET',
+                'amount' => (float) $transaction->amount,
+                'status' => 'SUCCESS',
+                'description' => "Refund for {$transaction->reference_id}",
+                'provider_name' => 'SYSTEM',
+                'provider_reference' => $transaction->reference_id,
+                'balance_before' => $balanceBefore,
+                'balance_after' => $balanceAfter,
+                'metadata' => [
+                    'ledger_type' => 'credit',
+                    'refunded_reference_id' => $transaction->reference_id,
+                ],
             ]);
-
-              // Store General Transaction
-            $newTransaction->transaction()->create([
-                    ...collect($transaction),
-                'status'=> 'refunded',
-                'reference'=> $this->generateRef(),
-                'balance_before'=> $balance_before,
-                'balance_after'=> $balance_after,
-                ]);
-
-                $transaction->update([
-                    'status' => 'failed'
-                ]);
-
-
-
-            // Create transaction for refunded
-
-        }elseif($request->status === 'failed'){ // validate transactiontype in: Airtime, Data,
-
-            $user = $transaction->user;
-            $wallet = $user->wallet;
-
-            $balance_before = $wallet->balance;
-
-            // $wallet->increment('balance', $transaction->amount);
 
             $transaction->update([
-                'status' => $request->status,
-                'api_response' => "Transaction failed",
+                'status' => 'REFUNDED',
+                'api_response' => 'Refunded manually',
             ]);
-
-
-        }elseif($request->status === 'success') {
-
-
-            $user = $transaction->user;
-            $wallet = $user->wallet;
-
-            $balance_before = $transaction->balance_before;
-
+        } else {
             $transaction->update([
                 'status' => $request->status,
-                'api_response' => "Transaction successful",
-                'balance_before' => $balance_before,
-                'balance_after' =>  (float)$balance_before - (float)$transaction->amount,
+                'api_response' => $request->status === 'SUCCESS'
+                    ? 'Transaction successful (manual override)'
+                    : 'Transaction failed (manual override)',
             ]);
-
-            $wallet->update(['balance'=>$transaction->balance_after]);
-
-            // $wallet->decrement('balance', $transaction->amount);
-
-
         }
 
 
@@ -145,7 +128,7 @@ class AdminTransactionController extends Controller
 
     private function generateRef() {
         $number = 'TX'.now()->month.now()->year.mt_rand(100000, 999999);
-        if (Transaction::wherereference($number)->exists()){
+        if (Transaction::where('reference_id', $number)->exists()){
             return $this->generateRef();
         }
         return $number;

@@ -8,7 +8,7 @@ use App\Models\Wallet;
 use Illuminate\Http\Request;
 use App\Models\FundingMethod;
 use App\Models\FundingAccount;
-use App\Models\WalletTransaction;
+use App\Models\Transaction;
 use App\Utils\User\AccountHelper;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
@@ -118,26 +118,26 @@ class WalletFundingController extends Controller
         $wallet->decrement('a2c_balance', $amount);
         $wallet->increment('balance', $amount);
         $balance_after = $wallet->balance;
+        $reference = $this->helpers->generateTransactionRef('ATC');
 
-        $transactionable = WalletTransaction::create([
-            'user_id' => auth()->user()->id,
-            'wallet_id' => $user->wallet->id,
-            'amount' => $amount,
-            'type'=> 'credit',
-            'method'=> 'AIRTIME_TO_CASH',
-            'payment_gateway'=> 'auto-pilot'
-        ]);
-
-        // // Store General Transaction
-        $transactionable->transaction()->create([
-            'reference'=> $this->helpers->generateTransactionRef('ATC'),
+        Transaction::create([
+            'reference_id' => $reference,
             'user_id' => $user->id,
+            'type' => 'WALLET',
             'amount' => $amount,
-            'status' => 'success',
-            'description'=> "Wallet Transfer". $amount. " from Airtime to Cash",
-            'api_response'=> "Wallet Transfer",
-            'balance_before'=> $balance_before,
-            'balance_after'=> $balance_after,
+            'status' => 'SUCCESS',
+            'description' => "Wallet transfer ₦{$amount} from Airtime to Cash",
+            'provider_name' => 'SYSTEM',
+            'provider_reference' => $reference,
+            'api_response' => 'Wallet Transfer',
+            'balance_before' => $balance_before,
+            'balance_after' => $balance_after,
+            'metadata' => [
+                'ledger_type' => 'credit',
+                'method' => 'AIRTIME_TO_CASH',
+                'payment_gateway' => 'auto-pilot',
+                'source' => 'a2c_balance',
+            ],
         ]);
 
         DB::commit();

@@ -7,7 +7,7 @@ use App\Models\User;
 use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Http\Request;
-use App\Models\WalletTransaction;
+use App\Models\Transaction;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
@@ -51,8 +51,7 @@ class WalletTransferController extends Controller
 
             $transaction = $this->performTransaction($request, $beneficiary, $data);
 
-            if ($transaction->status !== 'success') {
-                DB::rollBack();
+            if ($transaction->status !== 'SUCCESS') {
                 throw ValidationException::withMessages([
                     'status' => $transaction->api_response ?? 'Transaction failed. Please try again later.',
                 ]);
@@ -144,54 +143,56 @@ class WalletTransferController extends Controller
 
             $balance = $this->helpers->validateBalanceAndDeductAmount($sender->id, $data['amount']);
 
-            $senderTransactionable = WalletTransaction::create([
-                'user_id' => $sender->id,
-                'wallet_id' => $sender->wallet->id,
-                'amount' => $data['amount'],
-                'type' => 'debit',
-                'method' => 'WALLET_TRANSFER',
-                'payment_gateway' => 'internal',
-            ]);
-
             $senderTransactionData = [
-                'reference' => $senderRef,
+                'reference_id' => $senderRef,
                 'user_id' => $sender->id,
+                'type' => 'WALLET',
                 'amount' => $data['amount'],
-                'status'=> 'success',
+                'status' => 'SUCCESS',
                 'description' => $descriptionSender,
+                'provider_name' => 'SYSTEM',
+                'provider_reference' => $senderRef,
                 'api_response' => 'Wallet Transfer',
                 'balance_before' => (float)$balance['before'],
                 'balance_after' => (float)$balance['after'],
+                'metadata' => [
+                    'ledger_type' => 'debit',
+                    'method' => 'WALLET_TRANSFER',
+                    'payment_gateway' => 'internal',
+                    'counterparty_user_id' => $beneficiary->id,
+                    'counterparty_reference_id' => $beneficiaryRef,
+                ],
             ];
 
-            $transaction = $senderTransactionable->transaction()->create($senderTransactionData);
+            $transaction = Transaction::create($senderTransactionData);
 
             $beneficiaryWallet = $beneficiary->wallet;
             $beneficiaryBalanceBefore = $beneficiaryWallet->balance;
             $beneficiaryWallet->increment('balance', $data['amount']);
             $beneficiaryBalanceAfter = $beneficiaryWallet->balance;
 
-            $beneficiaryTransactionable = WalletTransaction::create([
-                'user_id' => $beneficiary->id,
-                'wallet_id' => $beneficiaryWallet->id,
-                'amount' => $data['amount'],
-                'type' => 'credit',
-                'method' => 'WALLET_TRANSFER',
-                'payment_gateway' => 'internal',
-            ]);
-
             $beneficiaryTransactionData = [
-                'reference' => $beneficiaryRef,
+                'reference_id' => $beneficiaryRef,
                 'user_id' => $beneficiary->id,
+                'type' => 'WALLET',
                 'amount' => $data['amount'],
-                'status'=> 'success',
+                'status' => 'SUCCESS',
                 'description' => $descriptionBeneficiary,
+                'provider_name' => 'SYSTEM',
+                'provider_reference' => $beneficiaryRef,
                 'api_response' => 'Wallet Transfer',
                 'balance_before' => (float)$beneficiaryBalanceBefore,
                 'balance_after' => (float)$beneficiaryBalanceAfter,
+                'metadata' => [
+                    'ledger_type' => 'credit',
+                    'method' => 'WALLET_TRANSFER',
+                    'payment_gateway' => 'internal',
+                    'counterparty_user_id' => $sender->id,
+                    'counterparty_reference_id' => $senderRef,
+                ],
             ];
 
-            $beneficiaryTransactionable->transaction()->create($beneficiaryTransactionData);
+            Transaction::create($beneficiaryTransactionData);
 
             DB::commit();
 

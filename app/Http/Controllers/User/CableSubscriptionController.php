@@ -13,6 +13,7 @@ use App\Http\Controllers\Controller;
 use App\Actions\BuyCableSubscription;
 use App\Models\CableSubscriptionPlan;
 use App\Models\ElectricityDistributor;
+use App\Models\Transaction;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Http\Request as HttpRequest;
 use App\Http\Resources\CableNetworkResource;
@@ -61,7 +62,7 @@ class CableSubscriptionController extends Controller
 
         $status = $this->buyCableSubscription->handle($transaction);
 
-       if($status != 'success'){
+       if($status !== 'SUCCESS'){
 
            $error = $transaction->api_response;
 
@@ -92,7 +93,7 @@ class CableSubscriptionController extends Controller
 
         $status = $this->buyCableSubscription->handle($transaction);
 
-        if($status != 'success'){
+       if($status !== 'SUCCESS'){
                 $error = $transaction->api_response;
 
                 throw ValidationException::withMessages([
@@ -154,24 +155,36 @@ class CableSubscriptionController extends Controller
             DB::beginTransaction();
 
                 $balance = $this->helpers->validateBalanceAndDeductAmount($user->id, $amount);
+                $provider = $plan->cableProvider;
 
-                $transactionable = CableSubscriptionTransaction::create([
-                'smart_card_number' => $data['smart_card_number'],
-                'cable_network_id' => $plan->cable_network_id,
-                'cable_subscription_plan_id' => $plan->id,
-                'name' => $data['name'],
-                'phone_number' => auth()->user()->phone,
-            ]);
-
-            $description = "$plan->name {$plan->amount} {$transactionable->network->name} Cable Subscription  to {$data['smart_card_number']} ({$data['name']})";
+            $description = ($plan->package_name ?? 'Cable Subscription')
+                ." {$amount} {$provider?->name} Cable Subscription to {$data['smart_card_number']} ({$data['name']})";
 
             $transactionData = [
-                'reference' => $this->helpers->generateTransactionRef('CS'),
+                'reference_id' => $this->helpers->generateTransactionRef('CS'),
                 'user_id' => $user->id,
                 'amount' => $amount,
-                'description'=>  $description,
+                'type' => 'CABLE',
+                'provider_name' => $provider?->name,
+                'provider_id' => (string) $plan->cable_network_id,
+                'product_category' => 'CABLE',
+                'product_id' => (string) $plan->id,
+                'status' => 'PENDING',
+                'description' => $description,
                 'balance_before' => (float)$balance['before'],
                 'balance_after' => (float)$balance['after'],
+                'api_process_started_at' => now(),
+                'metadata' => [
+                    'smart_card_number' => $data['smart_card_number'],
+                    'name' => $data['name'],
+                    'phone_number' => $user->phone ?? null,
+                    'network_id' => $plan->cable_network_id,
+                    'network' => $provider?->name,
+                    'plan_id' => $plan->id,
+                    'plan_name' => $plan->package_name ?? null,
+                    'product_code' => $plan->product_code ?? null,
+                    'beneficiary' => $data['smart_card_number'],
+                ],
             ];
 
             //! if doesn
@@ -179,7 +192,7 @@ class CableSubscriptionController extends Controller
                 $transactionData['request_ip'] = $request->ip();
             }
 
-            $transaction = $transactionable->transaction()->create($transactionData);
+            $transaction = Transaction::create($transactionData);
 
             DB::commit();
 

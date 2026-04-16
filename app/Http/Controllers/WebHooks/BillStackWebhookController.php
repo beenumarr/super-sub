@@ -6,7 +6,6 @@ use App\Models\FundingAccount;
 use App\Models\User;
 use App\Models\Transaction;
 use Illuminate\Http\Request;
-use App\Models\WalletTransaction;
 use Illuminate\Support\Facades\Log;
 
 class BillStackWebhookController extends Controller
@@ -37,7 +36,7 @@ class BillStackWebhookController extends Controller
                 $data = $request->data;
                 Log::info($data);
                 // Check if the transaction already exists (to avoid duplicates)
-                if (Transaction::where('reference', $data['transaction_ref'])->exists()) {
+                if (Transaction::where('reference_id', $data['transaction_ref'])->exists()) {
                     Log::info('Transaction already processed');
                     return response()->json(['message' => 'Transaction already processed'], 200);
                 }
@@ -60,26 +59,27 @@ class BillStackWebhookController extends Controller
                 // $wallet->increment('balance', $data['amount']);
                 $balance_after = $wallet->balance;
 
-                $transactionable = WalletTransaction::create([
+                Transaction::create([
+                    'reference_id' => $data['transaction_ref'],
                     'user_id' => $user->id,
-                    'wallet_id' => $user->wallet->id,
+                    'type' => 'WALLET',
                     'amount' => $amount,
-                    'type' => 'credit',
-                    'method' => 'ACCOUNT_TRANSFER',
-                    'payment_gateway' => $data['account']['bank_name'],
-                ]);
-                // Store General Transaction
-                $transactionable->transaction()->create([
-                    'reference' => $data['transaction_ref'],
-                    'user_id' => $user->id,
-                    'amount' => $amount,
-                    'status' => 'success',
+                    'status' => 'SUCCESS',
                     'description' => 'Account has been successfully funded',
+                    'provider_name' => 'BillStack',
+                    'provider_reference' => $data['transaction_ref'],
                     'api_response' => 'BILL STACK PAYMENT NOTIFICATION',
                     'balance_before' => $balance_before,
                     'balance_after' => $balance_after,
-                ]); 
-                return response()->json(['message' => 'Webhook processed successfully', 'data' => $transactionable], 200);
+                    'metadata' => [
+                        'ledger_type' => 'credit',
+                        'method' => 'ACCOUNT_TRANSFER',
+                        'payment_gateway' => $data['account']['bank_name'] ?? null,
+                        'raw' => $data,
+                    ],
+                ]);
+
+                return response()->json(['message' => 'Webhook processed successfully'], 200);
             } catch (\Exception $e) {
                 Log::error('Webhook Error:', ['message' => $e->getMessage()]);
                 return response()->json(['error' => 'Internal Server Error'], 500);

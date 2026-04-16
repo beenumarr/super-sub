@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@import './theme-colors.css';
 
 @plugin 'tailwindcss-animate';
 
@@ -58,6 +59,7 @@
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-ring: var(--sidebar-ring);
     --color-theme-1: var(--theme-1);
+    --color-theme-2: var(--theme-2);
 
     --animate-collapsible-up: collapsible-up 0.2s ease-out;
     @keyframes collapsible-up {
@@ -151,6 +153,7 @@
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.87 0 0);
     --theme-1: #9483ef;
+    --theme-2: #8b5cf6;
 }
 
 .dark {
@@ -187,6 +190,7 @@
     --sidebar-border: oklch(0.269 0 0);
     --sidebar-ring: oklch(0.439 0 0);
     --theme-1: #9483ef;
+    --theme-2: #8b5cf6;
 }
 
 @layer base {

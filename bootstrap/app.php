@@ -40,6 +40,14 @@ return Application::configure(basePath: dirname(__DIR__))
             EnsureUserIsActive::class,
         ]);
 
+        $middleware->alias([
+            'admin' => AdminMiddleware::class,
+            'permission' => PermissionMiddleware::class,
+            'role' => RoleMiddleware::class,
+            'feature' => \App\Http\Middleware\FeatureChecker::class,
+            'kyc' => \App\Http\Middleware\KycRedirect::class,
+            'kycCheck' => \App\Http\Middleware\KycCheck::class,
+        ]);
 
         $middleware->priority([
             ApiAuthenticate::class,
@@ -50,9 +58,6 @@ return Application::configure(basePath: dirname(__DIR__))
             'feature' => \App\Http\Middleware\FeatureChecker::class,
             'kyc' => \App\Http\Middleware\KycRedirect::class,
             'kycCheck' => \App\Http\Middleware\KycCheck::class,
-            'admin' => AdminMiddleware::class,
-            'permission' => PermissionMiddleware::class,
-            'role' => RoleMiddleware::class,
         ]);
 
     })

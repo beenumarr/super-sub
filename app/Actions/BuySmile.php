@@ -23,11 +23,11 @@ class BuySmile
             Log::error('BuySmile Error: ' . $e->getMessage());
 
             $transaction->update([
-                'status' => 'failed',
+                'status' => 'FAILED',
                 'api_response' => 'Something went wrong. Please try again later.',
             ]);
 
-            return 'failed';
+            return 'FAILED';
         }
     }
 }

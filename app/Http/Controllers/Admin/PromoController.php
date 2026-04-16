@@ -27,11 +27,11 @@ class PromoController extends Controller
 
         if(isset($from)){
 
-            $data = Transaction::where('transactionable_type', "App\\Models\\BonusWalletTransaction")->whereBetween('updated_at', [$from.' 00:00:00',$to.' 23:59:59']);
+            $data = Transaction::where('type', 'BONUS_WALLET')->whereBetween('updated_at', [$from.' 00:00:00',$to.' 23:59:59']);
 
         }else{
 
-             $data = Transaction::where('transactionable_type', "App\\Models\\BonusWalletTransaction")->latest();
+             $data = Transaction::where('type', 'BONUS_WALLET')->latest();
 
         }
 
