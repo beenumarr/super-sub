@@ -126,7 +126,7 @@ export default function ImageUpload({
     return (
         <div className="my-3 flex w-full flex-col items-center justify-center">
             {(previews.length === 0 || multiple) && (
-                <label className="mt-5 flex w-full cursor-pointer items-center justify-center rounded-md border border-theme-2 px-4 py-3 tracking-wide shadow-sm hover:font-medium text-theme-2">
+                <label className="mt-5 flex w-full cursor-pointer items-center justify-center rounded-md border border-secondary px-4 py-3 tracking-wide shadow-sm text-secondary hover:font-medium">
                     <Camera className="h-5 w-5" />
                     <span className="ml-2 text-base leading-normal">
                         {multiple ? 'Select Images' : 'Select a Photo'}
@@ -143,7 +143,7 @@ export default function ImageUpload({
             <div className="mt-2 w-full">
                 {processing && (
                     <div className="flex w-full justify-center p-5">
-                        <div className="h-8 w-8 animate-spin rounded-full border-2 border-theme-1 border-t-transparent" />
+                        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                         <span className="ml-2">Processing Images...</span>
                     </div>
                 )}

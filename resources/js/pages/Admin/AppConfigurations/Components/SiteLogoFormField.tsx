@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { router } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import ImageUpload from './ImageUpload';
@@ -13,6 +13,7 @@ export default function SiteLogoFormField({ handleClose, reloadPage }: SiteLogoF
     const [images, setImages] = useState<Blob[]>([]);
     const [previews, setPreviews] = useState<string[]>([]);
     const [processing, setProcessing] = useState(false);
+    const { flash } = usePage().props as any;
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -30,16 +31,25 @@ export default function SiteLogoFormField({ handleClose, reloadPage }: SiteLogoF
             forceFormData: true,
             preserveScroll: true,
             onSuccess: () => {
-                toast.success('Settings Updated Successfully!');
+                toast.success('Logo uploaded successfully! Processing...');
                 handleClose();
-                router.reload();
+                // Wait a moment for the job to process, then reload
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
             },
-            onError: (errors) => {
-                Object.values(errors)
-                    .flat()
-                    .forEach((err) => toast.error(String(err)));
+            onError: (errors: any) => {
+                console.error('Upload error:', errors);
+                // Handle validation errors
+                Object.entries(errors).forEach(([key, value]) => {
+                    if (Array.isArray(value)) {
+                        value.forEach((err) => toast.error(String(err)));
+                    } else {
+                        toast.error(String(value));
+                    }
+                });
+                setProcessing(false);
             },
-            onFinish: () => setProcessing(false),
         });
     };
 
@@ -48,6 +58,9 @@ export default function SiteLogoFormField({ handleClose, reloadPage }: SiteLogoF
             <span className="m-4 text-center text-lg font-medium text-muted-foreground">
                 Please Select Photo
             </span>
+            <p className="mb-3 text-center text-xs text-muted-foreground">
+                Recommended logo: square PNG (512×512 or 1024×1024). Use transparent background for best results.
+            </p>
             <ImageUpload
                 images={images}
                 setImages={setImages}
@@ -57,7 +70,7 @@ export default function SiteLogoFormField({ handleClose, reloadPage }: SiteLogoF
             />
             <div className="mt-4 flex items-center justify-end">
                 <Button type="submit" disabled={processing}>
-                    Update
+                    {processing ? 'Uploading...' : 'Update'}
                 </Button>
             </div>
         </form>

@@ -4,6 +4,7 @@ import AppLayout from '@/layouts/app-layout';
 import { usePrevious } from 'react-use';
 import ViewDetailModal from './components/ViewDetailModal';
 import TransactionTable from './components/TransactionTable';
+import DateRangeFilter from '@/components/DateRangeFilter';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
@@ -203,6 +204,20 @@ const Index: FC = () => {
                             </SelectContent>
                         </Select>
                     </div>
+
+                    {/* Date Range Filter */}
+                    <DateRangeFilter
+                        from={filterValues.from}
+                        to={filterValues.to}
+                        onDateChange={(from, to) =>
+                            setFilterValue({
+                                ...filterValues,
+                                from,
+                                to,
+                                page: 1,
+                            })
+                        }
+                    />
                 </div>
                 <div className="my-6 w-full items-center overflow-x-auto text-center justify-start flex gap-2">
                     {transactionTypes.map((type, i) => (

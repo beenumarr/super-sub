@@ -3,14 +3,14 @@
 namespace App\Jobs;
 
 use Illuminate\Bus\Queueable;
-use Intervention\Image\Facades\Image;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\File;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use App\Models\AppConfiguration;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Cache;
 
 class ImageUpload implements ShouldQueue
 {
@@ -31,56 +31,89 @@ class ImageUpload implements ShouldQueue
      */
     public function handle(): void
     {
-
-
-        $allFilesName = [];
-
-        foreach ($this->allFilesId as $fileId) {
-            $path = storage_path('uploads/' . $fileId);
-
-
-            if($fileId === 'logo'){
-
-                $fileName = $fileId . '.png';
-                Image::make($path)->encode('png')->save();
-                // make logo as png
-                // make logo as favicon
-
-            }else{
-
-                $fileName = $fileId . '.jpg';
-                Image::make($path)->encode('jpg')->save();
-
-            };
-
-
-            $allFilesName[] = $fileName;
-
-            try {
-
-                // Delete from the 'storage' file
-                $storageDeleted = File::delete('images/' . $fileName);
-
-                if (!$storageDeleted) {
-                    Log::error("Failed to delete folder from 'storage' disk: images/{$fileId}");
-                }
-
-                // // Move the new version to the 'public' folder
-                if (Storage::disk('public')->put('images/' . $fileName, fopen($path, 'r+'))) {
-                    // Delete the temporary file from the 'storage' folder
-                    File::delete($path);
-
-                    // Update or create the configuration record
-                    $config = AppConfiguration::updateOrCreate(
-                        ['key' => $fileId],
-                        ['value' => $fileName]
-                    );
-                } else {
-                    Log::error("Failed to move file to 'public' disk: images/{$fileName}");
-                }
-            } catch (\Exception $e) {
-                Log::error("An error occurred: {$e->getMessage()}");
+        try {
+            // Ensure public uploads directory exists
+            $publicUploadsPath = storage_path('app/public/uploads');
+            if (!File::isDirectory($publicUploadsPath)) {
+                File::makeDirectory($publicUploadsPath, 0755, true, true);
             }
+
+            foreach ($this->allFilesId as $fileId) {
+                $fileMeta = is_array($fileId) ? $fileId : null;
+                $logicalId = is_array($fileId) ? ($fileId['id'] ?? null) : $fileId;
+                $ext = is_array($fileId) ? ($fileId['ext'] ?? null) : null;
+
+                if (!is_string($logicalId) || $logicalId === '') {
+                    Log::error('Invalid file id in ImageUpload job payload');
+                    continue;
+                }
+
+                // Backward-compatible temp filename support
+                $tempFileName = $logicalId;
+                if (is_string($ext) && $ext !== '') {
+                    $tempFileName = "{$logicalId}.{$ext}";
+                }
+
+                $tempPath = storage_path('uploads/' . $tempFileName);
+
+                // Validate temp file exists
+                if (!File::exists($tempPath)) {
+                    Log::error("Temp file not found: {$tempPath}");
+                    continue;
+                }
+
+                try {
+                    // Determine output filename (preserve extension when provided)
+                    if (is_string($ext) && $ext !== '') {
+                        $fileName = "{$logicalId}.{$ext}";
+                    } elseif ($logicalId === 'logo') {
+                        $fileName = 'logo.png';
+                    } elseif ($logicalId === 'favicon') {
+                        $fileName = 'favicon.png';
+                    } else {
+                        $fileName = $logicalId . '.jpg';
+                    }
+
+                    $publicPath = storage_path('app/public/uploads/' . $fileName);
+
+                    // Copy file directly to public uploads directory
+                    if (File::copy($tempPath, $publicPath)) {
+                        Log::info("File processed successfully: {$logicalId} -> {$fileName}");
+
+                        // Determine the config key to update
+                        if ($logicalId === 'logo') {
+                            $configKey = 'site_logo';
+                        } elseif ($logicalId === 'favicon') {
+                            $configKey = 'site_favicon';
+                        } else {
+                            $configKey = $logicalId;
+                        }
+
+                        // Update configuration with the filename
+                        AppConfiguration::updateOrCreate(
+                            ['key' => $configKey],
+                            ['value' => $fileName]
+                        );
+
+                        // Clear the settings cache so new values are picked up
+                        Cache::forget('app_settings');
+                    } else {
+                        Log::error("Failed to copy file: {$fileId}");
+                        continue;
+                    }
+
+                    // Clean up temporary file
+                    if (File::exists($tempPath)) {
+                        File::delete($tempPath);
+                    }
+
+                } catch (\Exception $e) {
+                    Log::error("Error processing file {$logicalId}: {$e->getMessage()}");
+                    continue;
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error("Image upload job error: {$e->getMessage()}");
         }
     }
 }

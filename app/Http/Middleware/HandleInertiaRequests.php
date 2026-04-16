@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 use Tighten\Ziggy\Ziggy;
+use App\Models\AppConfiguration;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -63,12 +64,19 @@ class HandleInertiaRequests extends Middleware
             'theme'=> config('settings.site_primary_color'),
             'isStl'=> config('app.enable_standalone_api'),
             'enable_referral'=> config('app.enable_referral'),
+            'colors' => [
+                'primary' => config('settings.site_primary_color'),
+                'secondary' => config('settings.site_secondary_color'),
+            ],
             'config'=> [
                 'monnify_contract_code'=> config('settings.monnify_contract_code'),
                 'monnify_api_key'=> config('settings.monnify_api_key'),
                 'monnify_marchant_name'=> config('settings.monnify_marchant_name'),
                 'monnify_funding_charges'=> config('settings.monnify_funding_charges'),
                 'site_name'=> config('settings.site_name'),
+                'site_logo'=> config('settings.site_logo'),
+                'site_favicon'=> config('settings.site_favicon'),
+                'logo_type'=> $this->getLogoType(),
             ],
             'feature_enabled'=> [
                 'wallet_transfer'=> config('settings.feat_enable_wallet_transfer') === '1',
@@ -80,6 +88,7 @@ class HandleInertiaRequests extends Middleware
                 'can' => $can,
                 'site_name'=> config('settings.site_name'),
                 'site_primary_color'=> config('settings.site_primary_color'),
+                'site_secondary_color'=> config('settings.site_secondary_color'),
                 'site_contact_number'=> config('settings.site_contact_number'),
                 'isAdmin' => $isAdmin,
                 'isSuperAdmin' => $isSuperAdmin,
@@ -96,5 +105,24 @@ class HandleInertiaRequests extends Middleware
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
+    }
+
+    /**
+     * Get logo_type directly from database to bypass cache issues
+     */
+    private function getLogoType(): string
+    {
+        try {
+            // Always check database first to ensure we get the latest value
+            $record = AppConfiguration::where('key', 'logo_type')->first();
+            if ($record && !empty($record->value)) {
+                return $record->value;
+            }
+
+            // Fallback to config if somehow the database query fails
+            return config('settings.logo_type', '');
+        } catch (\Exception $e) {
+            return '';
+        }
     }
 }

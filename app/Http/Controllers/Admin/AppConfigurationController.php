@@ -13,6 +13,7 @@ use App\Utils\Services\ApiUtils;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Cache;
 
 class AppConfigurationController extends Controller
 {
@@ -41,6 +42,25 @@ class AppConfigurationController extends Controller
         }
 
 
+        // Prefer uploads folder where processed images are stored
+        $logoPath = isset($configs['site_logo']) && Storage::disk('public')->exists("uploads/" . $configs['site_logo'])
+            ? Storage::url("uploads/" . $configs['site_logo'])
+            : asset('images/logo.png');
+
+        $faviconPath = isset($configs['site_favicon']) && Storage::disk('public')->exists("uploads/" . $configs['site_favicon'])
+            ? Storage::url("uploads/" . $configs['site_favicon'])
+            : null;
+
+        $bg0Path = isset($configs['site_background_0']) && Storage::disk('public')->exists("uploads/" . $configs['site_background_0'])
+            ? Storage::url("uploads/" . $configs['site_background_0'])
+            : null;
+        $bg1Path = isset($configs['site_background_1']) && Storage::disk('public')->exists("uploads/" . $configs['site_background_1'])
+            ? Storage::url("uploads/" . $configs['site_background_1'])
+            : null;
+        $bg2Path = isset($configs['site_background_2']) && Storage::disk('public')->exists("uploads/" . $configs['site_background_2'])
+            ? Storage::url("uploads/" . $configs['site_background_2'])
+            : null;
+
         return Inertia::render('Admin/AppConfigurations/Index', [
             'data' =>$data,
             'enable_payvessel'=> $enable_payvessel,
@@ -49,10 +69,11 @@ class AppConfigurationController extends Controller
             'monnify_charges_options' => AppConfiguration::where('key', 'monnify_funding_charges')->first()->options,
             'configs_values'=> $configs,
             'site_images'=> [
-                'logo' => isset($configs['site_logo']) ? Storage::url("/images/" . $configs['site_logo']) : Storage::url("/images/logo.png"),
-                'bg_0' => isset($configs['site_background_0']) ? Storage::url("/images/" . $configs['site_background_0']) : Storage::url("/images/bg1.jpg"),
-                'bg_1' => isset($configs['site_background_1']) ? Storage::url("/images/" . $configs['site_background_1']) : Storage::url("/images/bg2.jpg"),
-                'bg_2' => isset($configs['site_background_2']) ? Storage::url("/images/" . $configs['site_background_2']) : Storage::url("/images/bg3.jpg"),
+                'logo' => $logoPath,
+                'favicon' => $faviconPath,
+                'bg_0' => $bg0Path,
+                'bg_1' => $bg1Path,
+                'bg_2' => $bg2Path,
             ]
 
         ]);
@@ -80,23 +101,30 @@ class AppConfigurationController extends Controller
 
         foreach ($data as $key => $value) {
 
-            if(!$this->isDataMasked($value)){
+            // Skip masked values
+            if ($this->isDataMasked($value)) {
+                continue;
+            }
 
-            if(in_array($key, $this->encConfigs )){
+            // Skip null values - database column is NOT NULL
+            if ($value === null) {
+                continue;
+            }
 
+            if (in_array($key, $this->encConfigs)) {
                 $value = cs_encrypt($value);
             }
 
-
             AppConfiguration::updateOrCreate(
-                ['key' => $key ],// The attributes to search for
+                ['key' => $key], // The attributes to search for
                 ['value' => $value] // The attributes to update or create
             );
         }
-        }
 
+        Cache::forget('app_settings');
 
        Artisan::call('cache:clear');
+       Artisan::call('config:clear');
        Artisan::call('config:cache');
 
         return redirect()->back();
@@ -137,6 +165,8 @@ class AppConfigurationController extends Controller
             );
         }
 
+        Cache::forget('app_settings');
+
         Artisan::call('cache:clear');
         Artisan::call('config:cache');
 
@@ -152,30 +182,69 @@ class AppConfigurationController extends Controller
     }
 
     function updatePhotos(Request $request) {
+        try {
+            // Validate that images are provided
+            $request->validate([
+                'images' => 'required|array',
+                // allow favicon (.ico) and standard web images
+                'images.*' => 'mimes:jpg,jpeg,png,webp,gif,ico|max:5120', // max 5MB per image
+                'name' => 'required|string'
+            ]);
 
-
-        $allFilesId = [];
-
-        foreach ($request->file('images') as $key => $file) {
-
-
-            if($request->name === 'logo'){
-                $file->move(storage_path().'/uploads', $fileId = "logo");
-            }else{
-                $file->move(storage_path().'/uploads', $fileId = "site_background_".$key);
-
+            // Ensure uploads directory exists
+            $uploadsPath = storage_path('uploads');
+            if (!File::isDirectory($uploadsPath)) {
+                File::makeDirectory($uploadsPath, 0755, true, true);
             }
 
-            $allFilesId[]= $fileId;
+            $allFilesId = [];
 
+            foreach ($request->file('images') as $key => $file) {
+                if ($request->name === 'logo') {
+                    $fileId = 'logo';
+                    $ext = strtolower($file->getClientOriginalExtension() ?: 'png');
+                    if ($ext === 'jpeg') {
+                        $ext = 'jpg';
+                    }
+                    $file->move($uploadsPath, "{$fileId}.{$ext}");
+                    $allFilesId[] = ['id' => $fileId, 'ext' => $ext];
+                } elseif ($request->name === 'favicon') {
+                    $fileId = 'favicon';
+                    $ext = strtolower($file->getClientOriginalExtension() ?: 'png');
+                    if ($ext === 'jpeg') {
+                        $ext = 'jpg';
+                    }
+                    $file->move($uploadsPath, "{$fileId}.{$ext}");
+                    $allFilesId[] = ['id' => $fileId, 'ext' => $ext];
+                } else {
+                    $fileId = 'site_background_' . $key;
+                    $ext = strtolower($file->getClientOriginalExtension() ?: 'jpg');
+                    if ($ext === 'jpeg') {
+                        $ext = 'jpg';
+                    }
+                    $file->move($uploadsPath, "{$fileId}.{$ext}");
+                    $allFilesId[] = ['id' => $fileId, 'ext' => $ext];
+                }
+            }
+
+            // Process immediately (queue workers are not always running in dev/prod)
+            ImageUpload::dispatchSync($allFilesId);
+
+            // Flash success message and redirect back
+            session()->flash('success', 'Image uploaded successfully!');
+
+            return redirect()->back();
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // Flash validation errors and redirect back
+            return redirect()->back()->withErrors($e->errors())->withInput();
+        } catch (\Exception $e) {
+            Log::error('Logo upload error: ' . $e->getMessage());
+
+            // Flash error message and redirect back
+            session()->flash('error', 'Failed to upload logo: ' . $e->getMessage());
+
+            return redirect()->back();
         }
-
-
-       ImageUpload::dispatch($allFilesId);
-
-
-       return response()->noContent();
-
     }
 
 
@@ -223,5 +292,3 @@ function isDataMasked($data)
 
 
 }
-
-
