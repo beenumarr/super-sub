@@ -35,12 +35,10 @@ class User extends Authenticatable implements MustVerifyEmail
         'user_category_id',
         'kyc_level',
         'webhook_url',
-        // From second list, merged and deduplicated
         'address',
         'original_token',
         'username',
         'referal_username',
-        'phone_number',
         'last_login',
         'last_login_ip',
         'active',
@@ -53,6 +51,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'bank_account_name',
         'bank_account_bank',
         'bank_account_bank_code',
+        'transaction_pin',
     ];
 
     /**
@@ -63,6 +62,7 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $hidden = [
         'password',
         'remember_token',
+        'transaction_pin',
     ];
 
     /**
@@ -73,6 +73,7 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
+        'transaction_pin' => 'hashed',
         'settings' => 'json',
         'user_config' => 'json',
     ];
@@ -173,6 +174,12 @@ class User extends Authenticatable implements MustVerifyEmail
     public function getIsSuperAdminAttribute(): bool
     {
         return $this->hasRole(['Superadmin', 'Masteradmin']);
+    }
+
+    public function hasTransactionPin(): bool
+    {
+        $raw = $this->getRawOriginal('transaction_pin');
+        return !empty($raw) && $raw !== 'NULL';
     }
 
 }

@@ -6,8 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import { Head, useForm, usePage } from '@inertiajs/react';
-import { AlertCircle, CheckCircle, Loader2, Tv, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { AlertCircle, CheckCircle, KeyRound, Loader2, Tv, X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
 interface CableNetwork {
@@ -43,6 +43,9 @@ export default function CableSubscription({ cable_networks }: CableSubscriptionP
 
     const { message } = usePage().props;
 
+    const [pin, setPin] = useState('');
+    const pinRefs = [useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null)];
+
     const { data, setData, post, processing, errors, reset } = useForm({
         cable_name: '',
         smart_card_number: '',
@@ -50,6 +53,7 @@ export default function CableSubscription({ cable_networks }: CableSubscriptionP
         amount: 0,
         payable_amount: 0,
         name: '',
+        transaction_pin: '',
     });
 
     const handleNetworkChange = async (networkId: string) => {
@@ -159,6 +163,7 @@ export default function CableSubscription({ cable_networks }: CableSubscriptionP
                 setTransactionStatus('success');
                 setTransactionMessage('Cable subscription purchased successfully!');
                 reset();
+                setPin('');
                 setSelectedNetwork('');
                 setCablePlans([]);
                 setTimeout(() => {
@@ -168,7 +173,9 @@ export default function CableSubscription({ cable_networks }: CableSubscriptionP
             },
             onError: (errs: any) => {
                 setTransactionStatus('error');
-                if (errs.amount) {
+                if (errs.transaction_pin) {
+                    setTransactionMessage(errs.transaction_pin);
+                } else if (errs.amount) {
                     setTransactionMessage('Insufficient balance');
                 } else {
                     setTransactionMessage(Object.values(errs).flat().join(', '));
@@ -339,6 +346,50 @@ export default function CableSubscription({ cable_networks }: CableSubscriptionP
                                         </span>
                                     </div>
                                 </div>
+
+                                <div className="space-y-2 pt-2">
+                                    <div className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        <KeyRound size={14} />
+                                        <span>Enter Transaction PIN</span>
+                                    </div>
+                                    <div className="flex justify-center gap-3">
+                                        {[0, 1, 2, 3].map((i) => (
+                                            <input
+                                                key={i}
+                                                ref={pinRefs[i]}
+                                                type="password"
+                                                inputMode="numeric"
+                                                maxLength={1}
+                                                value={pin[i] || ''}
+                                                aria-label={`PIN digit ${i + 1}`}
+                                                title={`PIN digit ${i + 1}`}
+                                                onChange={(e) => {
+                                                    const digit = e.target.value.replace(/\D/g, '').slice(-1);
+                                                    const digits = pin.split('');
+                                                    digits[i] = digit;
+                                                    const newPin = digits.join('').slice(0, 4);
+                                                    setPin(newPin);
+                                                    setData('transaction_pin', newPin);
+                                                    if (digit && i < 3) pinRefs[i + 1].current?.focus();
+                                                }}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Backspace') {
+                                                        const digits = pin.split('');
+                                                        if (!digits[i] && i > 0) pinRefs[i - 1].current?.focus();
+                                                        digits[i] = '';
+                                                        const newPin = digits.join('').slice(0, 4);
+                                                        setPin(newPin);
+                                                        setData('transaction_pin', newPin);
+                                                    }
+                                                }}
+                                                className="h-12 w-12 rounded-md border border-gray-300 bg-white text-center text-lg font-bold text-gray-900 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                                            />
+                                        ))}
+                                    </div>
+                                    {errors.transaction_pin && (
+                                        <p className="text-center text-xs text-red-500">{errors.transaction_pin}</p>
+                                    )}
+                                </div>
                             </>
                         )}
 
@@ -377,7 +428,7 @@ export default function CableSubscription({ cable_networks }: CableSubscriptionP
                             >
                                 Cancel
                             </Button>
-                            <Button onClick={handleSubmit} disabled={processing} className="gap-2">
+                            <Button onClick={handleSubmit} disabled={processing || pin.length < 4} className="gap-2">
                                 {processing ? (
                                     <>
                                         <Loader2 className="h-4 w-4 animate-spin" />

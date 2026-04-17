@@ -58,6 +58,8 @@ class CableSubscriptionController extends Controller
 
         $user = $request->user();
 
+        $this->helpers->validateTransactionPin($user, $request->input('transaction_pin'));
+
         $transaction = $this->performTransaction($request, $user, $data);
 
         $status = $this->buyCableSubscription->handle($transaction);

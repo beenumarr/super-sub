@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-import { branding } from '@/config/branding';
-=======
 import { usePage } from '@inertiajs/react';
->>>>>>> af529122c89458f6ab673bbd279ba6f013276113
 import AppLogoIcon from './app-logo-icon';
 
 export default function AppLogo() {
@@ -16,10 +12,6 @@ export default function AppLogo() {
             <div className="flex items-center justify-center">
                 <AppLogoIcon className="h-10 w-10" alt={siteName} />
             </div>
-<<<<<<< HEAD
-            <div className="ml-1 grid flex-1 text-left text-lg">
-                <span className="mb-0.5 truncate leading-none font-semibold">{branding.appName}</span>
-=======
         );
     }
 
@@ -31,7 +23,6 @@ export default function AppLogo() {
                 <div className="mt-1 text-center">
                     <span className="block truncate text-sm font-semibold">{siteName}</span>
                 </div>
->>>>>>> af529122c89458f6ab673bbd279ba6f013276113
             </div>
         );
     }

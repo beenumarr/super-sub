@@ -54,12 +54,6 @@ return Application::configure(basePath: dirname(__DIR__))
             'auth:sanctum'
         ]);
 
-        $middleware->alias([
-            'feature' => \App\Http\Middleware\FeatureChecker::class,
-            'kyc' => \App\Http\Middleware\KycRedirect::class,
-            'kycCheck' => \App\Http\Middleware\KycCheck::class,
-        ]);
-
     })
     ->withExceptions(function (Exceptions $exceptions) {
 

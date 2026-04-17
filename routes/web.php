@@ -73,7 +73,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/smile/plans', [SmileTransactionController::class, 'filterPlans'])->name('smile.plans');
     Route::get('/buy_airtime', [BuyAirtimeController::class, 'index'])->name('buy_airtime');
     Route::post('/buy_airtime', [BuyAirtimeController::class, 'store'])->name('buy_airtime.store')->middleware(['throttle:30,1']);;
-    Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
     Route::get('/developer', [DeveloperApiController::class, 'index'])->name('developer.index');
     Route::get('/api-documentation', [DeveloperApiController::class, 'docs'])->name('api-documentation');
     Route::get('/developer/api-documentation', [DeveloperApiController::class, 'docs'])->name('developer.documentation');

@@ -73,6 +73,7 @@ class DashboardController extends Controller
                 'title' => $announcementTitle,
                 'content' => $announcementContent,
             ],
+            'has_pin' => $user->hasTransactionPin(),
         ]);
     }
 }

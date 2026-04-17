@@ -18,10 +18,11 @@ const sidebarNavItems: NavItem[] = [
         icon: null,
     },
     {
-        title: 'Transaction Charges',
-        href: '/user-settings/charges',
+        title: 'Transaction PIN',
+        href: '/user-settings/pin',
         icon: null,
     },
+
     // {
     //     title: 'Appearance',
     //     href: '/settings/appearance',

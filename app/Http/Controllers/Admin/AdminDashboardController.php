@@ -11,9 +11,13 @@ use App\Models\Transaction;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class AdminDashboardController extends Controller
 {
+    private ?bool $hasTransactionTypeColumn = null;
+
     public function index(Request $request, GetApiBalance $GetApiBalance): Response
     {
         $dateFilter = $request->get('date_filter', 'today');
@@ -31,11 +35,15 @@ class AdminDashboardController extends Controller
 
         $topUsers = $this->getTopUsers(10, $startDate, $endDate);
 
+        $user = $request->user();
+        $userRole = $user->hasRole(['Superadmin', 'Masteradmin']) ? 'admin' : 'staff';
+
         return Inertia::render('Admin/Dashboard/Index', [
             'stats' => $stats,
             'recent_transactions' => $recentTransactions,
             'top_users' => $topUsers,
             'api_balance' => $apiBalance,
+            'user_role' => $userRole,
         ]);
     }
 
@@ -114,7 +122,7 @@ class AdminDashboardController extends Controller
             'pending' => $transactionsQuery->clone()->where('status', 'PENDING')->count(),
             'success_amount' => $transactionsQuery->clone()->where('status', 'SUCCESS')->sum('amount'),
             'failed_amount' => $transactionsQuery->clone()->where('status', 'FAILED')->sum('amount'),
-            'data_transactions' => $transactionsQuery->clone()->where('type', 'DATA')->count(),
+            'data_transactions' => $this->filterByTransactionType($transactionsQuery->clone(), 'DATA')->count(),
         ];
 
         // Wallet statistics
@@ -187,8 +195,10 @@ class AdminDashboardController extends Controller
     {
         $breakdown = [];
 
-        $dataTransactions = Transaction::whereBetween('created_at', [$startDate, $endDate])
-            ->where('type', 'DATA')
+        $dataTransactions = $this->filterByTransactionType(
+            Transaction::whereBetween('created_at', [$startDate, $endDate]),
+            'DATA'
+        )
             ->get()
             ->groupBy(function ($transaction) {
                 return ($transaction->metadata['network'] ?? null) ?: ($transaction->provider_name ?? 'Unknown');
@@ -205,8 +215,10 @@ class AdminDashboardController extends Controller
         }
         $breakdown['data'] = $dataStats;
 
-        $airtimeTransactions = Transaction::whereBetween('created_at', [$startDate, $endDate])
-            ->where('type', 'AIRTIME')
+        $airtimeTransactions = $this->filterByTransactionType(
+            Transaction::whereBetween('created_at', [$startDate, $endDate]),
+            'AIRTIME'
+        )
             ->get()
             ->groupBy(function ($transaction) {
                 return ($transaction->metadata['network'] ?? null) ?: ($transaction->provider_name ?? 'Unknown');
@@ -223,8 +235,10 @@ class AdminDashboardController extends Controller
         }
         $breakdown['airtime'] = $airtimeStats;
 
-        $cableTransactions = Transaction::whereBetween('created_at', [$startDate, $endDate])
-            ->where('type', 'CABLE')
+        $cableTransactions = $this->filterByTransactionType(
+            Transaction::whereBetween('created_at', [$startDate, $endDate]),
+            'CABLE'
+        )
             ->get()
             ->groupBy(function ($transaction) {
                 return ($transaction->metadata['network'] ?? null) ?: ($transaction->provider_name ?? 'Unknown');
@@ -242,8 +256,10 @@ class AdminDashboardController extends Controller
         $breakdown['cable'] = $cableStats;
 
 
-        $walletTransactions = Transaction::whereBetween('created_at', [$startDate, $endDate])
-            ->where('type', 'WALLET')
+        $walletTransactions = $this->filterByTransactionType(
+            Transaction::whereBetween('created_at', [$startDate, $endDate]),
+            'WALLET'
+        )
             ->get()
             ->groupBy(function ($transaction) {
                 return $transaction->metadata['payment_gateway'] ?? $transaction->provider_name ?? 'Unknown';
@@ -265,10 +281,9 @@ class AdminDashboardController extends Controller
 
     private function getWalletFundingStats($startDate, $endDate)
     {
-        $fundingTransactions = Transaction::whereBetween('created_at', [$startDate, $endDate])
-            ->where('type', 'WALLET')
-            ->where('metadata->ledger_type', 'credit')
-            ->get();
+        $query = Transaction::whereBetween('created_at', [$startDate, $endDate]);
+        $query = $this->filterByTransactionType($query, 'WALLET');
+        $fundingTransactions = $query->where('metadata->ledger_type', 'credit')->get();
 
         return [
             'total_funded' => $fundingTransactions->where('status', 'SUCCESS')->sum('amount'),
@@ -280,11 +295,13 @@ class AdminDashboardController extends Controller
 
     private function getRecentTransactions($limit = 10)
     {
-        return Transaction::with(['user'])
-            ->whereNot('type', 'BONUS_WALLET')
-            ->latest()
-            ->limit($limit)
-            ->get()
+        $query = Transaction::with(['user'])->latest()->limit($limit);
+
+        if ($this->hasTransactionTypeColumn()) {
+            $query->whereNot('type', 'BONUS_WALLET');
+        }
+
+        return $query->get()
             ->map(function ($transaction) {
                 $metadata = $transaction->metadata ?? [];
                 $networkName = $metadata['network'] ?? $transaction->provider_name ?? 'N/A';
@@ -301,6 +318,24 @@ class AdminDashboardController extends Controller
                     'api_response' => $transaction->api_response ?? '',
                 ];
             });
+    }
+
+    private function hasTransactionTypeColumn(): bool
+    {
+        if ($this->hasTransactionTypeColumn === null) {
+            $this->hasTransactionTypeColumn = Schema::hasColumn('transactions', 'type');
+        }
+
+        return $this->hasTransactionTypeColumn;
+    }
+
+    private function filterByTransactionType($query, string $type)
+    {
+        if ($this->hasTransactionTypeColumn()) {
+            return $query->where('type', $type);
+        }
+
+        return $query;
     }
 
 
