@@ -12,11 +12,27 @@ use App\Models\ElectricityDistributor;
 use App\Models\FundingMethod;
 use App\Models\TransactionApi;
 use App\Models\Wallet;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
 
 class TransactionHelper
 {
+
+    public function validateTransactionPin(User $user, ?string $pin): void
+    {
+        if (!$user->hasTransactionPin()) {
+            return;
+        }
+
+        $storedPin = $user->getRawOriginal('transaction_pin');
+
+        if (!$pin || !Hash::check($pin, $storedPin)) {
+            throw ValidationException::withMessages([
+                'transaction_pin' => 'Invalid transaction PIN.',
+            ]);
+        }
+    }
 
 
     public function checkDuplicate(User $user, $period)

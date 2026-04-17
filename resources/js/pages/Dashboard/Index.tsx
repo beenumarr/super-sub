@@ -1,3 +1,4 @@
+import { SetTransactionPinModal } from '@/components/modals/set-transaction-pin-modal';
 import { WelcomeAnnouncementModal } from '@/components/modals/welcome-announcement-modal';
 import { NetworkIcon } from '@/components/shared/network-icon';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -48,9 +49,10 @@ interface DashboardProps {
         title: string;
         content: string;
     };
+    has_pin: boolean;
 }
 
-export default function Index({ recent_transactions, wallet, funding_accounts, active_promotion, welcome_announcement }: DashboardProps) {
+export default function Index({ recent_transactions, wallet, funding_accounts, welcome_announcement, has_pin, active_promotion, }: DashboardProps) {
     const { auth } = usePage<{
         auth: {
             user: {
@@ -378,6 +380,8 @@ export default function Index({ recent_transactions, wallet, funding_accounts, a
                     showOnce={true}
                 />
             )}
+
+            <SetTransactionPinModal open={!has_pin} />
         </AppLayout>
     );
 }

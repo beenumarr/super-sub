@@ -23,6 +23,7 @@ interface BuyDataForm {
     data_plan_type: string | number;
     data_plan: any;
     disable_number_validator: boolean;
+    transaction_pin: string;
 }
 
 interface BuyDataPageProps {
@@ -59,6 +60,7 @@ export default function Index(props: BuyDataPageProps) {
         data_plan_type: '',
         data_plan: null,
         disable_number_validator: true,
+        transaction_pin: '',
     });
 
     const validateForm = (handleValidated: () => void) => {
@@ -303,6 +305,9 @@ export default function Index(props: BuyDataPageProps) {
                                 handleSubmit={submit}
                                 validateForm={validateForm}
                                 detailsRows={confirmationDetails}
+                                requirePin
+                                onPinChange={(pin) => setData('transaction_pin', pin)}
+                                pinError={errors.transaction_pin}
                             />
                         </form>
                     </div>

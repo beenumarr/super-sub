@@ -7,8 +7,8 @@ interface Props {
 }
 
 export default function AppLogoIcon({ className = 'h-10 w-10', alt }: Props) {
-    const { config } = usePage().props as any;
-    const siteLogo = config?.site_logo;
+    const { config } = usePage().props as unknown as { config: { site_logo: string } };
+    const siteLogo = config.site_logo;
 
     // Construct full URL for uploaded logo with cache busting
     const logoUrl = siteLogo ? `/storage/uploads/${siteLogo}?t=${Date.now()}` : null;
@@ -34,7 +34,7 @@ export default function AppLogoIcon({ className = 'h-10 w-10', alt }: Props) {
     // Placeholder icon when no logo is configured
     return (
         <div className={containerClass}>
-            <ImageIcon className="w-3/4 h-3/4 text-sidebar-primary-foreground/70" />
+            <ImageIcon className="text-sidebar-primary-foreground/70 h-3/4 w-3/4" />
         </div>
     );
 }

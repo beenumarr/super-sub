@@ -30,6 +30,8 @@ class DashboardController extends Controller
                 ];
             });
 
+
+
         $announcementEnabled = AppConfiguration::where('key', 'welcome_announcement_enabled')->first()?->value === 'true';
         $announcementTitle = AppConfiguration::where('key', 'welcome_announcement_title')->first()?->value ?? 'Welcome!';
         $announcementContent = AppConfiguration::where('key', 'welcome_announcement_content')->first()?->value ?? '';
@@ -88,6 +90,7 @@ class DashboardController extends Controller
                 'title' => $announcementTitle,
                 'content' => $announcementContent,
             ],
+            'has_pin' => $user->hasTransactionPin(),
         ]);
     }
 }

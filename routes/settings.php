@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Settings\PasswordController;
+use App\Http\Controllers\Settings\PinController;
 use App\Http\Controllers\Settings\ProfileController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -21,6 +22,9 @@ Route::middleware('auth')->group(function () {
     Route::put('user-settings/password', [PasswordController::class, 'update'])->name('password.update');
 
     Route::get('user-settings/charges', [ProfileController::class, 'charges'])->name('user-settings.charges');
+
+    Route::get('user-settings/pin', [PinController::class, 'edit'])->name('user-settings.pin');
+    Route::put('user-settings/pin', [PinController::class, 'update'])->name('pin.update');
 
     Route::get('user-settings/appearance', function () {
         return Inertia::render('settings/appearance');

@@ -22,6 +22,7 @@ interface BuyAirtimeForm {
     payable_amount: string | number;
     disable_number_validator: boolean;
     discount?: number;
+    transaction_pin: string;
 }
 
 interface BuyAirtimePageProps {
@@ -41,6 +42,7 @@ export default function Index(props: BuyAirtimePageProps) {
         payable_amount: '',
         disable_number_validator: false,
         discount: 0,
+        transaction_pin: '',
     });
 
     const validationSchema = Yup.object().shape({
@@ -326,6 +328,9 @@ export default function Index(props: BuyAirtimePageProps) {
                                     handleSubmit={submit}
                                     validateForm={validateForm}
                                     detailsRows={confirmationDetails}
+                                    requirePin
+                                    onPinChange={(pin) => setData('transaction_pin', pin)}
+                                    pinError={errors.transaction_pin}
                                 />
                             </div>
                         </form>
