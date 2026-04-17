@@ -14,6 +14,7 @@ use App\Http\Controllers\User\DeveloperApiController;
 use App\Http\Controllers\User\ElectricityBillController;
 use App\Http\Controllers\User\KiraniTransactionController;
 use App\Http\Controllers\User\KycController;
+use App\Http\Controllers\User\PromotionRedemptionController;
 use App\Http\Controllers\User\ReferralController;
 use App\Http\Controllers\User\ResultCheckerController;
 use App\Http\Controllers\User\SmileTransactionController;
@@ -81,6 +82,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/referrals', [ReferralController::class, 'index'])->name('referrals.index');
     Route::post('/withdraw-bonus', [ReferralController::class, 'withdrawBonus'])->name('withdraw-bonus');
     Route::put('/claim-referral-bonus/{referral}', [ReferralController::class, 'claimReferralBonus'])->name('claim-referral-bonus');
+    Route::post('/promotions/redeem', [PromotionRedemptionController::class, 'redeem'])->name('promotions.redeem');
     Route::get('/comin-soon', function () {return Inertia::render('Utils/CominSoon');})->name('coming-soon');
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -130,7 +132,6 @@ require __DIR__.'/auth.php';
 require __DIR__.'/utils.php';
 require __DIR__.'/feat.php';
 require __DIR__.'/settings.php';
-
 
 
 

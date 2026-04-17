@@ -10,6 +10,9 @@ export interface DataTypeRow {
     network: {
         name: string;
     };
+    code?: string;
+    api?: { name: string } | null;
+    transaction_api_id?: number | null;
     active: boolean;
     [key: string]: unknown;
 }
@@ -31,6 +34,18 @@ export function getDataTypeColumns(
             header: 'Network',
             className: 'min-w-[120px]',
             render: (row) => <span className="uppercase text-sm">{row.network?.name ?? 'N/A'}</span>,
+        },
+        {
+            key: 'code',
+            header: 'Code',
+            className: 'min-w-[120px]',
+            render: (row) => <span className="text-sm">{String(row.code ?? '—')}</span>,
+        },
+        {
+            key: 'api',
+            header: 'API',
+            className: 'min-w-[140px]',
+            render: (row) => <span className="text-sm">{(row as any)?.api?.name ?? '—'}</span>,
         },
         {
             key: 'status',

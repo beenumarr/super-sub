@@ -15,7 +15,10 @@ interface DataPlanTypeEditFormProps {
 interface EditData {
     id: number;
     name: string;
-    network_id: number;
+    network_id?: number;
+    mobile_network_id?: number;
+    code?: string;
+    transaction_api_id?: number;
     active: boolean;
 }
 

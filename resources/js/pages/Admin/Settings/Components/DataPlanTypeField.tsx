@@ -11,15 +11,24 @@ interface MobileNetwork {
     name: string;
 }
 
+interface TransactionApiOption {
+    id: number;
+    name: string;
+}
+
 interface EditDataType {
     id?: number;
     name?: string;
     network_id?: number;
+    mobile_network_id?: number;
+    code?: string;
+    transaction_api_id?: number;
     active?: boolean;
 }
 
 interface PageProps {
     mobile_networks: MobileNetwork[];
+    apis?: TransactionApiOption[];
     [key: string]: any;
 }
 
@@ -30,22 +39,30 @@ interface DataPlanTypeFieldProps {
 
 interface FormData {
     mobile_network_id: string | number;
+    transaction_api_id: string | number;
     name: string;
+    code: string;
     active: boolean | number;
     [key: string]: any;
 }
 
 const DataPlanTypeField: FC<DataPlanTypeFieldProps> = ({ handleClose, editData }) => {
-    const { mobile_networks } = usePage<PageProps>().props;
+    const { mobile_networks, apis = [] } = usePage<PageProps>().props;
 
     const validationSchema = Yup.object().shape({
         name: Yup.string().required("Name is required"),
+        code: Yup.string().required("Plan code is required"),
+        transaction_api_id: Yup.string().required("Transaction API is required"),
     });
 
     const { data, setData, post, put, processing, setError, errors } =
         useForm<FormData>({
-            mobile_network_id: editData && typeof editData === 'object' ? (editData.network_id ?? "") : "",
+            mobile_network_id: editData && typeof editData === 'object'
+                ? (editData.mobile_network_id ?? editData.network_id ?? "")
+                : "",
+            transaction_api_id: editData && typeof editData === 'object' ? (editData.transaction_api_id ?? "") : "",
             name: editData && typeof editData === 'object' ? (editData.name ?? "") : "",
+            code: editData && typeof editData === 'object' ? (editData.code ?? "") : "",
             active: editData && typeof editData === 'object' ? (editData.active ?? 1) : 1,
         });
 
@@ -59,7 +76,7 @@ const DataPlanTypeField: FC<DataPlanTypeFieldProps> = ({ handleClose, editData }
                 put(
                     route("data_plan_types.update", {
                         data_plan_type: editData.id,
-                    }),
+                    }, false),
                     {
                         onSuccess: () => {
                             handleClose(false);
@@ -70,7 +87,7 @@ const DataPlanTypeField: FC<DataPlanTypeFieldProps> = ({ handleClose, editData }
                     }
                 );
             } else {
-                post(route("data_plan_types.store"), {
+                post(route("data_plan_types.store", undefined, false), {
                     onSuccess: () => {
                         handleClose(false);
                     },
@@ -90,6 +107,10 @@ const DataPlanTypeField: FC<DataPlanTypeFieldProps> = ({ handleClose, editData }
 
     const selectedNetwork = data.mobile_network_id
         ? String(data.mobile_network_id)
+        : undefined;
+
+    const selectedApi = data.transaction_api_id
+        ? String(data.transaction_api_id)
         : undefined;
 
     return (
@@ -119,6 +140,31 @@ const DataPlanTypeField: FC<DataPlanTypeFieldProps> = ({ handleClose, editData }
             </div>
 
             <div className="space-y-2">
+                <Label htmlFor="transaction_api_id">Transaction API</Label>
+                <Select
+                    value={selectedApi}
+                    onValueChange={(value) =>
+                        setData({
+                            ...data,
+                            transaction_api_id: value,
+                        })
+                    }
+                >
+                    <SelectTrigger id="transaction_api_id">
+                        <SelectValue placeholder="Select Transaction API" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {apis.map((api) => (
+                            <SelectItem key={api.id} value={String(api.id)}>
+                                {api.name}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+                {errors.transaction_api_id && <span className="text-sm text-red-600">{errors.transaction_api_id}</span>}
+            </div>
+
+            <div className="space-y-2">
                 <Label htmlFor="name">Name</Label>
                 <Input
                     id="name"
@@ -129,6 +175,19 @@ const DataPlanTypeField: FC<DataPlanTypeFieldProps> = ({ handleClose, editData }
                     placeholder="Enter data type name"
                 />
                 {errors.name && <span className="text-sm text-red-600">{errors.name}</span>}
+            </div>
+
+            <div className="space-y-2">
+                <Label htmlFor="code">Plan Code</Label>
+                <Input
+                    id="code"
+                    type="text"
+                    name="code"
+                    value={data.code}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => setData("code", e.target.value)}
+                    placeholder="Enter plan code (e.g. SME, GIFTING)"
+                />
+                {errors.code && <span className="text-sm text-red-600">{errors.code}</span>}
             </div>
 
             <div className="flex items-center justify-end gap-2 mt-4">

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use Inertia\Inertia;
 use Inertia\Response;
 use App\Models\DataPlan;
+use App\Models\DataPlanType;
 use App\Models\MobileNetwork;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\DataPlanRequest;
@@ -19,16 +20,25 @@ class DataPlanController extends Controller
     {
         $pageSize = request('pageSize', 20);
         $currentPage = request('page', 1);
+        $network = request('network');
 
 
         $data = DataPlan::with('planType.network', 'apis')->latest();
 
         $data->filter(FilterRequest::only('search', 'trashed', 'network', 'planType', 'status'));
 
+        $dataTypes = DataPlanType::with('network', 'api')->latest();
+        if (!empty($network)) {
+            $dataTypes->where('mobile_network_id', $network);
+        }
+
         return Inertia::render('Admin/Settings/DataPlans', [
             'data_plans' => DataPlanResource::collection($data->paginate($pageSize, ['*'], 'page', $currentPage)->appends(FilterRequest::all())),
             'mobile_networks' => MobileNetworkResource::collection(MobileNetwork::with('addon.package')->whereNotIn('name', ['KIRANI'])->get()),
-            'apis'=> TransactionApi::all()
+            'apis'=> TransactionApi::all(['id', 'name']),
+            'data_types' => $dataTypes->get(),
+            'enable_add_datatype' => config('settings.feat_enable_data_type'),
+            'active_tab' => request('tab', 'plans'),
 
 
         ]);

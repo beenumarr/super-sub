@@ -24,6 +24,7 @@ use App\Http\Controllers\Admin\StaffController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\AppConfigurationController;
 use App\Http\Controllers\Admin\PromoController;
+use App\Http\Controllers\Admin\PromotionController;
 use App\Http\Controllers\Admin\ServiceManagementController;
 use App\Http\Controllers\Admin\DataPlanTypeController;
 use App\Http\Controllers\Admin\MobileNetworkController;
@@ -111,6 +112,10 @@ Route::middleware(['auth', Admin::class])->prefix('admin')->group(function () {
         ->name('app_configurations.edit');
 
     Route::resource('/promo', PromoController::class);
+    Route::post('/promotions', [PromotionController::class, 'store'])->name('admin.promotions.store');
+    Route::put('/promotions/{promotion}/activate', [PromotionController::class, 'activate'])->name('admin.promotions.activate');
+    Route::put('/promotions/{promotion}/deactivate', [PromotionController::class, 'deactivate'])->name('admin.promotions.deactivate');
+    Route::delete('/promotions/{promotion}', [PromotionController::class, 'destroy'])->name('admin.promotions.destroy');
     Route::post('/update-site-images', [AppConfigurationController::class, 'updatePhotos'])->name('update-site-images');
     Route::post('/clear-images', [AppConfigurationController::class, 'clearImages'])->name('clear-images');
     Route::get('/services-management', [ServiceManagementController::class, 'index'])->name('services-management');

@@ -37,6 +37,13 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Data Types', href: '/admin/data_plan_types' },
 ];
 
+function isEnabledSetting(value: unknown): boolean {
+    if (value === true) return true;
+    if (value === false || value === null || value === undefined) return false;
+    const normalized = String(value).trim().toLowerCase();
+    return normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'on';
+}
+
 function NetworkFilter({
     data,
     onChange,
@@ -68,6 +75,8 @@ const Index: FC = () => {
         enable_add_datatype,
         data_types: data,
     } = usePage<PageProps>().props;
+
+    const isAdminUser = Boolean((usePage().props as any)?.auth?.isAdmin);
 
     const [filterValues, setFilterValue] = useState<FilterValues>({
         network: 1,
@@ -111,7 +120,7 @@ const Index: FC = () => {
                     ))}
                 </div>
                 <DataTypeTable
-                    enable_add_datatype={enable_add_datatype === "1"}
+                    enable_add_datatype={isAdminUser || isEnabledSetting(enable_add_datatype)}
                     filterValues={filterValues}
                     setFilterValue={setFilterValue}
                     data={data}

@@ -252,7 +252,7 @@ export default function UserField({ handleClose, editData }: UserFieldProps) {
                     htmlFor="active"
                     className="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer"
                 >
-                    {Boolean(data.active) ? "Active" : "Disabled"}
+                    {data.active ? "Active" : "Disabled"}
                 </label>
             </div>
 

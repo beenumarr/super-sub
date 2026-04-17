@@ -7,6 +7,7 @@ use Inertia\Ssr\Response;
 use App\Models\DataPlanType;
 use Illuminate\Http\Request;
 use App\Models\MobileNetwork;
+use App\Models\TransactionApi;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\MobileNetworkResource;
 use App\Http\Resources\Admin\DataPlanTypeResource;
@@ -19,7 +20,7 @@ class DataPlanTypeController extends Controller
     {
         $network = request('network', 1);
 
-        $data = DataPlanType::with('network');
+        $data = DataPlanType::with('network', 'api');
 
 
         if ($network) {
@@ -31,6 +32,7 @@ class DataPlanTypeController extends Controller
             'data_types' => $data->get(),
             'enable_add_datatype' => config('settings.feat_enable_data_type'),
             'mobile_networks' => MobileNetwork::all(),
+            'apis' => TransactionApi::all(['id', 'name']),
         ]);
     }
 
@@ -40,12 +42,20 @@ class DataPlanTypeController extends Controller
     public function store(Request $request)
     {
 
+        $validated = $request->validate([
+            'mobile_network_id' => ['required', 'integer', 'exists:mobile_networks,id'],
+            'transaction_api_id' => ['required', 'integer', 'exists:transaction_apis,id'],
+            'name' => ['required', 'string', 'max:255'],
+            'code' => ['required', 'string', 'max:255'],
+            'active' => ['required'],
+        ]);
 
         DataPlanType::create([
-            'mobile_network_id'=> $request->mobile_network_id,
-            'name'=> $request->name,
-            'code'=> $request->name,
-            'active' => $request->active,
+            'mobile_network_id'=> $validated['mobile_network_id'],
+            'transaction_api_id'=> $validated['transaction_api_id'],
+            'name'=> $validated['name'],
+            'code'=> $validated['code'],
+            'active' => $validated['active'],
         ]);
 
 
@@ -63,10 +73,20 @@ class DataPlanTypeController extends Controller
     public function update(Request $request, DataPlanType $data_plan_type)
     {
 
+        $validated = $request->validate([
+            'mobile_network_id' => ['required', 'integer', 'exists:mobile_networks,id'],
+            'transaction_api_id' => ['required', 'integer', 'exists:transaction_apis,id'],
+            'name' => ['required', 'string', 'max:255'],
+            'code' => ['required', 'string', 'max:255'],
+            'active' => ['required'],
+        ]);
 
         $data_plan_type->update([
-            'name'=> $request->name,
-            'active'=> $request->active,
+            'mobile_network_id'=> $validated['mobile_network_id'],
+            'transaction_api_id'=> $validated['transaction_api_id'],
+            'name'=> $validated['name'],
+            'code'=> $validated['code'],
+            'active'=> $validated['active'],
         ]);
 
 
