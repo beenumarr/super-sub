@@ -5,11 +5,21 @@ import { memo, useEffect, useState } from 'react';
 import { usePrevious } from 'react-use';
 import DataPlanTable from './Components/DataPlanTable';
 import type { DataPlanRow } from './Components/DataPlanUtils';
+import DataTypeTable from './Components/DataTypeTable';
+import type { DataTypeRow } from './Components/DataTypeUtils';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Admin', href: '/admin/dashboard' },
     { title: 'Data Plans', href: '/admin/data_plans' },
 ];
+
+function isEnabledSetting(value: unknown): boolean {
+    if (value === true) return true;
+    if (value === false || value === null || value === undefined) return false;
+    const normalized = String(value).trim().toLowerCase();
+    return normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'on';
+}
 
 interface MobileNetwork {
     id: string | number;
@@ -35,6 +45,9 @@ interface PageProps {
         links?: { first: string; last: string; prev: string | null; next: string | null };
     };
     auth: { can?: { create_data_plan?: boolean; edit_data_plan?: boolean; delete_data_plan?: boolean } };
+    data_types: DataTypeRow[];
+    enable_add_datatype: string;
+    active_tab?: string;
 }
 
 function NetworkFilter({
@@ -63,14 +76,17 @@ function NetworkFilter({
 }
 
 const Index = memo(function DataPlansIndex() {
-    const { theme, mobile_networks, data_plans: data, auth } = usePage().props as unknown as PageProps;
+    const pageProps = usePage().props as any;
+    const { theme, mobile_networks, data_plans: data, data_types, enable_add_datatype, active_tab, auth } = pageProps as PageProps;
     const can = auth?.can ?? {};
+    const isAdminUser = Boolean(pageProps?.auth?.isAdmin);
 
-    const [filterValues, setFilterValue] = useState<{ page: number; pageSize: number; network: string | number; planType: string | number; [key: string]: any }>({
+    const [filterValues, setFilterValue] = useState<{ page: number; pageSize: number; network: string | number; planType: string | number; tab: string; [key: string]: any }>({
         page: 1,
         pageSize: 20,
         network: '',
         planType: '',
+        tab: active_tab || 'plans',
     });
 
     const setPaginationModel = (val: { page: number; pageSize: number }) => {
@@ -100,39 +116,76 @@ const Index = memo(function DataPlansIndex() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Data Plans" />
             <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-                <div className="mb-4 flex flex-wrap items-center gap-2 overflow-x-auto border-b pb-4">
-                    <NetworkFilter
-                        data={{ name: 'ALL', id: '' }}
-                        valueSelected={filterValues.network}
-                        onChange={() => setFilterValue({ ...filterValues, network: '' })}
-                    />
-                    {mobile_networks.map((type) => (
-                        <NetworkFilter
-                            key={String(type.id)}
-                            data={type}
-                            valueSelected={filterValues.network}
-                            onChange={() => setFilterValue({ ...filterValues, network: type.id })}
+                <Tabs
+                    value={filterValues.tab}
+                    onValueChange={(tab) => setFilterValue({ ...filterValues, tab })}
+                    className="w-full"
+                >
+                    <TabsList className="mb-4 grid w-full grid-cols-2">
+                        <TabsTrigger value="plans">Data Plans</TabsTrigger>
+                        <TabsTrigger value="types">Plan Types</TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent value="plans" className="mt-0 space-y-4">
+                        <div className="flex flex-wrap items-center gap-2 overflow-x-auto border-b pb-4">
+                            <NetworkFilter
+                                data={{ name: 'ALL', id: '' }}
+                                valueSelected={filterValues.network}
+                                onChange={() => setFilterValue({ ...filterValues, network: '' })}
+                            />
+                            {mobile_networks.map((type) => (
+                                <NetworkFilter
+                                    key={String(type.id)}
+                                    data={type}
+                                    valueSelected={filterValues.network}
+                                    onChange={() => setFilterValue({ ...filterValues, network: type.id })}
+                                />
+                            ))}
+                        </div>
+
+                        <DataPlanTable
+                            filterValues={filterValues}
+                            setFilterValue={setFilterValue as any}
+                            data={data}
+                            planTypes={
+                                mobile_networks.find((it) => String(it.id) === String(filterValues.network))
+                                    ?.plan_types ?? []
+                            }
+                            theme={theme}
+                            paginationModel={{
+                                page: filterValues.page - 1,
+                                pageSize: filterValues.pageSize,
+                            }}
+                            setPaginationModel={setPaginationModel}
+                            canCreateDataPlan={can?.create_data_plan ?? false}
+                            canEditDataPlan={can?.edit_data_plan ?? false}
+                            canDeleteDataPlan={can?.delete_data_plan ?? false}
                         />
-                    ))}
-                </div>
-                <DataPlanTable
-                    filterValues={filterValues}
-                    setFilterValue={setFilterValue}
-                    data={data}
-                    planTypes={
-                        mobile_networks.find((it) => String(it.id) === String(filterValues.network))
-                            ?.plan_types ?? []
-                    }
-                    theme={theme}
-                    paginationModel={{
-                        page: filterValues.page - 1,
-                        pageSize: filterValues.pageSize,
-                    }}
-                    setPaginationModel={setPaginationModel}
-                    canCreateDataPlan={can?.create_data_plan ?? false}
-                    canEditDataPlan={can?.edit_data_plan ?? false}
-                    canDeleteDataPlan={can?.delete_data_plan ?? false}
-                />
+                    </TabsContent>
+
+                    <TabsContent value="types" className="mt-0 space-y-4">
+                        <div className="flex flex-wrap items-center gap-2 overflow-x-auto border-b pb-4">
+                            <NetworkFilter
+                                data={{ name: 'ALL', id: '' }}
+                                valueSelected={filterValues.network}
+                                onChange={() => setFilterValue({ ...filterValues, network: '' })}
+                            />
+                            {mobile_networks.map((type) => (
+                                <NetworkFilter
+                                    key={String(type.id)}
+                                    data={type}
+                                    valueSelected={filterValues.network}
+                                    onChange={() => setFilterValue({ ...filterValues, network: type.id })}
+                                />
+                            ))}
+                        </div>
+
+                        <DataTypeTable
+                            enable_add_datatype={isAdminUser || isEnabledSetting(enable_add_datatype)}
+                            data={data_types ?? []}
+                        />
+                    </TabsContent>
+                </Tabs>
             </div>
         </AppLayout>
     );

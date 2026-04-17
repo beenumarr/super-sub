@@ -8,6 +8,7 @@ use App\Jobs\ImageUpload;
 use App\Models\Transaction;
 use Illuminate\Http\Request;
 use App\Models\AppConfiguration;
+use App\Models\Promotion;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Artisan;
 use App\Http\Resources\Admin\AdminTransactionResource;
@@ -54,6 +55,7 @@ class PromoController extends Controller
         return Inertia::render('Admin/Promo/Index', [
             'data' =>$configsdata,
             'configs_values'=> $configs,
+            'promotions' => Promotion::orderByDesc('id')->get(),
             'transactions' => AdminTransactionResource::collection($data->orderBy('created_at', 'desc')->paginate($pageSize, ['*'], 'page', $currentPage)->appends(FilterRequest::all())),
             'total_amount'=> number_format($total, 2),
         ]);

@@ -16,9 +16,12 @@ class DataPlanTypeResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'network' => $this->network->name,
-            'mobile_network_id' => $this->network->id,
+            'network' => $this->network?->name,
+            'network_id' => $this->mobile_network_id,
+            'mobile_network_id' => $this->mobile_network_id,
             'name' => $this->name,
+            'code' => $this->code,
+            'transaction_api_id' => $this->transaction_api_id,
             'active' => $this->active,
         ];
     }
