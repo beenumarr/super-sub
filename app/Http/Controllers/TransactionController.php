@@ -72,18 +72,6 @@ class TransactionController extends Controller
 
 
 
-    public function data(ShareDataRequest $request, SMEDirect $sMEDirect) {
-
-
-
-        //
-        $sMEDirect->handle($sim, $data['phone'], $plan, $transaction);
-
-
-        return response(json_encode(new APITransactionResource($transaction)));
-
-
-    }
 
     public function show(Transaction $transaction)
     {

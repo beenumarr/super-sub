@@ -101,7 +101,7 @@ export default function Field({ handleClose, editData }: FieldProps) {
     const apiType = editData.model.replace('APIs\\', '').replace('\\', '');
 
     return (
-        <form onSubmit={submit} className="flex w-full flex-col justify-center p-3">
+        <form onSubmit={submit} className="flex w-full flex-col justify-center p-0">
             <div>
                 <span>API Type: {apiType === 'Default' ? 'Msorg' : apiType}</span>
             </div>
@@ -111,7 +111,7 @@ export default function Field({ handleClose, editData }: FieldProps) {
                 <Input
                     id="name"
                     type="text"
-                    className="h-8 w-40"
+                    className="h-8 w-full"
                     name="name"
                     value={data.name}
                     onChange={handleChange}
@@ -127,7 +127,7 @@ export default function Field({ handleClose, editData }: FieldProps) {
                         <Input
                             id="url"
                             type="text"
-                            className="h-8 w-40"
+                            className="h-8 w-full"
                             name="url"
                             value={data.url}
                             onChange={handleChange}
@@ -141,7 +141,7 @@ export default function Field({ handleClose, editData }: FieldProps) {
                         <Input
                             id="username"
                             type="text"
-                            className="h-8 w-40"
+                            className="h-8 w-full"
                             name="username"
                             value={data.username}
                             onChange={handleChange}
@@ -155,7 +155,7 @@ export default function Field({ handleClose, editData }: FieldProps) {
                         <Input
                             id="password"
                             type="text"
-                            className="h-8 w-40"
+                            className="h-8 w-full"
                             name="password"
                             value={data.password}
                             onChange={handleChange}
@@ -171,7 +171,7 @@ export default function Field({ handleClose, editData }: FieldProps) {
                         <Input
                             id="url"
                             type="text"
-                            className="h-8 w-40"
+                            className="h-8 w-full"
                             name="url"
                             value={data.url}
                             onChange={handleChange}
@@ -185,7 +185,7 @@ export default function Field({ handleClose, editData }: FieldProps) {
                         <Input
                             id="token"
                             type="text"
-                            className="h-8 w-40"
+                            className="h-8 w-full"
                             name="token"
                             value={data.token}
                             onChange={handleChange}
@@ -204,7 +204,7 @@ export default function Field({ handleClose, editData }: FieldProps) {
                     <Input
                         id="mtn_service_id"
                         type="text"
-                        className="h-8 w-40"
+                        className="h-8 w-full"
                         name="mtn_service_id"
                         value={data.mtn_service_id}
                         onChange={handleChange}
@@ -218,7 +218,7 @@ export default function Field({ handleClose, editData }: FieldProps) {
                     <Input
                         id="airtel_service_id"
                         type="text"
-                        className="h-8 w-40"
+                        className="h-8 w-full"
                         name="airtel_service_id"
                         value={data.airtel_service_id}
                         onChange={handleChange}
@@ -232,7 +232,7 @@ export default function Field({ handleClose, editData }: FieldProps) {
                     <Input
                         id="glo_service_id"
                         type="text"
-                        className="h-8 w-40"
+                        className="h-8 w-full"
                         name="glo_service_id"
                         value={data.glo_service_id}
                         onChange={handleChange}
@@ -246,7 +246,7 @@ export default function Field({ handleClose, editData }: FieldProps) {
                     <Input
                         id="ninemobile_service_id"
                         type="text"
-                        className="h-8 w-40"
+                        className="h-8 w-full"
                         name="ninemobile_service_id"
                         value={data.ninemobile_service_id}
                         onChange={handleChange}

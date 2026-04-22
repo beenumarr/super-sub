@@ -17,10 +17,6 @@ class DataPlan extends Model
         'validity',
         'numeric_value',
         'amount',
-        'smart_earner_amount',
-        'affiliate_amount',
-        'top_user_amount',
-        'api_amount',
         'active',
         'name',
         'enable_custom_vending_api',
@@ -55,26 +51,7 @@ class DataPlan extends Model
 
     public function getUseramountAttribute()
     {
-        $package = auth()->user()->user_package_id;
-
-        $amount = $this->amount;
-
-        if($package === 1){
-            $amount = $this->smart_earner_amount ?? $this->amount;
-        }
-        if($package === 2){
-            $amount = $this->affiliate_amount ?? $this->amount;
-        }
-
-        if($package === 3){
-            $amount = $this->top_user_amount ?? $this->amount;
-        }
-
-        if($package === 4){
-            $amount = $this->api_amount ?? $this->amount;
-        }
-
-        return $amount;
+        return $this->amount;
     }
 
 

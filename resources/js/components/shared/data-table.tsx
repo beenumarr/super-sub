@@ -30,7 +30,7 @@ export interface PaginationLinks {
 
 export interface DataTableColumn<T> {
     key: string;
-    header: string;
+    header: React.ReactNode;
     className?: string;
     render?: (row: T) => React.ReactNode;
 }

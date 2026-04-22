@@ -54,16 +54,12 @@ export default function Field({ handleClose, editData }: FieldProps) {
     });
 
     const initialPlanTypeApiList: Record<string, string> = Object.fromEntries(
-        Object.entries(editData?.plan_type_api_list ?? {}).map(([key, value]) => [
-            key,
-            value == null ? '' : String(value),
-        ]),
+        Object.entries(editData?.plan_type_api_list ?? {}).map(([key, value]) => [key, value == null ? '' : String(value)]),
     );
 
     const { data, setData, put, processing, setError, errors } = useForm<DataForm>({
         api_network_id: editData?.api_network_id != null ? String(editData.api_network_id) : '',
-        airtime_transaction_api_id:
-            editData?.airtime_transaction_api_id != null ? String(editData.airtime_transaction_api_id) : '',
+        airtime_transaction_api_id: editData?.airtime_transaction_api_id != null ? String(editData.airtime_transaction_api_id) : '',
         data_active: editData?.data_active ?? false,
         data_types_vending: initialPlanTypeApiList,
         airtime_active: editData?.airtime_active ?? false,

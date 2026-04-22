@@ -21,7 +21,6 @@ class DataPlanResource extends JsonResource
             'type' => $this->planType->name,
             'amount' => $this->amount,
             'name' => $this->name?? $this->size . ' ' . $this->volume,
-            'smart_earner_amount' => $this->smart_earner_amount ?? $this->amount,
             'size' => $this->size,
             'volume' => $this->volume,
             'validity' => $this->validity,

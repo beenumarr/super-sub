@@ -9,10 +9,6 @@ export interface DataPlanRow {
     plan_size: number;
     plan_volume: string;
     amount: number;
-    smart_earner_amount: number;
-    affiliate_amount: number;
-    top_user_amount: number;
-    api_amount: number;
     plan_validity: number | string;
     mobile_network?: { name: string };
     [key: string]: unknown;
@@ -48,22 +44,6 @@ export function getDataPlanColumns(
         {
             key: 'amount',
             header: 'Amount',
-        },
-        {
-            key: 'smart_earner_amount',
-            header: 'Smart Earner Amount',
-        },
-        {
-            key: 'affiliate_amount',
-            header: 'Affiliate Amount',
-        },
-        {
-            key: 'top_user_amount',
-            header: 'Top User Amount',
-        },
-        {
-            key: 'api_amount',
-            header: 'Api Amount',
         },
         {
             key: 'plan_validity',

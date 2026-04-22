@@ -60,6 +60,7 @@ Route::middleware(['auth', Admin::class])->prefix('admin')->group(function () {
     Route::post('/a2c-transactions/transfer-to-wallet/{transaction}', [A2CTransactionController::class, 'transferToWallet'])->name('admin.a2c-transactions.transfer-to-wallet');
     Route::get('/transactions/{transaction}', [AdminTransactionController::class, 'show'])->name('admin.transactions.show');
     Route::put('/transactions/{transaction}', [AdminTransactionController::class, 'update'])->name('admin.transactions.update');
+    Route::post('/data_plans/bulk-action', [DataPlanController::class, 'bulkAction'])->name('data_plans.bulk-action');
     Route::resource('/data_plans', DataPlanController::class);
     Route::resource('/cable_subscription_plans', CableSubscriptionPlanController::class);
     Route::resource('/service-cards', ServiceCardController::class);

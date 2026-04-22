@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Hash;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Traits\HasRoles;
@@ -180,6 +181,27 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         $raw = $this->getRawOriginal('transaction_pin');
         return !empty($raw) && $raw !== 'NULL';
+    }
+
+    public function verifyTransactionPin(?string $pin): bool
+    {
+        if (!$this->hasTransactionPin() || $pin === null) {
+            return false;
+        }
+
+        $storedPin = (string) $this->getRawOriginal('transaction_pin');
+
+        if (Hash::isHashed($storedPin)) {
+            return Hash::check($pin, $storedPin);
+        }
+
+        // Legacy support: old records may still have a plain 4-digit PIN.
+        if (hash_equals($storedPin, $pin)) {
+            $this->forceFill(['transaction_pin' => $pin])->saveQuietly();
+            return true;
+        }
+
+        return false;
     }
 
 }

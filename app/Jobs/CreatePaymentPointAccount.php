@@ -51,7 +51,7 @@ class CreatePaymentPointAccount implements ShouldQueue
                 'reference' => self::generateReference(),
                 'email' => $this->request['email'],
                 'name' => $this->request['name'],
-                'phoneNumber' => $this->request['phone'],
+                'phoneNumber' => $this->request['phone_number'],
                 'bankCode' => $bankCode,
                 'businessId' => $PaymentPoint_business_id,
             ]);

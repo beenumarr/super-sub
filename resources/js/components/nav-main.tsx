@@ -16,15 +16,14 @@ import {
     Cog,
     DollarSign,
     Gift,
-    Layers,
+    History,
     LayoutDashboard,
-    Receipt,
     Settings,
+    Signal,
     Tv,
     UserCog,
     Users,
     Wallet,
-    Wifi,
 } from 'lucide-react';
 
 const adminMainNavItems: NavItem[] = [
@@ -35,9 +34,9 @@ const adminMainNavItems: NavItem[] = [
         icon: LayoutDashboard,
     },
     {
-        title: 'Transactions History',
+        title: 'Transactions',
         href: '/admin/transactions',
-        icon: Receipt,
+        icon: History,
     },
     // {
     //     title: 'Analytics',
@@ -53,15 +52,11 @@ const adminMainNavItems: NavItem[] = [
     {
         title: 'Data Plans',
         href: '/admin/data_plans',
-        icon: Wifi,
+        icon: Signal,
     },
+
     {
-        title: 'Data Types',
-        href: '/admin/data_plan_types',
-        icon: Layers,
-    },
-    {
-        title: 'Cable Plans',
+        title: 'Cable TV Plans',
         href: '/admin/cable_subscription_plans',
         icon: Tv,
     },
@@ -72,7 +67,7 @@ const adminMainNavItems: NavItem[] = [
     },
     // Services
     {
-        title: 'Services',
+        title: 'Services Settings',
         href: '/admin/services-management',
         icon: Settings,
     },

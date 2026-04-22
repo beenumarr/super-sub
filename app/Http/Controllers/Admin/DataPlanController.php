@@ -12,7 +12,10 @@ use App\Http\Requests\Admin\DataPlanRequest;
 use App\Http\Resources\MobileNetworkResource;
 use App\Http\Resources\Admin\DataPlanResource;
 use App\Models\TransactionApi;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Request as FilterRequest;
+use Illuminate\Validation\Rule;
 
 class DataPlanController extends Controller
 {
@@ -56,10 +59,6 @@ class DataPlanController extends Controller
             'validity' => $request->plan_validity??0,
             'numeric_value' => 1000,
             'amount' => $request->amount,
-            'smart_earner_amount' => $request->smart_earner_amount,
-            'affiliate_amount' => $request->affiliate_amount,
-            'top_user_amount' => $request->top_user_amount,
-            'api_amount' => $request->api_amount,
             'enable_custom_vending_api' => $request->enable_custom_vending_api,
             'custom_api_vending_id' => $request->custom_api_vending_id,
             'active' => $request->active,
@@ -96,10 +95,6 @@ class DataPlanController extends Controller
             'validity' => $request->plan_validity,
             'numeric_value' => 1000,
             'amount' => $request->amount,
-            'smart_earner_amount' => $request->smart_earner_amount,
-            'affiliate_amount' => $request->affiliate_amount,
-            'top_user_amount' => $request->top_user_amount,
-            'api_amount' => $request->api_amount,
             'enable_custom_vending_api' => $request->enable_custom_vending_api,
             'custom_api_vending_id' => $request->custom_api_vending_id,
             'active' => $request->active,
@@ -135,7 +130,46 @@ class DataPlanController extends Controller
     {
         $data_plan->delete();
 
-		return response()->json(['success'=>'Deleted']);
+		return back()->with('success', 'Data plan deleted successfully');
+    }
+
+    public function bulkAction(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer', 'exists:data_plans,id'],
+            'action' => ['required', Rule::in(['enable', 'disable', 'delete', 'move_category'])],
+            'data_plan_type_id' => [
+                'nullable',
+                'integer',
+                'exists:data_plan_types,id',
+                Rule::requiredIf(fn () => $request->input('action') === 'move_category'),
+            ],
+        ]);
+
+        $query = DataPlan::whereIn('id', $validated['ids']);
+
+        switch ($validated['action']) {
+            case 'enable':
+                $query->update(['active' => true]);
+                $message = 'Selected data plans enabled successfully';
+                break;
+            case 'disable':
+                $query->update(['active' => false]);
+                $message = 'Selected data plans disabled successfully';
+                break;
+            case 'move_category':
+                $query->update(['data_plan_type_id' => $validated['data_plan_type_id']]);
+                $message = 'Selected data plans moved to category successfully';
+                break;
+            case 'delete':
+            default:
+                $query->delete();
+                $message = 'Selected data plans deleted successfully';
+                break;
+        }
+
+        return back()->with('success', $message);
     }
 
 }

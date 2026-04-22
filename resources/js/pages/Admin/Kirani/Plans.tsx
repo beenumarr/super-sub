@@ -21,10 +21,6 @@ interface Plan {
     id: number;
     size: number;
     amount: number;
-    smart_earner_amount?: number;
-    affiliate_amount?: number;
-    top_user_amount?: number;
-    api_amount?: number;
     active: boolean;
     created_at?: string;
 }
@@ -37,10 +33,6 @@ export default function KiraniPlansPage() {
     const { data, setData, post, put, processing, errors, reset } = useForm({
         size: "",
         amount: "",
-        smart_earner_amount: "",
-        affiliate_amount: "",
-        top_user_amount: "",
-        api_amount: "",
         active: true as boolean,
     });
 
@@ -59,10 +51,6 @@ export default function KiraniPlansPage() {
         setData({
             size: String(plan.size || ""),
             amount: String(plan.amount || ""),
-            smart_earner_amount: String(plan.smart_earner_amount || ""),
-            affiliate_amount: String(plan.affiliate_amount || ""),
-            top_user_amount: String(plan.top_user_amount || ""),
-            api_amount: String(plan.api_amount || ""),
             active: plan.active ?? true,
         });
         setShowModal(true);
@@ -153,15 +141,6 @@ export default function KiraniPlansPage() {
                                             Amount (₦)
                                         </th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                            Smart Earner
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                            Affiliate
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                            Top User
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                             Status
                                         </th>
                                         <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -172,7 +151,7 @@ export default function KiraniPlansPage() {
                                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                                     {plans.length === 0 ? (
                                         <tr>
-                                            <td colSpan={7} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                                            <td colSpan={4} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                                                 No plans found. Click "Add Plan" to create one.
                                             </td>
                                         </tr>
@@ -186,15 +165,6 @@ export default function KiraniPlansPage() {
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                                                     ₦{Number(plan.amount).toLocaleString()}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
-                                                    ₦{Number(plan.smart_earner_amount || plan.amount).toLocaleString()}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
-                                                    ₦{Number(plan.affiliate_amount || plan.amount).toLocaleString()}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
-                                                    ₦{Number(plan.top_user_amount || plan.amount).toLocaleString()}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
                                                     <span
@@ -289,75 +259,6 @@ export default function KiraniPlansPage() {
                             {errors.amount && (
                                 <span className="text-sm text-red-600 dark:text-red-400">{errors.amount}</span>
                             )}
-                        </div>
-
-                        {/* Package Amounts */}
-                        <div className="space-y-3 border rounded-md p-3 dark:border-gray-700">
-                            <p className="text-sm font-medium text-gray-700 dark:text-gray-200">Package Pricing (Optional)</p>
-
-                            <div className="space-y-1">
-                                <label htmlFor="smart_earner" className="text-xs text-gray-600 dark:text-gray-400">
-                                    Smart Earner Amount
-                                </label>
-                                <Input
-                                    id="smart_earner"
-                                    type="number"
-                                    step="0.01"
-                                    value={data.smart_earner_amount}
-                                    onChange={(e) =>
-                                        setData("smart_earner_amount", e.target.value)
-                                    }
-                                    placeholder="Leave empty to use main amount"
-                                />
-                            </div>
-
-                            <div className="space-y-1">
-                                <label htmlFor="affiliate" className="text-xs text-gray-600 dark:text-gray-400">
-                                    Affiliate Amount
-                                </label>
-                                <Input
-                                    id="affiliate"
-                                    type="number"
-                                    step="0.01"
-                                    value={data.affiliate_amount}
-                                    onChange={(e) =>
-                                        setData("affiliate_amount", e.target.value)
-                                    }
-                                    placeholder="Leave empty to use main amount"
-                                />
-                            </div>
-
-                            <div className="space-y-1">
-                                <label htmlFor="top_user" className="text-xs text-gray-600 dark:text-gray-400">
-                                    Top User Amount
-                                </label>
-                                <Input
-                                    id="top_user"
-                                    type="number"
-                                    step="0.01"
-                                    value={data.top_user_amount}
-                                    onChange={(e) =>
-                                        setData("top_user_amount", e.target.value)
-                                    }
-                                    placeholder="Leave empty to use main amount"
-                                />
-                            </div>
-
-                            <div className="space-y-1">
-                                <label htmlFor="api_amount" className="text-xs text-gray-600 dark:text-gray-400">
-                                    API Amount
-                                </label>
-                                <Input
-                                    id="api_amount"
-                                    type="number"
-                                    step="0.01"
-                                    value={data.api_amount}
-                                    onChange={(e) =>
-                                        setData("api_amount", e.target.value)
-                                    }
-                                    placeholder="Leave empty to use main amount"
-                                />
-                            </div>
                         </div>
 
                         {/* Active Status */}

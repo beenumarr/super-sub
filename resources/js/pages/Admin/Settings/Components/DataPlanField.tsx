@@ -24,10 +24,6 @@ interface EditData {
     plan_volume?: string;
     plan_validity?: string | number;
     amount?: string | number;
-    smart_earner_amount?: string | number;
-    affiliate_amount?: string | number;
-    top_user_amount?: string | number;
-    api_amount?: string | number;
     api_plan_id?: string;
     data_plan_type_id?: string | number;
     api_ids?: { transaction_api_id: number; product_id?: string; product_code?: string }[];
@@ -77,10 +73,6 @@ export default function DataPlanField({ handleClose, editData }: DataPlanFieldPr
         plan_volume: editData?.plan_volume ?? '',
         plan_validity: editData?.plan_validity ?? '',
         amount: editData?.amount ?? '',
-        smart_earner_amount: editData?.smart_earner_amount ?? '',
-        affiliate_amount: editData?.affiliate_amount ?? '',
-        top_user_amount: editData?.top_user_amount ?? '',
-        api_amount: editData?.api_amount ?? '',
         api_plan_id: editData?.api_plan_id ?? '',
         data_plan_type_id: editData?.data_plan_type_id ?? '',
         api_ids: editData?.api_ids ?? [],
@@ -287,52 +279,6 @@ export default function DataPlanField({ handleClose, editData }: DataPlanFieldPr
                         onChange={(e) => setData('amount', e.target.value)}
                     />
                     <InputError message={errors.amount} />
-                </div>
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <div className="space-y-2">
-                        <Label htmlFor="smart_earner_amount">Smart Earner Amount (₦)</Label>
-                        <Input
-                            id="smart_earner_amount"
-                            type="number"
-                            placeholder="₦ Smart Earner Amount"
-                            value={data.smart_earner_amount ?? data.amount}
-                            onChange={(e) => setData('smart_earner_amount', e.target.value)}
-                        />
-                        <InputError message={errors.smart_earner_amount} />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="affiliate_amount">Affiliate Amount (₦)</Label>
-                        <Input
-                            id="affiliate_amount"
-                            type="number"
-                            placeholder="₦ Affiliate Amount"
-                            value={data.affiliate_amount ?? data.amount}
-                            onChange={(e) => setData('affiliate_amount', e.target.value)}
-                        />
-                        <InputError message={errors.affiliate_amount} />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="top_user_amount">Top User Amount (₦)</Label>
-                        <Input
-                            id="top_user_amount"
-                            type="number"
-                            placeholder="₦ Top User Amount"
-                            value={data.top_user_amount ?? data.amount}
-                            onChange={(e) => setData('top_user_amount', e.target.value)}
-                        />
-                        <InputError message={errors.top_user_amount} />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="api_amount">API Amount (₦)</Label>
-                        <Input
-                            id="api_amount"
-                            type="number"
-                            placeholder="₦ API Amount"
-                            value={data.api_amount ?? data.amount}
-                            onChange={(e) => setData('api_amount', e.target.value)}
-                        />
-                        <InputError message={errors.api_amount} />
-                    </div>
                 </div>
             </div>
 

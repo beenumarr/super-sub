@@ -1,3 +1,4 @@
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
@@ -7,7 +8,6 @@ import DataPlanTable from './Components/DataPlanTable';
 import type { DataPlanRow } from './Components/DataPlanUtils';
 import DataTypeTable from './Components/DataTypeTable';
 import type { DataTypeRow } from './Components/DataTypeUtils';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Admin', href: '/admin/dashboard' },
@@ -81,7 +81,14 @@ const Index = memo(function DataPlansIndex() {
     const can = auth?.can ?? {};
     const isAdminUser = Boolean(pageProps?.auth?.isAdmin);
 
-    const [filterValues, setFilterValue] = useState<{ page: number; pageSize: number; network: string | number; planType: string | number; tab: string; [key: string]: any }>({
+    const [filterValues, setFilterValue] = useState<{
+        page: number;
+        pageSize: number;
+        network: string | number;
+        planType: string | number;
+        tab: string;
+        [key: string]: any;
+    }>({
         page: 1,
         pageSize: 20,
         network: '',
@@ -115,18 +122,14 @@ const Index = memo(function DataPlansIndex() {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Data Plans" />
-            <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-                <Tabs
-                    value={filterValues.tab}
-                    onValueChange={(tab) => setFilterValue({ ...filterValues, tab })}
-                    className="w-full"
-                >
+            <div className="max-w-screen-4xl mx-auto w-full px-4 py-6 sm:px-6 lg:px-8">
+                <Tabs value={filterValues.tab} onValueChange={(tab) => setFilterValue({ ...filterValues, tab })} className="w-full">
                     <TabsList className="mb-4 grid w-full grid-cols-2">
                         <TabsTrigger value="plans">Data Plans</TabsTrigger>
-                        <TabsTrigger value="types">Plan Types</TabsTrigger>
+                        <TabsTrigger value="types">Plan Categories</TabsTrigger>
                     </TabsList>
 
-                    <TabsContent value="plans" className="mt-0 space-y-4">
+                    <TabsContent value="plans" className="mt-0 space-y-4 border-none shadow-none">
                         <div className="flex flex-wrap items-center gap-2 overflow-x-auto border-b pb-4">
                             <NetworkFilter
                                 data={{ name: 'ALL', id: '' }}
@@ -147,10 +150,8 @@ const Index = memo(function DataPlansIndex() {
                             filterValues={filterValues}
                             setFilterValue={setFilterValue as any}
                             data={data}
-                            planTypes={
-                                mobile_networks.find((it) => String(it.id) === String(filterValues.network))
-                                    ?.plan_types ?? []
-                            }
+                            dataTypes={data_types ?? []}
+                            planTypes={mobile_networks.find((it) => String(it.id) === String(filterValues.network))?.plan_types ?? []}
                             theme={theme}
                             paginationModel={{
                                 page: filterValues.page - 1,
@@ -180,10 +181,7 @@ const Index = memo(function DataPlansIndex() {
                             ))}
                         </div>
 
-                        <DataTypeTable
-                            enable_add_datatype={isAdminUser || isEnabledSetting(enable_add_datatype)}
-                            data={data_types ?? []}
-                        />
+                        <DataTypeTable enable_add_datatype={isAdminUser || isEnabledSetting(enable_add_datatype)} data={data_types ?? []} />
                     </TabsContent>
                 </Tabs>
             </div>

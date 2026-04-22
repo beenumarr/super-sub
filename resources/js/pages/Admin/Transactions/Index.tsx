@@ -57,12 +57,15 @@ interface PageProps extends Record<string, any> {
     transactions: TransactionData;
     total_amount: number;
     users?: User[];
+    networks?: string[];
+    filters?: Partial<FilterValues>;
 }
 
 interface FilterValues {
     page: number;
     pageSize: number;
     transaction_type: string;
+    network: string;
     search: string;
     status: string;
     user_id: string;
@@ -77,14 +80,16 @@ interface PaginationModel {
 
 const transactionTypes = [
     { name: 'All', id: '' },
-    { name: 'Data', id: 'DataTransaction' },
-    { name: 'Airtime', id: 'AirtimeTransaction' },
-    { name: 'Wallet', id: 'WalletTransaction' },
-    { name: 'Cable Subscription', id: 'CableSubscriptionTransaction' },
-    { name: 'Electricity Bill Payment', id: 'ElectricityBillTransaction' },
+    { name: 'Data', id: 'DATA' },
+    { name: 'Airtime', id: 'AIRTIME' },
+    { name: 'Wallet', id: 'WALLET' },
+    { name: 'Cable Subscription', id: 'CABLE' },
+    { name: 'Electricity Bill Payment', id: 'ELECTRICITY' },
+    { name: 'Result Checker', id: 'RESULT_CHECKER' },
 ];
 
 const ALL_USERS_VALUE = '__all_users__';
+const ALL_NETWORKS_VALUE = '__all_networks__';
 
 interface TransactionTypeData {
     name: string;
@@ -116,7 +121,7 @@ const TransactionType: FC<TransactionTypeProps> = ({ data, onChange, field_name,
 };
 
 const Index: FC = () => {
-    const { transactions: data, total_amount, users = [] } = usePage<PageProps>().props;
+    const { transactions: data, total_amount, users = [], networks = [], filters = {} } = usePage<PageProps>().props;
 
     const [viewDetailModal, setViewDetailModal] = useState<{ show: boolean; id: string | number }>(
         {
@@ -126,14 +131,15 @@ const Index: FC = () => {
     );
 
     const [filterValues, setFilterValue] = useState<FilterValues>({
-        page: 1,
-        pageSize: 20,
-        transaction_type: '',
-        search: '',
-        status: '',
-        user_id: '',
-        from: '',
-        to: '',
+        page: Number(filters.page ?? 1),
+        pageSize: Number(filters.pageSize ?? 20),
+        transaction_type: filters.transaction_type ?? '',
+        network: filters.network ?? '',
+        search: filters.search ?? '',
+        status: filters.status ?? '',
+        user_id: filters.user_id ?? '',
+        from: filters.from ?? '',
+        to: filters.to ?? '',
     });
 
     const setPaginationModel = (val: PaginationModel) => {
@@ -199,6 +205,28 @@ const Index: FC = () => {
                                 {users.map((user) => (
                                     <SelectItem key={user.id} value={user.id.toString()}>
                                         {user.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <Select
+                            value={filterValues.network ? filterValues.network : ALL_NETWORKS_VALUE}
+                            onValueChange={(val) =>
+                                setFilterValue({
+                                    ...filterValues,
+                                    network: val === ALL_NETWORKS_VALUE ? '' : val,
+                                    page: 1,
+                                })
+                            }
+                        >
+                            <SelectTrigger className="w-full sm:w-56">
+                                <SelectValue placeholder="Filter By Network" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value={ALL_NETWORKS_VALUE}>All Networks</SelectItem>
+                                {networks.map((network) => (
+                                    <SelectItem key={network} value={network}>
+                                        {network}
                                     </SelectItem>
                                 ))}
                             </SelectContent>

@@ -25,10 +25,6 @@ interface EditData {
     plan_volume?: string;
     plan_validity?: string | number;
     amount?: string | number;
-    smart_earner_amount?: string | number;
-    affiliate_amount?: string | number;
-    top_user_amount?: string | number;
-    api_amount?: string | number;
     api_plan_id?: string;
     data_plan_type_id?: string | number;
     api_ids?: { transaction_api_id: number; product_id?: string; product_code?: string }[];

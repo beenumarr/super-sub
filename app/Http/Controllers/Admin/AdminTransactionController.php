@@ -7,9 +7,6 @@ use Inertia\Response;
 use App\Models\Transaction;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use App\Models\AirtimeToCashTransaction;
-use App\Http\Resources\TransactionResource;
-use App\Http\Resources\A2CTransactionResource;
 use App\Http\Resources\Admin\AdminTransactionResource;
 use Illuminate\Support\Facades\Request as FilterRequest;
 use Illuminate\Support\Str;
@@ -24,36 +21,35 @@ class AdminTransactionController extends Controller
         $to = request('to');
         $type = request('transaction_type');
 
-        $data = Transaction::whereNot('type', 'BONUS_WALLET')->with('user');
+        $data = Transaction::withoutLegacy()
+            ->whereNot('type', 'BONUS_WALLET')
+            ->with('user');
 
         if ($from && $to) {
             $data->whereBetween('updated_at', [$from . ' 00:00:00', $to . ' 23:59:59']);
         }
 
         if ($type) {
-            $normalized = Str::upper($type);
-            $legacyModel = str_contains($type, '\\') ? class_basename($type) : $type;
-
-            $mapped = [
-                'DATATRANSACTION' => 'DATA',
-                'AIRTIMETRANSACTION' => 'AIRTIME',
-                'CABLESUBSCRIPTIONTRANSACTION' => 'CABLE',
-                'ELECTRICITYBILLTRANSACTION' => 'ELECTRICITY',
-                'ELECTRICITYTRANSACTION' => 'ELECTRICITY',
-                'RESULTCHECKERTRANSACTION' => 'RESULT_CHECKER',
-                'WALLETTRANSACTION' => 'WALLET',
-                'BONUSWALLETTRANSACTION' => 'BONUS_WALLET',
-            ][Str::upper($legacyModel)] ?? null;
-
-            $data->where('type', $mapped ?: $normalized);
+            $data->where('type', Str::upper($type));
         }
 
-        if (!auth()->user()->isAdmin) {
-            $data->where('user_id', auth()->user()->id);
+        $authenticatedUser = request()->user();
+        if ($authenticatedUser && ! $authenticatedUser->isAdmin) {
+            $data->where('user_id', $authenticatedUser->id);
         }
 
         // Apply filters
-        $data->filter(FilterRequest::only('search', 'trashed', 'user_id', 'status'));
+        $data->filter(FilterRequest::only('search', 'trashed', 'user_id', 'status', 'network'));
+
+        $networks = Transaction::query()
+            ->withoutLegacy()
+            ->select('provider_name')
+            ->whereNotNull('provider_name')
+            ->pluck('provider_name')
+            ->filter()
+            ->unique()
+            ->sort()
+            ->values();
 
         // Get total amount
         $total = $data->sum('amount');
@@ -64,6 +60,8 @@ class AdminTransactionController extends Controller
                 $data->latest()->paginate($pageSize, ['*'], 'page', $currentPage)
             ),
             'total_amount' => number_format($total, 2),
+            'networks' => $networks,
+            'filters' => request()->only(['search', 'user_id', 'status', 'transaction_type', 'from', 'to', 'network']),
         ]);
     }
 

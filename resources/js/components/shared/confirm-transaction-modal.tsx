@@ -41,7 +41,8 @@ export default function ConfirmTransactionModal({
     pinError,
 }: ConfirmTransactionModalProps) {
     const [open, setOpen] = useState(false);
-    const [pin, setPin] = useState('');
+    const [pinDigits, setPinDigits] = useState<string[]>(['', '', '', '']);
+    const autoSubmitLockRef = useRef(false);
     const pinRefs = [
         useRef<HTMLInputElement>(null),
         useRef<HTMLInputElement>(null),
@@ -50,16 +51,17 @@ export default function ConfirmTransactionModal({
     ];
 
     const currentMessage = status.type === '' ? message : status.message;
-
+    const isPinComplete = pinDigits.every((d) => d.length === 1);
     const resetPin = () => {
-        setPin('');
+        setPinDigits(['', '', '', '']);
+        autoSubmitLockRef.current = false;
         onPinChange?.('');
     };
 
     // When a PIN error comes back from the server, clear inputs and refocus
     useEffect(() => {
         if (pinError) {
-            setPin('');
+            setPinDigits(['', '', '', '']);
             onPinChange?.('');
             setTimeout(() => pinRefs[0].current?.focus(), 50);
         }
@@ -113,34 +115,51 @@ export default function ConfirmTransactionModal({
 
     const handlePinDigit = (index: number, value: string) => {
         const digit = value.replace(/\D/g, '').slice(-1);
-        const digits = pin.split('');
+        const digits = [...pinDigits];
         digits[index] = digit;
-        const newPin = digits.join('').slice(0, 4);
-        setPin(newPin);
+        setPinDigits(digits);
+        const newPin = digits.join('');
         onPinChange?.(newPin);
+        autoSubmitLockRef.current = false;
 
         if (digit && index < 3) {
             pinRefs[index + 1].current?.focus();
         }
 
-        // Auto-submit when the 4th digit is entered
-        if (digit && index === 3 && newPin.length === 4) {
-            setTimeout(() => handleSubmit(), 80);
-        }
     };
 
     const handlePinKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Backspace') {
-            const digits = pin.split('');
+            const digits = [...pinDigits];
             if (!digits[index] && index > 0) {
                 pinRefs[index - 1].current?.focus();
             }
             digits[index] = '';
-            const newPin = digits.join('').slice(0, 4);
-            setPin(newPin);
+            const newPin = digits.join('');
+            setPinDigits(digits);
             onPinChange?.(newPin);
+            autoSubmitLockRef.current = false;
         }
     };
+
+    useEffect(() => {
+        if (!requirePin || !open || processing || status.type !== '' || !isPinComplete) {
+            return;
+        }
+
+        if (autoSubmitLockRef.current) {
+            return;
+        }
+
+        autoSubmitLockRef.current = true;
+        const fullPin = pinDigits.join('');
+        onPinChange?.(fullPin);
+        const timer = setTimeout(() => {
+            handleSubmit();
+        }, 120);
+
+        return () => clearTimeout(timer);
+    }, [requirePin, open, processing, status.type, isPinComplete, pinDigits, onPinChange, handleSubmit]);
 
     const renderStatusIcon = () => {
         if (status.type === '') return <AlertCircle className="h-10 w-10 text-yellow-500" />;
@@ -194,7 +213,7 @@ export default function ConfirmTransactionModal({
                                             type="password"
                                             inputMode="numeric"
                                             maxLength={1}
-                                            value={pin[i] || ''}
+                                            value={pinDigits[i]}
                                             aria-label={`PIN digit ${i + 1}`}
                                             title={`PIN digit ${i + 1}`}
                                             onChange={(e) => handlePinDigit(i, e.target.value)}
@@ -235,7 +254,7 @@ export default function ConfirmTransactionModal({
                             </>
                         )}
 
-                        {/* PIN flow: only a Cancel link while waiting for PIN */}
+                        {/* PIN flow: auto-submits when complete */}
                         {requirePin && !processing && status.type === '' && (
                             <button
                                 type="button"

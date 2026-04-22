@@ -57,10 +57,6 @@ class SmileController extends Controller
         $data = $request->validate([
             'size' => ['required', 'string'],
             'amount' => ['required', 'numeric', 'min:0'],
-            'smart_earner_amount' => ['nullable', 'numeric', 'min:0'],
-            'affiliate_amount' => ['nullable', 'numeric', 'min:0'],
-            'top_user_amount' => ['nullable', 'numeric', 'min:0'],
-            'api_amount' => ['nullable', 'numeric', 'min:0'],
             'active' => ['boolean'],
         ]);
 
@@ -78,10 +74,6 @@ class SmileController extends Controller
             'numeric_value' => 1,
             'api_plan_id' => 1,
             'amount' => $data['amount'],
-            'smart_earner_amount' => $data['smart_earner_amount'] ?? $data['amount'],
-            'affiliate_amount' => $data['affiliate_amount'] ?? $data['amount'],
-            'top_user_amount' => $data['top_user_amount'] ?? $data['amount'],
-            'api_amount' => $data['api_amount'] ?? $data['amount'],
             'active' => $data['active'] ?? true,
         ]);
 
@@ -96,20 +88,12 @@ class SmileController extends Controller
         $data = $request->validate([
             'size' => ['required', 'string'],
             'amount' => ['required', 'numeric', 'min:0'],
-            'smart_earner_amount' => ['nullable', 'numeric', 'min:0'],
-            'affiliate_amount' => ['nullable', 'numeric', 'min:0'],
-            'top_user_amount' => ['nullable', 'numeric', 'min:0'],
-            'api_amount' => ['nullable', 'numeric', 'min:0'],
             'active' => ['boolean'],
         ]);
 
         $plan->update([
             'size' => $data['size'],
             'amount' => $data['amount'],
-            'smart_earner_amount' => $data['smart_earner_amount'] ?? $data['amount'],
-            'affiliate_amount' => $data['affiliate_amount'] ?? $data['amount'],
-            'top_user_amount' => $data['top_user_amount'] ?? $data['amount'],
-            'api_amount' => $data['api_amount'] ?? $data['amount'],
             'active' => $data['active'] ?? true,
         ]);
 

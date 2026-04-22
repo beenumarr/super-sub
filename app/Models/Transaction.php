@@ -10,6 +10,16 @@ class Transaction extends Model
 {
     use HasFactory, DateScopes;
 
+    public const ACTIVE_TYPES = [
+        'DATA',
+        'AIRTIME',
+        'CABLE',
+        'ELECTRICITY',
+        'RESULT_CHECKER',
+        'WALLET',
+        'BONUS_WALLET',
+    ];
+
     protected $fillable = [
         'reference_id',
         'provider_name',
@@ -80,7 +90,20 @@ class Transaction extends Model
         })
         ->when($filters['type'] ?? null, function ($query, $type) {
             $query->where('type', strtoupper((string) $type));
+        })
+        ->when($filters['network'] ?? null, function ($query, $network) {
+            $query->where(function ($q) use ($network) {
+                $q->where('provider_name', $network)
+                    ->orWhereJsonContains('metadata->network', $network);
+            });
         });
+    }
+
+    public function scopeWithoutLegacy($query)
+    {
+        return $query
+            ->whereIn('type', self::ACTIVE_TYPES)
+            ->whereNotNull('reference_id');
     }
 
     public function user()

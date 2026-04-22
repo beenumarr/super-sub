@@ -74,10 +74,6 @@ class ServiceCardController extends Controller
             'validity' => $request->plan_validity,
             'numeric_value' => 1000,
             'amount' => $request->amount,
-            'smart_earner_amount' => $request->smart_earner_amount,
-            'affiliate_amount' => $request->affiliate_amount,
-            'top_user_amount' => $request->top_user_amount,
-            'api_amount' => $request->api_amount,
         ]);
 
 

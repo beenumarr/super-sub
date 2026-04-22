@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Settings;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -36,8 +35,7 @@ class PinController extends Controller
         $validated = $request->validate($rules);
 
         if ($hasPin) {
-            $storedPin = $user->getRawOriginal('transaction_pin');
-            if (!$storedPin || !Hash::check($validated['current_pin'], $storedPin)) {
+            if (!$user->verifyTransactionPin($validated['current_pin'])) {
                 throw ValidationException::withMessages([
                     'current_pin' => 'The current PIN is incorrect.',
                 ]);
