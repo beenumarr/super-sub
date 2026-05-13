@@ -1,0 +1,427 @@
+[
+  {
+    "id": 1,
+    "code": "011",
+    "name": "First Bank of Nigeria"
+  },
+  {
+    "id": 2,
+    "code": "012",
+    "name": "Union Bank of Nigeria"
+  },
+  {
+    "id": 3,
+    "code": "013",
+    "name": "United Bank for Africa"
+  },
+  {
+    "id": 4,
+    "code": "014",
+    "name": "Zenith International Bank"
+  },
+  {
+    "id": 5,
+    "code": "015",
+    "name": "WEMA Bank"
+  },
+  {
+    "id": 6,
+    "code": "016",
+    "name": "Access Bank"
+  },
+  {
+    "id": 7,
+    "code": "017",
+    "name": "Guaranty Trust Bank"
+  },
+  {
+    "id": 8,
+    "code": "018",
+    "name": "Equatorial Trust Bank"
+  },
+  {
+    "id": 9,
+    "code": "019",
+    "name": "Afribank Nigeria"
+  },
+  {
+    "id": 10,
+    "code": "020",
+    "name": "Stanbic IBTC Bank"
+  },
+  {
+    "id": 11,
+    "code": "021",
+    "name": "Standard Chartered Bank"
+  },
+  {
+    "id": 12,
+    "code": "022",
+    "name": "Barclays Bank Nigeria"
+  },
+  {
+    "id": 13,
+    "code": "023",
+    "name": "Citibank Nigeria"
+  },
+  {
+    "id": 14,
+    "code": "024",
+    "name": "Diamond Bank"
+  },
+  {
+    "id": 15,
+    "code": "025",
+    "name": "FCMB Group"
+  },
+  {
+    "id": 16,
+    "code": "026",
+    "name": "Fidelity Bank Nigeria"
+  },
+  {
+    "id": 17,
+    "code": "027",
+    "name": "Heritage Bank Plc"
+  },
+  {
+    "id": 18,
+    "code": "028",
+    "name": "Wema Bank Plc"
+  },
+  {
+    "id": 19,
+    "code": "029",
+    "name": "Eco Bank Plc"
+  },
+  {
+    "id": 20,
+    "code": "030",
+    "name": "Jaiz Bank"
+  },
+  {
+    "id": 21,
+    "code": "031",
+    "name": "Sterling Bank"
+  },
+  {
+    "id": 22,
+    "code": "032",
+    "name": "Providus Bank"
+  },
+  {
+    "id": 23,
+    "code": "033",
+    "name": "ALAT"
+  },
+  {
+    "id": 24,
+    "code": "035",
+    "name": "Kuda Microfinance Bank"
+  },
+  {
+    "id": 25,
+    "code": "036",
+    "name": "Opay"
+  },
+  {
+    "id": 26,
+    "code": "037",
+    "name": "Access Bank Sub"
+  },
+  {
+    "id": 27,
+    "code": "038",
+    "name": "Palmpay"
+  },
+  {
+    "id": 28,
+    "code": "039",
+    "name": "Flutterwave"
+  },
+  {
+    "id": 29,
+    "code": "040",
+    "name": "Payantala"
+  },
+  {
+    "id": 30,
+    "code": "041",
+    "name": "9Mobile 9Payment Service Bank"
+  },
+  {
+    "id": 31,
+    "code": "050",
+    "name": "Ecobank Plc"
+  },
+  {
+    "id": 32,
+    "code": "051",
+    "name": "Sagebank"
+  },
+  {
+    "id": 33,
+    "code": "052",
+    "name": "Titan Trust Bank"
+  },
+  {
+    "id": 34,
+    "code": "053",
+    "name": "Migo Money"
+  },
+  {
+    "id": 35,
+    "code": "054",
+    "name": "Bank of Industry"
+  },
+  {
+    "id": 36,
+    "code": "055",
+    "name": "Nigerian Export-Import Bank"
+  },
+  {
+    "id": 37,
+    "code": "056",
+    "name": "Melvins Microfinance Bank"
+  },
+  {
+    "id": 38,
+    "code": "057",
+    "name": "VFD Microfinance Bank"
+  },
+  {
+    "id": 39,
+    "code": "058",
+    "name": "Zenith Microfinance Bank"
+  },
+  {
+    "id": 40,
+    "code": "059",
+    "name": "Kegow Bank"
+  },
+  {
+    "id": 41,
+    "code": "060",
+    "name": "Apex Mortgage Bank"
+  },
+  {
+    "id": 42,
+    "code": "061",
+    "name": "UnityBank"
+  },
+  {
+    "id": 43,
+    "code": "062",
+    "name": "GTCo Microfinance Bank"
+  },
+  {
+    "id": 44,
+    "code": "063",
+    "name": "Polaris Bank Plc"
+  },
+  {
+    "id": 45,
+    "code": "064",
+    "name": "Infiniti Bank"
+  },
+  {
+    "id": 46,
+    "code": "065",
+    "name": "Paypal Microfinance Bank"
+  },
+  {
+    "id": 47,
+    "code": "066",
+    "name": "Bancorp"
+  },
+  {
+    "id": 48,
+    "code": "067",
+    "name": "Nova Merchant Bank"
+  },
+  {
+    "id": 49,
+    "code": "070",
+    "name": "Fidelity Bank Plc"
+  },
+  {
+    "id": 50,
+    "code": "071",
+    "name": "Interswitch"
+  },
+  {
+    "id": 51,
+    "code": "072",
+    "name": "FBN Holdings Limited"
+  },
+  {
+    "id": 52,
+    "code": "073",
+    "name": "Bayfront Microfinance Bank"
+  },
+  {
+    "id": 53,
+    "code": "074",
+    "name": "Sustainable Bank of Nigeria"
+  },
+  {
+    "id": 54,
+    "code": "075",
+    "name": "Sigma Pensions"
+  },
+  {
+    "id": 55,
+    "code": "076",
+    "name": "Reliance Services"
+  },
+  {
+    "id": 56,
+    "code": "077",
+    "name": "First Consultant Limited"
+  },
+  {
+    "id": 57,
+    "code": "078",
+    "name": "Accelerex"
+  },
+  {
+    "id": 58,
+    "code": "079",
+    "name": "Quantum Merchant Bank"
+  },
+  {
+    "id": 59,
+    "code": "080",
+    "name": "Omega Bank Limited"
+  },
+  {
+    "id": 60,
+    "code": "081",
+    "name": "GTT"
+  },
+  {
+    "id": 61,
+    "code": "082",
+    "name": "Unitech"
+  },
+  {
+    "id": 62,
+    "code": "083",
+    "name": "LAPO Microfinance Bank"
+  },
+  {
+    "id": 63,
+    "code": "084",
+    "name": "Giz Limited"
+  },
+  {
+    "id": 64,
+    "code": "085",
+    "name": "Ecobank Nigeria"
+  },
+  {
+    "id": 65,
+    "code": "090",
+    "name": "Prudential Bank"
+  },
+  {
+    "id": 66,
+    "code": "091",
+    "name": "PennyTele"
+  },
+  {
+    "id": 67,
+    "code": "092",
+    "name": "NECA Microfinance Bank"
+  },
+  {
+    "id": 68,
+    "code": "093",
+    "name": "First Generation Microfinance Bank"
+  },
+  {
+    "id": 69,
+    "code": "094",
+    "name": "Rennaisance Microfinance Bank"
+  },
+  {
+    "id": 70,
+    "code": "095",
+    "name": "Banccorp Limited"
+  },
+  {
+    "id": 71,
+    "code": "096",
+    "name": "PAY"
+  },
+  {
+    "id": 72,
+    "code": "097",
+    "name": "First Rate"
+  },
+  {
+    "id": 73,
+    "code": "098",
+    "name": "FirstFinancialsNigeria"
+  },
+  {
+    "id": 74,
+    "code": "099",
+    "name": "Paystack Microfinance Bank"
+  },
+  {
+    "id": 75,
+    "code": "100",
+    "name": "Moni Point"
+  },
+  {
+    "id": 76,
+    "code": "101",
+    "name": "Sanctum Bank"
+  },
+  {
+    "id": 77,
+    "code": "102",
+    "name": "Simi Bank"
+  },
+  {
+    "id": 78,
+    "code": "103",
+    "name": "Moneycabal"
+  },
+  {
+    "id": 79,
+    "code": "104",
+    "name": "OMO Bank"
+  },
+  {
+    "id": 80,
+    "code": "105",
+    "name": "Transnational Bank"
+  },
+  {
+    "id": 81,
+    "code": "106",
+    "name": "Fidelity Microfinance Bank"
+  },
+  {
+    "id": 82,
+    "code": "107",
+    "name": "Loanwise Microfinance Bank"
+  },
+  {
+    "id": 83,
+    "code": "108",
+    "name": "Paybox Bank"
+  },
+  {
+    "id": 84,
+    "code": "109",
+    "name": "Refiland Financial Services"
+  },
+  {
+    "id": 85,
+    "code": "110",
+    "name": "Swift Banking"
+  }
+]

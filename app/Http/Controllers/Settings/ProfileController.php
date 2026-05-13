@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Settings;
 
+use Throwable;
 use App\Models\User;
 use App\Models\DataPlan;
 use App\Models\DataPlanCategory;
@@ -32,11 +33,22 @@ class ProfileController extends Controller
     public function apiKey(Request $request)
     {
         $user = $request->user();
+        $token = null;
+
+        if ($user->original_token) {
+            $token = $user->original_token;
+        } elseif ($user->api_token) {
+            try {
+                $token = decrypt($user->api_token);
+            } catch (Throwable) {
+                $token = $user->api_token;
+            }
+        }
 
         return Inertia::render('developer/api-key', [
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => $request->session()->get('status'),
-            'token' => $user->api_token ? decrypt($user->api_token) : null,
+            'token' => $token,
         ]);
     }
 
@@ -79,8 +91,8 @@ class ProfileController extends Controller
 
         // Store encrypted token in user table
         $user->update([
-            'api_token' => encrypt($token->plainTextToken),
-            'api_token_id' => $token->accessToken->id,
+            'api_token' => hash('sha256', $token->plainTextToken),
+            'original_token' => $token->plainTextToken,
         ]);
 
         return back();

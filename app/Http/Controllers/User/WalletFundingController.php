@@ -47,23 +47,15 @@ class WalletFundingController extends Controller
 
     public function refreshAccounts(Request $request)
     {
-        return null;
-        $accountHelper = new AccountHelper();
+        try {
+            $accountHelper = new AccountHelper();
+            $user = auth()->user();
+            $accountHelper->generateVirtualAccount($user);
 
-        $user = auth()->user();
-
-        $accountHelper->generateVirtualAccount($user);
-
-
-        if($request->wantsJson() ){
-
-            return response()->noContent();
-
+            return redirect()->back()->with('success', 'Accounts refreshed successfully.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', $e->getMessage());
         }
-
-        return redirect()->route('funding')->with('success', ' updated successfully.');
-
-
     }
 
 

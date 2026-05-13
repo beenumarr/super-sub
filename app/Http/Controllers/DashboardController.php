@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Transaction;
 use App\Models\AppConfiguration;
-use App\Models\Promotion;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
@@ -48,16 +47,6 @@ class DashboardController extends Controller
         $outstandingBalance = $user->outstanding_balance ?? 0;
         $netBalance = $walletBalance - $outstandingBalance;
 
-        $activePromotion = Promotion::where('is_active', true)
-            ->where(function ($q) {
-                $q->whereNull('starts_at')->orWhere('starts_at', '<=', now());
-            })
-            ->where(function ($q) {
-                $q->whereNull('ends_at')->orWhere('ends_at', '>', now());
-            })
-            ->orderByDesc('id')
-            ->first();
-
         $fundingAccounts = $user->fundingAccounts()
             ->where('active', 1)
             ->get()
@@ -78,12 +67,6 @@ class DashboardController extends Controller
                 'bonus_balance' => $wallet->bonus_balance ?? 0,
             ],
             'funding_accounts' => $fundingAccounts,
-            'active_promotion' => $activePromotion
-                ? [
-                    'id' => $activePromotion->id,
-                    'reward_amount' => (float) $activePromotion->reward_amount,
-                ]
-                : null,
             'welcome_announcement' => [
                 'enabled' => $announcementEnabled,
                 'show' => $showAnnouncement,

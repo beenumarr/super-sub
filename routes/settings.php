@@ -11,7 +11,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('developer', [ProfileController::class, 'developer'])->name('developer.index');
     Route::get('developer/api-key', [ProfileController::class, 'apiKey'])->name('developer.api');
-    Route::post('devloper/apikey', [ProfileController::class, 'generateApiKey'])->name('developer.generate-key');
+    Route::post('developer/api-key', [ProfileController::class, 'generateApiKey'])->name('developer.generate-key');
     Route::get('developer/webhook', [ProfileController::class, 'webhook'])->name('developer.webhook');
     Route::put('developer/webhook', [ProfileController::class, 'updateWebhook'])->name('developer.webhook.update');
 

@@ -1,5 +1,6 @@
 import { useForm } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
+import toast from 'react-hot-toast';
 
 import HeadingSmall from '@/components/heading-small';
 import InputError from '@/components/input-error';
@@ -8,6 +9,14 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Link } from '@inertiajs/react';
+
+const maskApiKey = (key: string) => {
+    if (key.length <= 20) return key;
+    const start = key.substring(0, 10);
+    const end = key.substring(key.length - 10);
+    const masked = '*'.repeat(Math.max(10, key.length - 20));
+    return `${start}${masked}${end}`;
+};
 
 export default function ApiKeyManager({ existingApiKey }: { existingApiKey?: string }) {
     const { post, processing, errors, reset } = useForm();
@@ -41,13 +50,16 @@ export default function ApiKeyManager({ existingApiKey }: { existingApiKey?: str
                 <div className="bg-accent/40 rounded-lg border p-4">
                     <p className="text-sm text-gray-600 dark:text-gray-300">
                         <div className="flex items-center gap-2">
-                            <span className="break-all">{existingApiKey}</span>
+                            <code className="bg-gray-800 text-gray-100 px-2 py-1 rounded font-mono text-xs">
+                                {maskApiKey(existingApiKey)}
+                            </code>
                             <button
                                 type="button"
                                 className="ml-2 rounded p-1 transition hover:bg-gray-200 dark:hover:bg-gray-700"
                                 title="Copy API Key"
                                 onClick={() => {
                                     navigator.clipboard.writeText(existingApiKey);
+                                    toast.success('API Key copied!');
                                 }}
                             >
                                 <svg
@@ -85,7 +97,7 @@ export default function ApiKeyManager({ existingApiKey }: { existingApiKey?: str
                             <Checkbox id="agree" checked={agreed} onCheckedChange={setAgreed} />
                             <Label htmlFor="agree" className="text-sm">
                                 I agree to the{' '}
-                                <Link href="/terms" target="_blank" className="text-primary underline">
+                                <Link href="/terms-of-use" target="_blank" className="text-primary underline">
                                     Terms and Conditions
                                 </Link>
                             </Label>

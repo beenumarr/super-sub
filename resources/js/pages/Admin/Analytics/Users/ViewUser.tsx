@@ -6,6 +6,14 @@ import { type BreadcrumbItem } from "@/types";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
+const maskApiKey = (key: string) => {
+    if (key.length <= 20) return key;
+    const start = key.substring(0, 10);
+    const end = key.substring(key.length - 10);
+    const masked = '*'.repeat(Math.max(10, key.length - 20));
+    return `${start}${masked}${end}`;
+};
+
 export default function ViewUser(props: any) {
     const { user } = usePage().props;
     const [activeTab, setActiveTab] = useState("overview");
@@ -158,7 +166,7 @@ export default function ViewUser(props: any) {
                                         {apiKey ? (
                                             <>
                                                 <code className="text-xs bg-gray-800 text-gray-100 px-2 py-1 rounded font-mono">
-                                                    {showApiKey ? apiKey : "••••••••"}
+                                                    {showApiKey ? maskApiKey(apiKey) : maskApiKey(apiKey)}
                                                 </code>
                                                 <Button
                                                     size="sm"
