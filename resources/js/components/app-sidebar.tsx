@@ -3,7 +3,7 @@ import { NavMain } from '@/components/nav-main';
 // import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
-import { FileText, GraduationCap, HelpCircle, LayoutDashboard, List, Phone, Settings, Signal, Tv, Wallet, Zap } from 'lucide-react';
+import { FileText, GraduationCap, HelpCircle, KeyRound, LayoutDashboard, List, Phone, Settings, Signal, Tv, Wallet, Zap } from 'lucide-react';
 import AppLogoIcon from './app-logo-icon';
 
 const mainNavItems: NavItem[] = [
@@ -87,11 +87,11 @@ const mainNavItems: NavItem[] = [
         divider: true,
     },
     // More
-    // {
-    //     title: 'Developer API',
-    //     href: '/developer',
-    //     icon: Code,
-    // },
+    {
+        title: 'Developer API',
+        href: '/developer/api-key',
+        icon: KeyRound,
+    },
     {
         title: 'Support',
         href: '/#footer',

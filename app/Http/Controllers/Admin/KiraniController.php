@@ -35,8 +35,8 @@ class KiraniController extends Controller
             ->pluck('value', 'key');
 
         foreach ($configs as $key => $value) {
-            if($key === 'kirani_username' || $key === 'kirani_password'){
-                $configs[$key] = cs_decrypt($value);
+            if($key === 'kirani_username' || $key === 'kirani_password' || $key === 'kirani_api_key'){
+                $configs[$key] = maskSensitiveData(cs_decrypt($value));
             }
         }
 
@@ -65,13 +65,10 @@ class KiraniController extends Controller
 
         foreach ($data as $key => $value) {
 
-            if($key === 'kirani_username' || $key === 'kirani_password'){
-                $value = cs_encrypt($value);
-
-
-
-                if($key === 'kirani_password'){
-                    $value = maskSensitiveData($value);
+            if($key === 'kirani_username' || $key === 'kirani_password' || $key === 'kirani_api_key'){
+                // Only encrypt if it's not already masked (masked means it wasn't changed)
+                if (!str_contains($value, '*')) {
+                    $value = cs_encrypt($value);
                 }
             }
 

@@ -1,8 +1,11 @@
 import { BankIcon } from '@/components/shared/bank-icon';
 import { Card, CardContent } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
 import { SharedData } from '@/types';
-import { Head, router, usePage } from '@inertiajs/react';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { ArrowLeftRight, Copy, CreditCard, Wallet } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -44,6 +47,10 @@ export default function Index() {
     const [transferModal, setTransferModal] = useState(false);
     const [processing, setProcessing] = useState(false);
     const [hasRun, setHasRun] = useState(false);
+    const [redeemOpen, setRedeemOpen] = useState(false);
+    const redeemForm = useForm({
+        code: '',
+    });
 
     const { auth, funding_accounts, methods } = usePage<SharedData>().props as unknown as WalletFundingPageProps;
 
@@ -57,9 +64,10 @@ export default function Index() {
                 preserveState: true,
                 onSuccess: () => {
                     toast.success('Accounts refreshed successfully');
+                    router.reload({ only: ['auth', 'funding_accounts'] });
                 },
                 onError: (errors) => {
-                    const message = (errors as unknown as { message?: string }).message || 'An error occurred. Please try again.';
+                    const message = (errors as unknown as { message?: string; error?: string }).message || (errors as unknown as { error?: string }).error || 'An error occurred. Please try again.';
                     toast.error(message);
                 },
                 onFinish: () => {
@@ -137,6 +145,13 @@ export default function Index() {
                                 }}
                             />
                         )}
+
+                        <ActionButton
+                            label="Redeem Promo"
+                            description="Enter your promo code and redeem it into your wallet."
+                            icon={<Wallet className="h-5 w-5" />}
+                            onClick={() => setRedeemOpen(true)}
+                        />
                     </div>
                 </div>
             </div>
@@ -150,6 +165,64 @@ export default function Index() {
                 walletBalance={walletBalance}
                 user={auth.user}
             />
+            <Dialog
+                open={redeemOpen}
+                onOpenChange={(open) => {
+                    setRedeemOpen(open);
+                    if (!open) redeemForm.reset();
+                }}
+            >
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Redeem Promo Code</DialogTitle>
+                        <DialogDescription>Enter your promo code below. We will verify and redeem it to your wallet if it is valid.</DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="funding-promo-code">Promo Code</Label>
+                        <Input
+                            id="funding-promo-code"
+                            placeholder="e.g. APRILBONUS"
+                            value={redeemForm.data.code}
+                            onChange={(e) => redeemForm.setData('code', e.target.value.toUpperCase())}
+                        />
+                        {redeemForm.errors.code && <p className="text-sm text-red-600">{redeemForm.errors.code}</p>}
+                    </div>
+
+                    <DialogFooter className="flex gap-2 sm:justify-end">
+                        <button
+                            type="button"
+                            onClick={() => setRedeemOpen(false)}
+                            className="bg-muted text-foreground hover:bg-muted/80 rounded-md px-3 py-2 text-sm font-medium"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="button"
+                            disabled={redeemForm.processing}
+                            onClick={() => {
+                                redeemForm.post(route('promotions.redeem', undefined, false), {
+                                    preserveScroll: true,
+                                    onSuccess: () => {
+                                        toast.success('Promo redeemed successfully');
+                                        setRedeemOpen(false);
+                                        router.reload({ only: ['auth', 'funding_accounts'] });
+                                    },
+                                    onError: (errs: Record<string, string | string[]>) => {
+                                        const msg = errs?.code ?? Object.values(errs ?? {}).flat().join(', ');
+                                        toast.error(Array.isArray(msg) ? msg.join(', ') : msg || 'Unable to redeem promo');
+                                    },
+                                });
+                            }}
+                            className="bg-theme-1 text-primary-foreground rounded-md px-3 py-2 text-sm font-semibold hover:opacity-90 disabled:opacity-60"
+                        >
+                            {redeemForm.processing ? 'Verifying...' : 'Verify & Redeem'}
+                        </button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+
         </AppLayout>
     );
 }

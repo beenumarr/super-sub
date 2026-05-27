@@ -8,3 +8,4 @@ export { default as EditPhoneModal } from './edit-phone-modal';
 export { default as LoadDataProgressModal } from './load-data-progress-modal';
 export { default as MoveToGroupModal } from './move-to-group-modal';
 export { default as RefreshProgressModal } from './refresh-progress-modal';
+export { SetTransactionPinModal } from './set-transaction-pin-modal';

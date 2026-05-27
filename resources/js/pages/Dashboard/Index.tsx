@@ -1,12 +1,10 @@
 import { SetTransactionPinModal } from '@/components/modals/set-transaction-pin-modal';
 import { WelcomeAnnouncementModal } from '@/components/modals/welcome-announcement-modal';
 import { NetworkIcon } from '@/components/shared/network-icon';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { formatToThousands } from '@/utils';
-import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { AlertCircle, ChevronRight, Copy, Eye, EyeOff, Headset, History, Phone, Plus, Receipt, Settings2, User, Wallet, Wifi } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
@@ -39,10 +37,6 @@ interface DashboardProps {
         bonus_balance: number;
     };
     funding_accounts: FundingAccount[];
-    active_promotion?: null | {
-        id: number;
-        reward_amount: number;
-    };
     welcome_announcement?: {
         enabled: boolean;
         show: boolean;
@@ -52,7 +46,7 @@ interface DashboardProps {
     has_pin: boolean;
 }
 
-export default function Index({ recent_transactions, wallet, funding_accounts, welcome_announcement, has_pin, active_promotion, }: DashboardProps) {
+export default function Index({ recent_transactions, wallet, funding_accounts, welcome_announcement, has_pin }: DashboardProps) {
     const { auth } = usePage<{
         auth: {
             user: {
@@ -74,11 +68,6 @@ export default function Index({ recent_transactions, wallet, funding_accounts, w
     const [isBalanceVisible, setIsBalanceVisible] = useState(true);
     const [showWelcomeModal, setShowWelcomeModal] = useState(welcome_announcement?.show ?? false);
     const [hasNewAnnouncement, setHasNewAnnouncement] = useState(welcome_announcement?.enabled ?? false);
-    const [redeemOpen, setRedeemOpen] = useState(false);
-
-    const redeemForm = useForm({
-        code: '',
-    });
 
     const handleShowAnnouncement = () => {
         setShowWelcomeModal(true);
@@ -168,85 +157,7 @@ export default function Index({ recent_transactions, wallet, funding_accounts, w
                         </button>
                     </div>
                     <p className="text-primary-foreground/90 mt-1 text-sm">Bonus: {displayBonus}</p>
-
-                    {active_promotion && (
-                        <div className="mt-3 flex items-center justify-between gap-3 rounded-lg bg-white/10 px-3 py-2">
-                            <div className="min-w-0">
-                                <p className="text-primary-foreground text-sm font-medium">Promo is live</p>
-                                <p className="text-primary-foreground/90 text-xs">
-                                    Redeem code to get ₦{formatToThousands(active_promotion.reward_amount)}
-                                </p>
-                            </div>
-                            <button
-                                type="button"
-                                onClick={() => setRedeemOpen(true)}
-                                className="bg-primary-foreground text-primary shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold hover:opacity-90"
-                            >
-                                Redeem
-                            </button>
-                        </div>
-                    )}
                 </div>
-
-                <Dialog
-                    open={redeemOpen}
-                    onOpenChange={(open) => {
-                        setRedeemOpen(open);
-                        if (!open) redeemForm.reset();
-                    }}
-                >
-                    <DialogContent className="sm:max-w-md">
-                        <DialogHeader>
-                            <DialogTitle>Redeem Promo Code</DialogTitle>
-                            <DialogDescription>Enter your promo code to receive the bonus.</DialogDescription>
-                        </DialogHeader>
-
-                        <div className="space-y-2">
-                            <Input
-                                placeholder="e.g. APRILBONUS"
-                                value={redeemForm.data.code}
-                                onChange={(e) => redeemForm.setData('code', e.target.value)}
-                            />
-                            {redeemForm.errors.code && (
-                                <p className="text-sm text-red-600">{redeemForm.errors.code}</p>
-                            )}
-                        </div>
-
-                        <DialogFooter className="flex gap-2 sm:justify-end">
-                            <button
-                                type="button"
-                                onClick={() => setRedeemOpen(false)}
-                                className="bg-muted text-foreground hover:bg-muted/80 rounded-md px-3 py-2 text-sm font-medium"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                type="button"
-                                disabled={redeemForm.processing}
-                                onClick={() => {
-                                    redeemForm.post(route('promotions.redeem', undefined, false), {
-                                        onSuccess: () => {
-                                            toast.success(
-                                                active_promotion
-                                                    ? `Promo redeemed: +₦${formatToThousands(active_promotion.reward_amount)} bonus`
-                                                    : 'Promo redeemed'
-                                            );
-                                            setRedeemOpen(false);
-                                            router.reload({ only: ['wallet', 'active_promotion'] });
-                                        },
-                                        onError: (errs: any) => {
-                                            const msg = errs?.code ?? Object.values(errs ?? {}).flat().join(', ');
-                                            toast.error(msg || 'Unable to redeem promo');
-                                        },
-                                    });
-                                }}
-                                className="bg-theme-1 text-primary-foreground rounded-md px-3 py-2 text-sm font-semibold hover:opacity-90 disabled:opacity-60"
-                            >
-                                {redeemForm.processing ? 'Redeeming...' : 'Redeem'}
-                            </button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
 
                 {/* KYC notice */}
                 {!auth.user.kyc_verified_at && (

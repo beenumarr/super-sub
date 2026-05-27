@@ -31,7 +31,6 @@ class User extends Authenticatable implements MustVerifyEmail
         'user_config',
         'phone_number',
         'api_token',
-        'api_token_id',
         'api_key',
         'user_category_id',
         'kyc_level',
