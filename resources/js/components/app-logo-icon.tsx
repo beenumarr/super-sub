@@ -1,5 +1,5 @@
 import { usePage } from '@inertiajs/react';
-import { Image as ImageIcon } from 'lucide-react';
+import { useState } from 'react';
 
 interface Props {
     className?: string;
@@ -7,34 +7,52 @@ interface Props {
 }
 
 export default function AppLogoIcon({ className = 'h-10 w-10', alt }: Props) {
-    const { config } = usePage().props as unknown as { config: { site_logo: string } };
-    const siteLogo = config.site_logo;
+    const { config } = usePage().props as unknown as { config?: { site_logo?: string; site_name?: string } };
+    const siteLogo = config?.site_logo;
+    const siteName = config?.site_name || 'VTU App';
 
-    // Construct full URL for uploaded logo with cache busting
-    const logoUrl = siteLogo ? `/storage/uploads/${siteLogo}?t=${Date.now()}` : null;
+    const [errorStage, setErrorStage] = useState<number>(0);
 
-    // Container ensures a fixed box; image fills it while preserving aspect ratio
-    const containerClass = `${className} overflow-hidden rounded-md flex items-center justify-center`;
+    // Compute primary logo URL
+    let primaryUrl = '/logo-icon.png';
+    if (siteLogo && siteLogo.trim() !== '') {
+        if (siteLogo.startsWith('http://') || siteLogo.startsWith('https://') || siteLogo.startsWith('/')) {
+            primaryUrl = siteLogo;
+        } else {
+            primaryUrl = `/storage/uploads/${siteLogo}?t=${Date.now()}`;
+        }
+    }
 
-    if (logoUrl) {
+    // Determine target URL based on error stage
+    let currentSrc = primaryUrl;
+    if (errorStage === 1) {
+        currentSrc = '/logo-icon.png';
+    } else if (errorStage === 2) {
+        currentSrc = '/logo_mob.png';
+    }
+
+    const containerClass = `${className} shrink-0 overflow-hidden rounded-md flex items-center justify-center`;
+
+    if (errorStage < 3) {
         return (
             <div className={containerClass}>
                 <img
-                    src={logoUrl}
-                    alt={alt ?? 'logo'}
-                    className="h-auto max-h-full w-auto max-w-full object-contain"
-                    onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
+                    src={currentSrc}
+                    alt={alt ?? siteName}
+                    className="h-full w-full object-contain"
+                    onError={() => {
+                        setErrorStage((prev) => prev + 1);
                     }}
                 />
             </div>
         );
     }
 
-    // Placeholder icon when no logo is configured
+    // Final fallback: Text Emblem badge with first letter of site name
     return (
-        <div className={containerClass}>
-            <ImageIcon className="text-sidebar-primary-foreground/70 h-3/4 w-3/4" />
+        <div className={`${containerClass} bg-primary text-primary-foreground font-bold text-sm select-none`}>
+            {siteName.charAt(0).toUpperCase()}
         </div>
     );
 }
+

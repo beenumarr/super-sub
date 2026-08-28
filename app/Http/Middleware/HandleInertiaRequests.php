@@ -73,8 +73,8 @@ class HandleInertiaRequests extends Middleware
                 'monnify_api_key'=> config('settings.monnify_api_key'),
                 'monnify_marchant_name'=> config('settings.monnify_marchant_name'),
                 'monnify_funding_charges'=> config('settings.monnify_funding_charges'),
-                'site_name'=> config('settings.site_name'),
-                'site_logo'=> config('settings.site_logo'),
+                'site_name'=> config('settings.site_name', 'VTU App'),
+                'site_logo'=> $this->getSiteLogo(),
                 'site_favicon'=> config('settings.site_favicon'),
                 'logo_type'=> $this->getLogoType(),
             ],
@@ -120,9 +120,26 @@ class HandleInertiaRequests extends Middleware
             }
 
             // Fallback to config if somehow the database query fails
-            return config('settings.logo_type', '');
+            return config('settings.logo_type', 'titled');
         } catch (\Exception $e) {
-            return '';
+            return 'titled';
+        }
+    }
+
+    /**
+     * Get site_logo directly from database with fallback
+     */
+    private function getSiteLogo(): string
+    {
+        try {
+            $record = AppConfiguration::where('key', 'site_logo')->first();
+            if ($record && !empty($record->value)) {
+                return $record->value;
+            }
+
+            return config('settings.site_logo', 'logo-icon.png');
+        } catch (\Exception $e) {
+            return 'logo-icon.png';
         }
     }
 }

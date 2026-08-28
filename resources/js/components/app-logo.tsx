@@ -10,23 +10,22 @@ export default function AppLogo() {
     if (logoType === 'icon') {
         return (
             <div className="flex items-center justify-center">
-                <AppLogoIcon className="h-10 w-10" alt={siteName} />
-            </div>
-        );
-    }
-
-    // titled mode: show logo icon with site name under it
-    if (logoType === 'titled' || !logoType) {
-        return (
-            <div className="flex flex-col items-center">
-                <AppLogoIcon className="h-10 w-10" alt={siteName} />
-                <div className="mt-1 text-center">
-                    <span className="block truncate text-sm font-semibold">{siteName}</span>
-                </div>
+                <AppLogoIcon className="h-9 w-auto max-w-[160px]" alt={siteName} />
             </div>
         );
     }
 
     // none mode: show nothing
-    return null;
+    if (logoType === 'none') {
+        return null;
+    }
+
+    // titled mode or default: show logo icon alongside site name
+    return (
+        <div className="flex items-center gap-2.5">
+            <AppLogoIcon className="h-9 w-9" alt={siteName} />
+            <span className="truncate text-base font-bold tracking-tight text-foreground">{siteName}</span>
+        </div>
+    );
 }
+

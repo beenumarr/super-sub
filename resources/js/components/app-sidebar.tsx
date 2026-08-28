@@ -3,6 +3,7 @@ import { NavMain } from '@/components/nav-main';
 // import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
+import { Link } from '@inertiajs/react';
 import { FileText, GraduationCap, HelpCircle, KeyRound, LayoutDashboard, List, Phone, Settings, Signal, Tv, Wallet, Zap } from 'lucide-react';
 import AppLogoIcon from './app-logo-icon';
 
@@ -117,7 +118,9 @@ export function AppSidebar() {
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton className="bg-sidebar-primary/5 flex items-center justify-center" size="lg" asChild>
-                            <AppLogoIcon />
+                            <Link href="/dashboard">
+                                <AppLogoIcon className="h-8 w-8" />
+                            </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                 </SidebarMenu>
