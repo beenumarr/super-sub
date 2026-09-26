@@ -79,9 +79,17 @@ class HandleInertiaRequests extends Middleware
                 'logo_type'=> $this->getLogoType(),
             ],
             'feature_enabled'=> [
-                'wallet_transfer'=> config('settings.feat_enable_wallet_transfer') === '1',
-                'airtime_to_cash'=> config('settings.feat_enable_airtime_to_cash') === '1',
-                'referral'=> config('settings.feat_enable_referral')=== '1',
+                'wallet_transfer'=> (bool) (config('settings.feat_enable_wallet_transfer') == '1'),
+                'airtime_to_cash'=> (bool) (config('settings.feat_enable_airtime_to_cash') == '1'),
+                'referral'=> (bool) (config('settings.feat_enable_referral') == '1'),
+                'email_verification'=> in_array(config('settings.feat_enable_email_verification'), ['1', 1, 'true', true], true),
+                'kyc'=> (bool) (
+                    in_array(config('settings.feat_enable_kyc'), ['1', 1, 'true', true], true)
+                    || (
+                        (in_array(config('settings.feat_enable_kyc_bvn'), ['1', 1, 'true', true], true) || in_array(config('settings.feat_enable_kyc_nin'), ['1', 1, 'true', true], true))
+                        && !in_array(config('settings.feat_enable_kyc'), ['0', 0, 'false', false], true)
+                    )
+                ),
             ],
             'auth' => [
                 'user' => $request->user(),

@@ -53,6 +53,13 @@ export interface SharedData {
     system_configuration: SystemConfiguration;
     ziggy: Config & { location: string };
     sidebarOpen: boolean;
+    feature_enabled?: {
+        wallet_transfer?: boolean;
+        airtime_to_cash?: boolean;
+        referral?: boolean;
+        email_verification?: boolean;
+        kyc?: boolean;
+    };
     [key: string]: unknown;
 }
 

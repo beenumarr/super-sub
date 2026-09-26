@@ -47,6 +47,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'feature' => \App\Http\Middleware\FeatureChecker::class,
             'kyc' => \App\Http\Middleware\KycRedirect::class,
             'kycCheck' => \App\Http\Middleware\KycCheck::class,
+            'verified' => \App\Http\Middleware\EnsureEmailIsVerified::class,
         ]);
 
         $middleware->priority([

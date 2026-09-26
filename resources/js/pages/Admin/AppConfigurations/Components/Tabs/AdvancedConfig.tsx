@@ -19,6 +19,7 @@ const configItems = [
     { key: 'feat_enable_wallet_transfer', label: 'Enable Wallet Transfer' },
     { key: 'feat_enable_referral', label: 'Enable Referral' },
     { key: 'feat_enable_airtime_to_cash', label: 'Enable Airtime to Cash' },
+    { key: 'feat_enable_email_verification', label: 'Email Verification' },
 ];
 
 export default function AdvancedConfig({ data, setData }: AdvancedConfigProps) {
@@ -28,17 +29,24 @@ export default function AdvancedConfig({ data, setData }: AdvancedConfigProps) {
                 <h3 className="text-lg font-medium">Features</h3>
             </div>
             <div className="space-y-4 rounded-b-md border border-t-0 p-4">
-                {configItems.map(({ key, label }) => (
-                    <div key={key} className="flex items-center justify-between py-2">
-                        <Label htmlFor={key} className="flex-1">
-                            {label}
-                        </Label>
-                        <div className="flex items-center gap-2">
-                            <Switch id={key} checked={data[key] as boolean} onCheckedChange={(checked) => setData({ ...data, [key]: checked })} />
-                            <span className="text-muted-foreground text-sm">{(data[key] as boolean) ? 'Enable' : 'Disabled'}</span>
+                {configItems.map(({ key, label }) => {
+                    const isChecked = Boolean(data[key] === true || data[key] === 1 || data[key] === '1' || data[key] === 'true');
+                    return (
+                        <div key={key} className="flex items-center justify-between py-2">
+                            <Label htmlFor={key} className="flex-1">
+                                {label}
+                            </Label>
+                            <div className="flex items-center gap-2">
+                                <Switch
+                                    id={key}
+                                    checked={isChecked}
+                                    onCheckedChange={(checked) => setData({ ...data, [key]: checked })}
+                                />
+                                <span className="text-muted-foreground text-sm">{isChecked ? 'Enable' : 'Disabled'}</span>
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
         </div>
     );

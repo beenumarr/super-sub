@@ -57,6 +57,12 @@ class DashboardController extends Controller
                 'account_number' => $a->account_number,
             ]);
 
+        $isKycEnabled = in_array(config('settings.feat_enable_kyc'), ['1', 1, 'true', true], true)
+            || (
+                (in_array(config('settings.feat_enable_kyc_bvn'), ['1', 1, 'true', true], true) || in_array(config('settings.feat_enable_kyc_nin'), ['1', 1, 'true', true], true))
+                && !in_array(config('settings.feat_enable_kyc'), ['0', 0, 'false', false], true)
+            );
+
         return inertia('Dashboard/Index', [
             'recent_transactions' => $recent_transactions,
             'wallet' => [
@@ -74,6 +80,7 @@ class DashboardController extends Controller
                 'content' => $announcementContent,
             ],
             'has_pin' => $user->hasTransactionPin(),
+            'kyc_enabled' => (bool) $isKycEnabled,
         ]);
     }
 }

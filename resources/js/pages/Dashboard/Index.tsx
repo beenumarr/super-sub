@@ -44,10 +44,11 @@ interface DashboardProps {
         content: string;
     };
     has_pin: boolean;
+    kyc_enabled?: boolean;
 }
 
-export default function Index({ recent_transactions, wallet, funding_accounts, welcome_announcement, has_pin }: DashboardProps) {
-    const { auth } = usePage<{
+export default function Index({ recent_transactions, wallet, funding_accounts, welcome_announcement, has_pin, kyc_enabled }: DashboardProps) {
+    const { auth, feature_enabled } = usePage<{
         auth: {
             user: {
                 name: string;
@@ -61,7 +62,15 @@ export default function Index({ recent_transactions, wallet, funding_accounts, w
             isAdmin?: boolean;
             can?: Record<string, boolean>;
         };
+        feature_enabled?: {
+            wallet_transfer?: boolean;
+            airtime_to_cash?: boolean;
+            referral?: boolean;
+            kyc?: boolean;
+        };
     }>().props;
+
+    const isKycEnabled = kyc_enabled ?? feature_enabled?.kyc ?? false;
 
     const breadcrumbs: BreadcrumbItem[] = [{ title: 'Dashboard', href: '/dashboard' }];
 
@@ -160,7 +169,7 @@ export default function Index({ recent_transactions, wallet, funding_accounts, w
                 </div>
 
                 {/* KYC notice */}
-                {!auth.user.kyc_verified_at && (
+                {isKycEnabled && !auth.user.kyc_verified_at && (
                     <div className="mb-3 flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-50">
                         <div className="mt-0.5 shrink-0">
                             <AlertCircle className="h-5 w-5 text-amber-500 dark:text-amber-300" />

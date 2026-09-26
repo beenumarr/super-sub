@@ -1,4 +1,3 @@
-
 <?php
 
 use Illuminate\Support\Facades\Route;
@@ -20,7 +19,9 @@ Route::get('/run-migration-seed', function() {
     return response()->json(['message' => 'Migration and seed run successfully', 'output' => $output]);
 })->middleware('update');
 
-Route::get('/run-migration', [MigrationController::class, 'runSpecificMigrations'])->middleware('update');
+if (class_exists(MigrationController::class)) {
+    Route::get('/run-migration', [MigrationController::class, 'runSpecificMigrations'])->middleware('update');
+}
 
 Route::get('/refresh-database___1', function() {
     Artisan::call('database:refresh');
