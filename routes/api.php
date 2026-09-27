@@ -24,6 +24,7 @@ Route::post('/auth/register', [\App\Http\Controllers\Api\AuthApiController::clas
 // Protected routes requiring authentication
 Route::middleware(ApiAuthenticate::class, 'auth:sanctum')->group(function () {
     Route::get('/user', [\App\Http\Controllers\Api\AuthApiController::class, 'user']);
+    Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'index']);
     Route::post('/auth/logout', [\App\Http\Controllers\Api\AuthApiController::class, 'logout']);
     Route::post('/user/pin', [\App\Http\Controllers\Api\AuthApiController::class, 'updatePin']);
 
