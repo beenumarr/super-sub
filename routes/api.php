@@ -17,14 +17,15 @@ use App\Http\Middleware\ApiAuthenticate;
 |
 */
 
+// Public mobile authentication routes
+Route::post('/auth/login', [\App\Http\Controllers\Api\AuthApiController::class, 'login']);
+Route::post('/auth/register', [\App\Http\Controllers\Api\AuthApiController::class, 'register']);
+
 // Protected routes requiring authentication
 Route::middleware(ApiAuthenticate::class, 'auth:sanctum')->group(function () {
-    Route::get('/user', function (Request $request) {
-        return response()->json([
-            'user' => $request->user(),
-            'message' => 'API test successful'
-        ]);
-    });
+    Route::get('/user', [\App\Http\Controllers\Api\AuthApiController::class, 'user']);
+    Route::post('/auth/logout', [\App\Http\Controllers\Api\AuthApiController::class, 'logout']);
+    Route::post('/user/pin', [\App\Http\Controllers\Api\AuthApiController::class, 'updatePin']);
 
     // Airtime transaction routes
     Route::post('/topup/{id}', [BuyAirtimeController::class, 'storeApi']);
