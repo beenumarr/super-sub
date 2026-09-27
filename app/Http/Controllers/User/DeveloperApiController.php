@@ -17,7 +17,7 @@ use App\Models\MobileNetwork;
 class DeveloperApiController extends Controller
 {
     /**
-     * Display the user's profile form.
+     * Display the user's developer dashboard.
      */
     public function index(): Response
     {
@@ -47,9 +47,18 @@ class DeveloperApiController extends Controller
             ->groupBy('cableProvider.name');
 
         $user = auth()->user();
+        $hasApiAccess = $user->hasRole('admin') ||
+            $user->hasRole('super-admin') ||
+            ($user->package && strtolower($user->package->name) === 'api') ||
+            !empty($user->enable_api);
+
+        $apiToken = $hasApiAccess
+            ? ($user->original_token ?: 'Click Generate to create your API token')
+            : 'Please contact Admin to enable API access';
 
         return Inertia::render('DeveloperApi/Index', [
-            'api_token' => $user->package->name === 'Api' ? $user->original_token : "Please contact Admin to enable API access",
+            'api_token' => $apiToken,
+            'has_api_access' => $hasApiAccess,
             'data_plans' => $data_plans,
             'kirani_plans' => $kirani_plans,
             'smile_plans' => $smile_plans,
@@ -60,32 +69,27 @@ class DeveloperApiController extends Controller
         ]);
     }
 
-
     public function docs(): Response
     {
         return Inertia::render('DeveloperApi/Documentation');
     }
 
-
-
-    function generateApiToken(Request $request) {
-
+    public function generateApiToken(Request $request)
+    {
         $user = $request->user();
 
-        $strToken = Str::random(40);
+        // Revoke older tokens to ensure clean state
+        $user->tokens()->delete();
 
-        $token = hash('sha256', $strToken);
+        // Generate genuine Sanctum Personal Access Token
+        $plainToken = $user->createToken('vtu-api')->plainTextToken;
 
-        $user->update(['api_token'=> $token, 'original_token'=> $strToken]);
+        $user->update([
+            'original_token' => $plainToken,
+            'api_token' => hash('sha256', $plainToken),
+            'api_key' => $plainToken,
+        ]);
 
         return back();
-
     }
-
-
-
-
-
-
-
 }

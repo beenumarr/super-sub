@@ -76,26 +76,54 @@ class ElectricityBillController extends Controller
         }
 
         return back();
-
     }
 
-    function validateMeter(HttpRequest $request, ValidateMeter $validateMeter) {
+    public function storeApi(HttpRequest $request)
+    {
+        $data = $request->validate([
+            'meter_number' => 'required',
+            'meter_type' => 'required',
+            'amount' => 'required|numeric|min:100',
+            'phone_number' => 'nullable',
+            'name' => 'nullable',
+            'electricity_distributor_id' => 'required|exists:electricity_distributors,id',
+        ]);
 
-        $response = $validateMeter->handle($request->meter_number, $request->disco_name, $request->meter_type);
+        $user = $request->user();
 
+        $transaction = $this->performTransaction($request, $user, $data);
 
-        if(isset($response['status'] ) && $response['status'] === 'success'){
+        $status = $this->payElectricityBill->handle($transaction);
 
-            return $response;
-
-        }else{
+        if ($status !== 'SUCCESS') {
+            $error = $transaction->api_response ?? $transaction->user_friendly_response;
 
             throw ValidationException::withMessages([
-                'status' => $error ?? 'Something Went Wrong! Try again Letter',
+                'status' => $error ?? 'Something Went Wrong! Try again Later',
             ]);
-
         }
 
+        return response(new \App\Http\Resources\ApiTransactionResource($transaction));
+    }
+
+    public function validateMeter(HttpRequest $request, ValidateMeter $validateMeter)
+    {
+        $disco = $request->disco_name ?? $request->distributor_name;
+        if (!$disco && $request->electricity_distributor_id) {
+            $distributor = ElectricityDistributor::find($request->electricity_distributor_id);
+            $disco = $distributor?->name;
+        }
+
+        $response = $validateMeter->handle($request->meter_number, $disco, $request->meter_type);
+
+        if (isset($response['status']) && $response['status'] === 'success') {
+            return response()->json($response);
+        } else {
+            return response()->json([
+                'status' => 'failed',
+                'message' => $response['message'] ?? $response['name'] ?? 'Meter validation failed. Please check your meter number and disco.',
+            ], 422);
+        }
     }
 
 

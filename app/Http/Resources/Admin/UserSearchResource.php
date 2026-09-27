@@ -18,7 +18,7 @@ class UserSearchResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'wallet_balance' => $this->wallet ? $this->wallet->balance : 0,
-            'phone' => $this->phone,
+            'phone' => $this->phone_number ?? $this->phone ?? '',
             'email' => $this->email
         ];
     }

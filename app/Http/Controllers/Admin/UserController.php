@@ -306,20 +306,25 @@ class UserController extends Controller
 
     public function search()
     {
+        $search = trim(request('search', ''));
 
-        if($search = request('search')){
+        $query = User::with('wallet')->orderBy('name');
 
-
-            $data =  User::orderBy('name');
-
-            $result = $data->where('name', 'like', '%'.$search.'%')->get();
-
-            return UserSearchResource::collection($result);
-
-
+        if ($search !== '') {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', '%' . $search . '%')
+                  ->orWhere('email', 'like', '%' . $search . '%')
+                  ->orWhere('phone_number', 'like', '%' . $search . '%');
+                if (is_numeric($search)) {
+                    $q->orWhere('id', (int) $search);
+                }
+            });
+            $result = $query->limit(50)->get();
+        } else {
+            $result = $query->limit(30)->get();
         }
 
-        return [];
+        return UserSearchResource::collection($result);
     }
 
     public function generateApiKey(User $user)
