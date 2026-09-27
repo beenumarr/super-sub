@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\AirtimeTransactionController;
+use App\Http\Controllers\User\BuyAirtimeController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TransactionController;
@@ -26,13 +26,18 @@ Route::middleware(ApiAuthenticate::class, 'auth:sanctum')->group(function () {
         ]);
     });
 
-    // Data transaction routes (disabled: legacy DataTransactionController removed)
-    Route::post('/topup/{id}', [AirtimeTransactionController::class, 'purchase']);
-    Route::post('/topup', [AirtimeTransactionController::class, 'purchase']);
-    Route::post('/airtime', [AirtimeTransactionController::class, 'purchase']);
+    // Airtime transaction routes
+    Route::post('/topup/{id}', [BuyAirtimeController::class, 'storeApi']);
+    Route::post('/topup', [BuyAirtimeController::class, 'storeApi']);
+    Route::post('/airtime', [BuyAirtimeController::class, 'storeApi']);
 
     // Transaction status routes (authenticated)
     Route::post('/transaction/get-by-reference', [TransactionController::class, 'getByReference']);
+
+    // Identity Verification (NIN & BVN)
+    Route::get('/kyc/pricing', [\App\Http\Controllers\Api\VerificationApiController::class, 'pricing']);
+    Route::post('/kyc/nin', [\App\Http\Controllers\Api\VerificationApiController::class, 'verifyNin']);
+    Route::post('/kyc/bvn', [\App\Http\Controllers\Api\VerificationApiController::class, 'verifyBvn']);
 });
 
 
@@ -41,8 +46,10 @@ Route::middleware(ApiAuthenticate::class, 'auth:sanctum')->group(function () {
 Route::get('/transaction/status/{referenceId}', [TransactionController::class, 'status']);
 
 // Testing routes - these should ideally be removed in production
-Route::prefix('test')->group(function () {
-    Route::post('/generate-keys', [App\Http\Controllers\ApiTestController::class, 'generateKeys']);
-    Route::post('/generate-signature', [App\Http\Controllers\ApiTestController::class, 'generateSignature']);
-    Route::post('/verify-signature', [App\Http\Controllers\ApiTestController::class, 'verifySignature']);
-});
+if (class_exists(App\Http\Controllers\ApiTestController::class)) {
+    Route::prefix('test')->group(function () {
+        Route::post('/generate-keys', [App\Http\Controllers\ApiTestController::class, 'generateKeys']);
+        Route::post('/generate-signature', [App\Http\Controllers\ApiTestController::class, 'generateSignature']);
+        Route::post('/verify-signature', [App\Http\Controllers\ApiTestController::class, 'verifySignature']);
+    });
+}

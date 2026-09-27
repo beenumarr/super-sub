@@ -49,15 +49,17 @@ interface TransactionTableProps {
 }
 
 const getStatusColor = (status: string): string => {
-    switch (status.toUpperCase()) {
+    switch (status?.toUpperCase()) {
         case 'SUCCESS':
-            return 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100';
+        case 'COMPLETED':
+            return 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800';
         case 'PENDING':
-            return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100';
+            return 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800';
         case 'FAILED':
-            return 'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100';
+        case 'ERROR':
+            return 'bg-red-100 text-red-800 border-red-300 dark:bg-red-950/60 dark:text-red-300 dark:border-red-800';
         default:
-            return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100';
+            return 'bg-gray-100 text-gray-800 border-gray-300 dark:bg-gray-800 dark:text-gray-100';
     }
 };
 
@@ -100,7 +102,7 @@ const TransactionTable: FC<TransactionTableProps> = ({ data, setViewDetailModal 
                                     {row.date}
                                 </TableCell>
                                 <TableCell className="text-sm">
-                                    <Badge className={getStatusColor(row.status)}>
+                                    <Badge variant="outline" className={getStatusColor(row.status)}>
                                         {row.status}
                                     </Badge>
                                 </TableCell>

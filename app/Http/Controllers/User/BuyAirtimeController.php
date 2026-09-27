@@ -58,11 +58,10 @@ class BuyAirtimeController extends Controller
 
 
        if($status !== 'SUCCESS'){
-
-           $error = $transaction->api_response;
+           $error = $transaction->user_friendly_response;
 
            throw ValidationException::withMessages([
-                'status' => $error ?? 'Something Went Wrong! Try again Letter',
+                'status' => $error,
             ]);
         }
 
@@ -93,12 +92,12 @@ class BuyAirtimeController extends Controller
 
 
         if($status !== 'SUCCESS'){
-                $error = $transaction->api_response;
+            $error = $transaction->user_friendly_response;
 
-                throw ValidationException::withMessages([
-                    'status' => $error ?? 'Something Went Wrong! Try again Letter',
-                ]);
-            }
+            throw ValidationException::withMessages([
+                'status' => $error,
+            ]);
+        }
 
         return response(new ApiTransactionResource($transaction));
 

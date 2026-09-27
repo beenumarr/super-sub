@@ -24,6 +24,7 @@ class UserResource extends JsonResource
                     'name' => $role->name,
                 ];
             })->toArray(),
+            'role' => $this->roles->first()?->name ?? 'User',
             'is_active' => (bool) ($this->active ?? false),
             'phone_number' => $this->phone_number ?? $this->phone,
             'phone' => $this->phone,

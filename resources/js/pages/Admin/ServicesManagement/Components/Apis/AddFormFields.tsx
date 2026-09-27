@@ -66,6 +66,10 @@ const API_TYPE_OPTIONS = [
         value: 'APIs\\EasyAccess\\',
         name: 'EasyAccess',
     },
+    {
+        value: 'APIs\\Boltnet\\',
+        name: 'Boltnet',
+    },
 ] as const;
 
 export default function AddFormFields({ handleClose }: AddFormFieldsProps) {

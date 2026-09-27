@@ -73,6 +73,17 @@ const ApiDocumentation = ({ networks, sampleDataPlans }: ApiDocumentationProps) 
         airtime_type: 'VTU',
     };
 
+    const ninEndpoint = `${branding.apiBaseUrl.replace(/\/$/, '')}/kyc/nin`;
+    const bvnEndpoint = `${branding.apiBaseUrl.replace(/\/$/, '')}/kyc/bvn`;
+
+    const ninPayload = {
+        nin: '11111111111',
+    };
+
+    const bvnPayload = {
+        bvn: '11111111111',
+    };
+
     return (
         <div className="container mx-auto max-w-6xl px-4 py-8">
             <div className="mb-8">
@@ -135,7 +146,7 @@ const ApiDocumentation = ({ networks, sampleDataPlans }: ApiDocumentationProps) 
 
                 {/* API Endpoints */}
                 <Tabs defaultValue="data" className="w-full">
-                    <TabsList className="grid w-full grid-cols-2 bg-gradient-to-r from-purple-100 to-blue-100 dark:from-purple-900/30 dark:to-blue-900/30">
+                    <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 bg-gradient-to-r from-purple-100 to-blue-100 dark:from-purple-900/30 dark:to-blue-900/30">
                         <TabsTrigger
                             value="data"
                             className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-blue-600 data-[state=active]:text-white"
@@ -147,6 +158,18 @@ const ApiDocumentation = ({ networks, sampleDataPlans }: ApiDocumentationProps) 
                             className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-blue-600 data-[state=active]:text-white"
                         >
                             Airtime Purchase
+                        </TabsTrigger>
+                        <TabsTrigger
+                            value="nin"
+                            className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-600 data-[state=active]:to-teal-600 data-[state=active]:text-white"
+                        >
+                            NIN Verification
+                        </TabsTrigger>
+                        <TabsTrigger
+                            value="bvn"
+                            className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-600 data-[state=active]:to-teal-600 data-[state=active]:text-white"
+                        >
+                            BVN Verification
                         </TabsTrigger>
                     </TabsList>
 
@@ -350,6 +373,157 @@ const ApiDocumentation = ({ networks, sampleDataPlans }: ApiDocumentationProps) 
   "plan_network": "MTN",
   "Status": "successful",
   "date": "15/01/2024 10:30 AM"
+}`}
+                                        </pre>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+
+                    {/* NIN Verification Endpoint */}
+                    <TabsContent value="nin" className="space-y-6">
+                        <Card className="border-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-50 dark:border-emerald-800 dark:from-emerald-950/20 dark:to-teal-950/20">
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2 text-emerald-700 dark:text-emerald-300">
+                                    <Badge variant="default" className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
+                                        POST
+                                    </Badge>
+                                    NIN Verification Endpoint
+                                </CardTitle>
+                                <CardDescription className="text-emerald-600 dark:text-emerald-400">
+                                    Verify an 11-digit Nigerian National Identity Number against official records
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-6">
+                                <div>
+                                    <h4 className="mb-2 font-semibold">Endpoint</h4>
+                                    <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-100 p-3 dark:border-emerald-800 dark:bg-emerald-900/30">
+                                        <code className="flex-1 font-mono text-sm text-emerald-800 dark:text-emerald-200">{ninEndpoint}</code>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="text-emerald-600 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-200"
+                                            onClick={() => copyToClipboard(ninEndpoint, 'endpoint')}
+                                        >
+                                            {copiedEndpoint === ninEndpoint ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                                        </Button>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h4 className="mb-2 font-semibold">Request Payload</h4>
+                                    <div className="rounded-lg border border-emerald-200 bg-emerald-100 p-4 dark:border-emerald-800 dark:bg-emerald-900/30">
+                                        <div className="mb-2 flex items-center justify-between">
+                                            <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">JSON</span>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="text-emerald-600 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-200"
+                                                onClick={() => copyToClipboard(JSON.stringify(ninPayload, null, 2), 'payload')}
+                                            >
+                                                {copiedPayload === JSON.stringify(ninPayload, null, 2) ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                                            </Button>
+                                        </div>
+                                        <pre className="overflow-x-auto text-sm text-emerald-800 dark:text-emerald-200">
+                                            {JSON.stringify(ninPayload, null, 2)}
+                                        </pre>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h4 className="mb-2 font-semibold">Sample Response</h4>
+                                    <div className="rounded-lg border border-emerald-200 bg-emerald-100 p-4 dark:border-emerald-800 dark:bg-emerald-900/30">
+                                        <pre className="overflow-x-auto text-sm text-emerald-800 dark:text-emerald-200">
+                                            {`{
+  "success": true,
+  "status": "SUCCESS",
+  "reference": "NV20260926123456",
+  "service": "NIN_VERIFICATION",
+  "data": {
+    "nin": "11111111111",
+    "first_name": "JOHN",
+    "last_name": "DOE",
+    "middle_name": "ALEX",
+    "date_of_birth": "1990-01-01",
+    "gender": "male",
+    "phone": "08012345678"
+  },
+  "balance_after": 4900.00
+}`}
+                                        </pre>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+
+                    {/* BVN Verification Endpoint */}
+                    <TabsContent value="bvn" className="space-y-6">
+                        <Card className="border-teal-200 bg-gradient-to-br from-teal-50 to-cyan-50 dark:border-teal-800 dark:from-teal-950/20 dark:to-cyan-950/20">
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2 text-teal-700 dark:text-teal-300">
+                                    <Badge variant="default" className="bg-gradient-to-r from-teal-600 to-cyan-600 text-white">
+                                        POST
+                                    </Badge>
+                                    BVN Verification Endpoint
+                                </CardTitle>
+                                <CardDescription className="text-teal-600 dark:text-teal-400">
+                                    Verify an 11-digit Nigerian Bank Verification Number against banking records
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-6">
+                                <div>
+                                    <h4 className="mb-2 font-semibold">Endpoint</h4>
+                                    <div className="flex items-center gap-2 rounded-lg border border-teal-200 bg-teal-100 p-3 dark:border-teal-800 dark:bg-teal-900/30">
+                                        <code className="flex-1 font-mono text-sm text-teal-800 dark:text-teal-200">{bvnEndpoint}</code>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="text-teal-600 hover:text-teal-800 dark:text-teal-400 dark:hover:text-teal-200"
+                                            onClick={() => copyToClipboard(bvnEndpoint, 'endpoint')}
+                                        >
+                                            {copiedEndpoint === bvnEndpoint ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                                        </Button>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h4 className="mb-2 font-semibold">Request Payload</h4>
+                                    <div className="rounded-lg border border-teal-200 bg-teal-100 p-4 dark:border-teal-800 dark:bg-teal-900/30">
+                                        <div className="mb-2 flex items-center justify-between">
+                                            <span className="text-sm font-medium text-teal-700 dark:text-teal-300">JSON</span>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="text-teal-600 hover:text-teal-800 dark:text-teal-400 dark:hover:text-teal-200"
+                                                onClick={() => copyToClipboard(JSON.stringify(bvnPayload, null, 2), 'payload')}
+                                            >
+                                                {copiedPayload === JSON.stringify(bvnPayload, null, 2) ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                                            </Button>
+                                        </div>
+                                        <pre className="overflow-x-auto text-sm text-teal-800 dark:text-teal-200">
+                                            {JSON.stringify(bvnPayload, null, 2)}
+                                        </pre>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h4 className="mb-2 font-semibold">Sample Response</h4>
+                                    <div className="rounded-lg border border-teal-200 bg-teal-100 p-4 dark:border-teal-800 dark:bg-teal-900/30">
+                                        <pre className="overflow-x-auto text-sm text-teal-800 dark:text-teal-200">
+                                            {`{
+  "success": true,
+  "status": "SUCCESS",
+  "reference": "BV20260926654321",
+  "service": "BVN_VERIFICATION",
+  "data": {
+    "bvn": "11111111111",
+    "first_name": "JOHN",
+    "last_name": "DOE",
+    "date_of_birth": "1990-01-01"
+  },
+  "balance_after": 4900.00
 }`}
                                         </pre>
                                     </div>

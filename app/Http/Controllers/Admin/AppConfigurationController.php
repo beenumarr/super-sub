@@ -115,6 +115,11 @@ class AppConfigurationController extends Controller
                 $value = cs_encrypt($value);
             }
 
+            // Convert boolean values to 0/1
+            if (is_bool($value)) {
+                $value = $value ? 1 : 0;
+            }
+
             AppConfiguration::updateOrCreate(
                 ['key' => $key], // The attributes to search for
                 ['value' => $value] // The attributes to update or create

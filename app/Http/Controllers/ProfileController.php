@@ -22,8 +22,10 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): Response
     {
+        $isEmailVerificationEnabled = in_array(config('settings.feat_enable_email_verification'), ['1', 1, 'true', true], true);
+
         return Inertia::render('Profile/Edit', [
-            'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
+            'mustVerifyEmail' => $isEmailVerificationEnabled && ($request->user() instanceof MustVerifyEmail),
             'status' => session('status'),
             'banks' => json_decode(file_get_contents(database_path('res/banks.json')), true),
             'user' => $request->user(),

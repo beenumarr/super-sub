@@ -184,6 +184,30 @@ export default function CableSubscription({ cable_networks }: CableSubscriptionP
         });
     };
 
+    const autoSubmitLockRef = useRef(false);
+    const handleSubmitRef = useRef(handleSubmit);
+    useEffect(() => {
+        handleSubmitRef.current = handleSubmit;
+    }, [handleSubmit]);
+
+    useEffect(() => {
+        if (pin.length !== 4 || !confirmDialogOpen) {
+            autoSubmitLockRef.current = false;
+            return;
+        }
+        if (processing || transactionStatus !== 'initial') {
+            return;
+        }
+        if (autoSubmitLockRef.current) {
+            return;
+        }
+        autoSubmitLockRef.current = true;
+        const timer = setTimeout(() => {
+            handleSubmitRef.current();
+        }, 150);
+        return () => clearTimeout(timer);
+    }, [pin, confirmDialogOpen, processing, transactionStatus]);
+
     return (
         <AppLayout>
             <Head title="Buy Cable Subscription" />

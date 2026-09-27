@@ -41,5 +41,8 @@ return [
 
     ],
 
-
+    'africverify' => [
+        'api_key' => env('AFRICVERIFY_API_KEY'),
+        'base_url' => env('AFRICVERIFY_BASE_URL', 'https://api.africverify.com/api/v1'),
+    ],
 ];

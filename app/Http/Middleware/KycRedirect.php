@@ -20,6 +20,16 @@ class KycRedirect
     {
         $guards = empty($guards) ? [null] : $guards;
 
+        $isKycEnabled = in_array(config('settings.feat_enable_kyc'), ['1', 1, 'true', true], true)
+            || (
+                (in_array(config('settings.feat_enable_kyc_bvn'), ['1', 1, 'true', true], true) || in_array(config('settings.feat_enable_kyc_nin'), ['1', 1, 'true', true], true))
+                && !in_array(config('settings.feat_enable_kyc'), ['0', 0, 'false', false], true)
+            );
+
+        if (!$isKycEnabled) {
+            return $next($request);
+        }
+
         foreach ($guards as $guard) {
             if (Auth::guard($guard)->check()) {
                 $user  = $request->user();

@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { AlertCircle, CheckCircle2, KeyRound, XCircle } from 'lucide-react';
+import { AlertCircle, CheckCircle2, KeyRound, Loader2, XCircle } from 'lucide-react';
 import { MouseEvent, useEffect, useRef, useState } from 'react';
 
 interface StatusState {
@@ -43,6 +43,9 @@ export default function ConfirmTransactionModal({
     const [open, setOpen] = useState(false);
     const [pinDigits, setPinDigits] = useState<string[]>(['', '', '', '']);
     const autoSubmitLockRef = useRef(false);
+    const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const handleSubmitRef = useRef(handleSubmit);
+    const onPinChangeRef = useRef(onPinChange);
     const pinRefs = [
         useRef<HTMLInputElement>(null),
         useRef<HTMLInputElement>(null),
@@ -50,19 +53,38 @@ export default function ConfirmTransactionModal({
         useRef<HTMLInputElement>(null),
     ];
 
+    useEffect(() => {
+        handleSubmitRef.current = handleSubmit;
+    }, [handleSubmit]);
+
+    useEffect(() => {
+        onPinChangeRef.current = onPinChange;
+    }, [onPinChange]);
+
     const currentMessage = status.type === '' ? message : status.message;
-    const isPinComplete = pinDigits.every((d) => d.length === 1);
+    const isPinComplete = pinDigits.every((d) => d.length === 1 && /^\d$/.test(d));
+
+    const clearTimer = () => {
+        if (timerRef.current) {
+            clearTimeout(timerRef.current);
+            timerRef.current = null;
+        }
+    };
+
     const resetPin = () => {
         setPinDigits(['', '', '', '']);
         autoSubmitLockRef.current = false;
-        onPinChange?.('');
+        clearTimer();
+        onPinChangeRef.current?.('');
     };
 
     // When a PIN error comes back from the server, clear inputs and refocus
     useEffect(() => {
         if (pinError) {
             setPinDigits(['', '', '', '']);
-            onPinChange?.('');
+            autoSubmitLockRef.current = false;
+            clearTimer();
+            onPinChangeRef.current?.('');
             setTimeout(() => pinRefs[0].current?.focus(), 50);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -99,10 +121,20 @@ export default function ConfirmTransactionModal({
         resetPin();
     };
 
-    const handleConfirm = (e: MouseEvent<HTMLButtonElement>) => {
-        e.preventDefault();
-        e.stopPropagation();
-        handleSubmit();
+    const handleConfirm = (e?: MouseEvent<HTMLButtonElement>) => {
+        e?.preventDefault();
+        e?.stopPropagation();
+        if (processing) return;
+
+        if (requirePin && !isPinComplete) {
+            const emptyIndex = pinDigits.findIndex((d) => !d);
+            pinRefs[emptyIndex !== -1 ? emptyIndex : 0].current?.focus();
+            return;
+        }
+
+        clearTimer();
+        autoSubmitLockRef.current = true;
+        handleSubmitRef.current();
     };
 
     const handleCloseAfterStatus = (e: MouseEvent<HTMLButtonElement>) => {
@@ -114,18 +146,30 @@ export default function ConfirmTransactionModal({
     };
 
     const handlePinDigit = (index: number, value: string) => {
-        const digit = value.replace(/\D/g, '').slice(-1);
+        const cleaned = value.replace(/\D/g, '');
+        if (cleaned.length > 1) {
+            const digits = [...pinDigits];
+            for (let i = 0; i < cleaned.length && index + i < 4; i++) {
+                digits[index + i] = cleaned[i];
+            }
+            setPinDigits(digits);
+            const newPin = digits.join('');
+            onPinChangeRef.current?.(newPin);
+            const nextFocus = Math.min(index + cleaned.length, 3);
+            pinRefs[nextFocus].current?.focus();
+            return;
+        }
+
+        const digit = cleaned.slice(-1);
         const digits = [...pinDigits];
         digits[index] = digit;
         setPinDigits(digits);
         const newPin = digits.join('');
-        onPinChange?.(newPin);
-        autoSubmitLockRef.current = false;
+        onPinChangeRef.current?.(newPin);
 
         if (digit && index < 3) {
             pinRefs[index + 1].current?.focus();
         }
-
     };
 
     const handlePinKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -137,13 +181,36 @@ export default function ConfirmTransactionModal({
             digits[index] = '';
             const newPin = digits.join('');
             setPinDigits(digits);
-            onPinChange?.(newPin);
-            autoSubmitLockRef.current = false;
+            onPinChangeRef.current?.(newPin);
         }
     };
 
+    const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+        e.preventDefault();
+        const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 4);
+        if (!pasted) return;
+
+        const digits = ['', '', '', ''];
+        for (let i = 0; i < pasted.length; i++) {
+            digits[i] = pasted[i];
+        }
+        setPinDigits(digits);
+        const newPin = digits.join('');
+        onPinChangeRef.current?.(newPin);
+
+        const focusIndex = Math.min(pasted.length, 3);
+        pinRefs[focusIndex].current?.focus();
+    };
+
     useEffect(() => {
-        if (!requirePin || !open || processing || status.type !== '' || !isPinComplete) {
+        if (!isPinComplete || !open) {
+            autoSubmitLockRef.current = false;
+            clearTimer();
+            return;
+        }
+
+        if (!requirePin || processing || status.type !== '') {
+            clearTimer();
             return;
         }
 
@@ -152,14 +219,14 @@ export default function ConfirmTransactionModal({
         }
 
         autoSubmitLockRef.current = true;
-        const fullPin = pinDigits.join('');
-        onPinChange?.(fullPin);
-        const timer = setTimeout(() => {
-            handleSubmit();
-        }, 120);
+        timerRef.current = setTimeout(() => {
+            handleSubmitRef.current();
+        }, 150);
 
-        return () => clearTimeout(timer);
-    }, [requirePin, open, processing, status.type, isPinComplete, pinDigits, onPinChange, handleSubmit]);
+        return () => {
+            clearTimer();
+        };
+    }, [requirePin, open, processing, status.type, isPinComplete]);
 
     const renderStatusIcon = () => {
         if (status.type === '') return <AlertCircle className="h-10 w-10 text-yellow-500" />;
@@ -198,7 +265,7 @@ export default function ConfirmTransactionModal({
                             </div>
                         )}
 
-                        {/* PIN entry — auto-submits on 4th digit */}
+                        {/* PIN entry */}
                         {requirePin && status.type === '' && !processing && (
                             <div className="space-y-3 pt-1">
                                 <div className="flex items-center justify-center gap-1.5 text-sm font-medium text-gray-600 dark:text-gray-400">
@@ -218,10 +285,12 @@ export default function ConfirmTransactionModal({
                                             title={`PIN digit ${i + 1}`}
                                             onChange={(e) => handlePinDigit(i, e.target.value)}
                                             onKeyDown={(e) => handlePinKeyDown(i, e)}
+                                            onPaste={handlePaste}
+                                            disabled={processing}
                                             className={`h-12 w-12 rounded-md border bg-white text-center text-lg font-bold text-gray-900 shadow-sm focus:outline-none dark:bg-gray-800 dark:text-white ${
                                                 pinError
                                                     ? 'border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500'
-                                                    : 'border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-gray-600'
+                                                    : 'border-gray-300 focus:border-[var(--theme-1,#3b82f6)] focus:ring-1 focus:ring-[var(--theme-1,#3b82f6)] dark:border-gray-600'
                                             }`}
                                         />
                                     ))}
@@ -241,28 +310,33 @@ export default function ConfirmTransactionModal({
                         )}
                     </div>
 
-                    <DialogFooter className="flex flex-col gap-2 sm:flex-row sm:justify-center">
-                        {/* Non-PIN flow: show Cancel + Confirm */}
-                        {!requirePin && !processing && status.type === '' && (
+                    <DialogFooter className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                        {status.type === '' && (
                             <>
-                                <Button type="button" variant="outline" onClick={handleCancel}>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={handleCancel}
+                                    disabled={processing}
+                                >
                                     Cancel
                                 </Button>
-                                <Button type="button" className="bg-theme-1 hover:bg-theme-1/90 text-white" onClick={handleConfirm}>
-                                    Confirm
+                                <Button
+                                    type="button"
+                                    className="bg-theme-1 hover:bg-theme-1/90 text-white"
+                                    onClick={handleConfirm}
+                                    disabled={processing || (requirePin && !isPinComplete)}
+                                >
+                                    {processing ? (
+                                        <div className="flex items-center gap-2">
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                            <span>Processing...</span>
+                                        </div>
+                                    ) : (
+                                        'Confirm'
+                                    )}
                                 </Button>
                             </>
-                        )}
-
-                        {/* PIN flow: auto-submits when complete */}
-                        {requirePin && !processing && status.type === '' && (
-                            <button
-                                type="button"
-                                onClick={handleCancel}
-                                className="text-sm text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
-                            >
-                                Cancel
-                            </button>
                         )}
 
                         {/* After success/error: Close */}

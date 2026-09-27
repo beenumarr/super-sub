@@ -5,12 +5,13 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { formatToThousands } from '@/utils';
 import { Head, Link, usePage } from '@inertiajs/react';
-import { AlertCircle, ChevronRight, Copy, Eye, EyeOff, Headset, History, Phone, Plus, Receipt, Settings2, User, Wallet, Wifi } from 'lucide-react';
+import { AlertCircle, ChevronRight, Copy, Eye, EyeOff, Headset, History, Phone, Plus, Receipt, Settings2, ShieldCheck, User, Wallet, Wifi } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 
 interface RecentTransaction {
     id: string;
+    amount?: number | string;
     description: string;
     reference_id: string;
     date: string;
@@ -44,10 +45,11 @@ interface DashboardProps {
         content: string;
     };
     has_pin: boolean;
+    kyc_enabled?: boolean;
 }
 
-export default function Index({ recent_transactions, wallet, funding_accounts, welcome_announcement, has_pin }: DashboardProps) {
-    const { auth } = usePage<{
+export default function Index({ recent_transactions, wallet, funding_accounts, welcome_announcement, has_pin, kyc_enabled }: DashboardProps) {
+    const { auth, feature_enabled } = usePage<{
         auth: {
             user: {
                 name: string;
@@ -61,7 +63,15 @@ export default function Index({ recent_transactions, wallet, funding_accounts, w
             isAdmin?: boolean;
             can?: Record<string, boolean>;
         };
+        feature_enabled?: {
+            wallet_transfer?: boolean;
+            airtime_to_cash?: boolean;
+            referral?: boolean;
+            kyc?: boolean;
+        };
     }>().props;
+
+    const isKycEnabled = kyc_enabled ?? feature_enabled?.kyc ?? false;
 
     const breadcrumbs: BreadcrumbItem[] = [{ title: 'Dashboard', href: '/dashboard' }];
 
@@ -91,9 +101,9 @@ export default function Index({ recent_transactions, wallet, funding_accounts, w
 
     function getStatusColor(status: string) {
         const s = status?.toUpperCase() ?? '';
-        if (s === 'SUCCESS' || s === 'COMPLETED') return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
-        if (s === 'PENDING') return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400';
-        if (s === 'FAILED' || s === 'ERROR') return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+        if (s === 'SUCCESS' || s === 'COMPLETED') return 'bg-emerald-100 text-emerald-800 border border-emerald-300 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800';
+        if (s === 'PENDING') return 'bg-amber-100 text-amber-800 border border-amber-300 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800';
+        if (s === 'FAILED' || s === 'ERROR') return 'bg-red-100 text-red-800 border border-red-300 dark:bg-red-950/50 dark:text-red-300 dark:border-red-800';
         return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300';
     }
 
@@ -160,7 +170,7 @@ export default function Index({ recent_transactions, wallet, funding_accounts, w
                 </div>
 
                 {/* KYC notice */}
-                {!auth.user.kyc_verified_at && (
+                {isKycEnabled && !auth.user.kyc_verified_at && (
                     <div className="mb-3 flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-50">
                         <div className="mt-0.5 shrink-0">
                             <AlertCircle className="h-5 w-5 text-amber-500 dark:text-amber-300" />
@@ -221,11 +231,11 @@ export default function Index({ recent_transactions, wallet, funding_accounts, w
                     <div className="grid grid-cols-3 gap-0">
                         <ServiceItem icon={Wifi} label="Data" href="/buy_data" />
                         <ServiceItem icon={Phone} label="Airtime" href="/buy_airtime" borderLeft={true} borderRight={true} />
-                        <ServiceItem icon={Wallet} label="Fund Wallet" href="/funding" />
+                        <ServiceItem icon={ShieldCheck} label="NIN / BVN Slip" href="/verification" />
                     </div>
                     <div className="my-1 border-t border-gray-200 dark:border-gray-600" />
                     <div className="grid grid-cols-3 gap-0">
-                        <ServiceItem icon={Headset} label="Support" href="mailto:support@vtuapp.com.ng" external />
+                        <ServiceItem icon={Wallet} label="Fund Wallet" href="/funding" />
                         <ServiceItem icon={History} label="History" href={historyHref} borderLeft={true} borderRight={true} />
                         <ServiceItem icon={User} label="Profile" href="/user-settings/profile" />
                     </div>
@@ -273,7 +283,7 @@ export default function Index({ recent_transactions, wallet, funding_accounts, w
                                     </div>
                                 </div>
                                 <div className="shrink-0 text-right">
-                                    <p className="text-foreground text-sm font-bold">₦{formatToThousands(tx.telco_price)}</p>
+                                    <p className="text-foreground text-sm font-bold">₦{formatToThousands(tx.amount ?? tx.telco_price ?? 0)}</p>
                                     <p className="text-muted-foreground text-[10px]">{formatDisplayDate(tx.date)}</p>
                                 </div>
                             </div>

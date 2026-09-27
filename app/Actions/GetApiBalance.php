@@ -24,7 +24,9 @@ class GetApiBalance
                 'headers' => [
                     'Authorization' => "Token $token",
                     'Content-Type' => 'application/json',
-                ]
+                ],
+                'verify' => false,
+                'timeout' => 15,
             ]);
 
             $res = json_decode($response->getBody(), true);

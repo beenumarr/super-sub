@@ -9,18 +9,36 @@ class ReverseTransaction
 
     public function handle(Transaction $transaction, $response = null): void
     {
-        if ($response === 'api') {
-            $transaction->update([
-                'status' => 'FAILED',
-            ]);
+        $rawMessage = null;
 
-        } else {
-            $transaction->update([
-                'status' => 'FAILED',
-                'api_response' => $response['message'] ?? $response['api_response'] ?? 'No Response',
-            ]);
-
+        if (is_string($response)) {
+            $rawMessage = $response;
+        } elseif (is_array($response)) {
+            if (!empty($response['error']) && is_array($response['error'])) {
+                $rawMessage = implode(', ', $response['error']);
+            } elseif (!empty($response['error']) && is_string($response['error'])) {
+                $rawMessage = $response['error'];
+            } elseif (!empty($response['msg'])) {
+                $rawMessage = $response['msg'];
+            } elseif (!empty($response['message'])) {
+                $rawMessage = $response['message'];
+            } elseif (!empty($response['api_response'])) {
+                $rawMessage = $response['api_response'];
+            } elseif (!empty($response['detail'])) {
+                $rawMessage = $response['detail'];
+            } else {
+                $rawMessage = json_encode($response);
+            }
         }
+
+        if ($rawMessage === 'api' || empty($rawMessage)) {
+            $rawMessage = 'Transaction failed on provider';
+        }
+
+        $transaction->fill([
+            'status' => 'FAILED',
+            'api_response' => $rawMessage,
+        ])->save();
 
         $wallet = $transaction->user?->wallet;
         if ($wallet) {
@@ -30,7 +48,6 @@ class ReverseTransaction
         if (!is_null($transaction->balance_after)) {
             $transaction->increment('balance_after', (float) $transaction->amount);
         }
-
     }
 
 

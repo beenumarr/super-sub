@@ -108,11 +108,10 @@ class BuyDataController extends Controller
         $status = $this->buyData->handle($transaction);
 
        if($status !== 'SUCCESS'){
-
-           $error = $transaction->api_response;
+           $error = $transaction->user_friendly_response;
 
            throw ValidationException::withMessages([
-                'status' => $error ?? 'Something Went Wrong! Try again Letter',
+                'status' => $error,
             ]);
 
         }
@@ -153,10 +152,10 @@ class BuyDataController extends Controller
         }
 
         else{
-            $error = $transaction->api_response;
+            $error = $transaction->user_friendly_response;
 
             throw ValidationException::withMessages([
-                'status' => $error ?? 'Something Went Wrong! Try again Letter',
+                'status' => $error,
             ]);
         }
 

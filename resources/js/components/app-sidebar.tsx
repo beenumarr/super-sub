@@ -4,7 +4,7 @@ import { NavMain } from '@/components/nav-main';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { FileText, GraduationCap, HelpCircle, KeyRound, LayoutDashboard, List, Phone, Settings, Signal, Tv, Wallet, Zap } from 'lucide-react';
+import { FileText, GraduationCap, HelpCircle, KeyRound, LayoutDashboard, List, Phone, Settings, ShieldCheck, Signal, Tv, Wallet, Zap } from 'lucide-react';
 import AppLogoIcon from './app-logo-icon';
 
 const mainNavItems: NavItem[] = [
@@ -54,6 +54,11 @@ const mainNavItems: NavItem[] = [
         title: 'Education Pin',
         href: '/result_checker',
         icon: GraduationCap,
+    },
+    {
+        title: 'NIN / BVN Slip',
+        href: '/verification',
+        icon: ShieldCheck,
     },
     // {
     //     title: 'Kirani Minutes',
