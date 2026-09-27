@@ -18,8 +18,10 @@ export default function AppLogoIcon({ className = 'h-10 w-10', alt }: Props) {
     if (siteLogo && siteLogo.trim() !== '') {
         if (siteLogo.startsWith('http://') || siteLogo.startsWith('https://') || siteLogo.startsWith('/')) {
             primaryUrl = siteLogo;
+        } else if (siteLogo === 'logo-icon.png' || siteLogo === 'logo_mob.png') {
+            primaryUrl = `/${siteLogo}`;
         } else {
-            primaryUrl = `/storage/uploads/${siteLogo}?t=${Date.now()}`;
+            primaryUrl = `/storage/uploads/${siteLogo}`;
         }
     }
 

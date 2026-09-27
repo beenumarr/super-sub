@@ -83,6 +83,8 @@ class HandleInertiaRequests extends Middleware
                 'airtime_to_cash'=> (bool) (config('settings.feat_enable_airtime_to_cash') == '1'),
                 'referral'=> (bool) (config('settings.feat_enable_referral') == '1'),
                 'email_verification'=> in_array(config('settings.feat_enable_email_verification'), ['1', 1, 'true', true], true),
+                'nin_verification' => in_array(config('settings.feat_enable_nin_verification', '1'), ['1', 1, 'true', true], true),
+                'bvn_verification' => in_array(config('settings.feat_enable_bvn_verification', '1'), ['1', 1, 'true', true], true),
                 'kyc'=> (bool) (
                     in_array(config('settings.feat_enable_kyc'), ['1', 1, 'true', true], true)
                     || (
@@ -104,8 +106,10 @@ class HandleInertiaRequests extends Middleware
                 'funded_wallet' => $fund_wallet ?? false,
                 'kyc_verified' => $kyc_verified ?? false,
                 'made_transaction' => $made_transaction ?? false,
-                'notifications'=> config('settings.site_notification')
+                'notifications'=> config('settings.site_notification'),
+                'is_impersonating' => session()->has('impersonate_original_id'),
             ],
+            'is_impersonating' => session()->has('impersonate_original_id'),
             'debug' => $debug,
             'ziggy' => fn (): array => [
                 ...(new Ziggy)->toArray(),

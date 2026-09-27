@@ -12,6 +12,7 @@ use App\Http\Controllers\User\BuyDataController;
 use App\Http\Controllers\User\CableSubscriptionController;
 use App\Http\Controllers\User\DeveloperApiController;
 use App\Http\Controllers\User\ElectricityBillController;
+use App\Http\Controllers\User\IdentityVerificationController;
 use App\Http\Controllers\User\KiraniTransactionController;
 use App\Http\Controllers\User\KycController;
 use App\Http\Controllers\User\PromotionRedemptionController;
@@ -31,6 +32,7 @@ use Inertia\Inertia;
 
 
 Route::middleware('auth')->group(function () {
+    Route::match(['get', 'post'], '/impersonate/leave', [\App\Http\Controllers\Admin\AdminImpersonateController::class, 'leave'])->name('impersonate.leave');
     Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['verified'])->name('dashboard');
     Route::get('/funding', [WalletFundingController::class, 'index'])->name('funding');
     Route::post('/fund-account', [WalletTransferController::class, 'store'])->name('fund-account');
@@ -57,6 +59,9 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/result_checker', [ResultCheckerController::class, 'index'])->name('result_checker');
     Route::post('/result_checker', [ResultCheckerController::class, 'store'])->name('result_checker.store');
+    Route::get('/verification', [IdentityVerificationController::class, 'index'])->name('verification.index');
+    Route::post('/verification/nin', [IdentityVerificationController::class, 'verifyNin'])->name('verification.nin')->middleware(['throttle:30,1']);
+    Route::post('/verification/bvn', [IdentityVerificationController::class, 'verifyBvn'])->name('verification.bvn')->middleware(['throttle:30,1']);
     Route::resource('/cable_subscriptions', CableSubscriptionController::class)->except(['show','edit']);
     Route::get('/validate_icu', [CableSubscriptionController::class, 'validateIcu'])->name('validate_icu');
     Route::get('/cable_subscriptions/filter_plans', [CableSubscriptionController::class, 'filterPlans']);

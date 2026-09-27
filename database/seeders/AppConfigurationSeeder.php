@@ -138,8 +138,36 @@ class AppConfigurationSeeder extends Seeder
                 'value' => 1,
                 'type'=> 'text'
             ],
-
-
+            [
+                'key' => "africverify_api_key",
+                'value' => "test_sk_",
+                'type'=> 'text'
+            ],
+            [
+                'key' => "africverify_api_url",
+                'value' => "https://api.africverify.com/api/v1",
+                'type'=> 'text'
+            ],
+            [
+                'key' => "nin_verification_charge",
+                'value' => "100 N",
+                'type'=> 'text'
+            ],
+            [
+                'key' => "bvn_verification_charge",
+                'value' => "100 N",
+                'type'=> 'text'
+            ],
+            [
+                'key' => "feat_enable_nin_verification",
+                'value' => "1",
+                'type'=> 'text'
+            ],
+            [
+                'key' => "feat_enable_bvn_verification",
+                'value' => "1",
+                'type'=> 'text'
+            ],
         ];
 
 

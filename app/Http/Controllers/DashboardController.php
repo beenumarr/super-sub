@@ -19,6 +19,7 @@ class DashboardController extends Controller
             ->map(function ($transaction) {
                 return [
                     'id' => $transaction->reference_id,
+                    'amount' => $transaction->amount,
                     'description' => $transaction->description,
                     'reference_id' => $transaction->reference_id,
                     'date' => $transaction->created_at->toISOString(),

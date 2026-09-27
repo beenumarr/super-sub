@@ -11,11 +11,32 @@ class AdminImpersonateController extends Controller
 {
     public function impersonate(User $user)
     {
-        session(['impersonate_original_id' => Auth::id(), 'debug'=> true]);
+        $originalId = session('impersonate_original_id') ?? Auth::id();
 
         Auth::login($user);
 
-        return redirect('/dashboard'); // or wherever users land
+        session([
+            'impersonate_original_id' => $originalId,
+            'debug' => true
+        ]);
+
+        return redirect('/dashboard')->with('success', "Logged in as {$user->name}");
     }
 
+    public function leave()
+    {
+        $adminId = session('impersonate_original_id');
+
+        if ($adminId) {
+            $admin = User::find($adminId);
+            if ($admin) {
+                Auth::login($admin);
+                session()->forget(['impersonate_original_id', 'debug']);
+
+                return redirect()->route('admin.users.index')->with('success', 'Returned to admin session.');
+            }
+        }
+
+        return redirect('/dashboard');
+    }
 }

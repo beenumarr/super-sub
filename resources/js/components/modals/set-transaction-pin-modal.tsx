@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useThemeColors } from '@/hooks/useThemeColors';
 import { useForm } from '@inertiajs/react';
 import { KeyRound, ShieldCheck } from 'lucide-react';
 import { useRef, useState } from 'react';
@@ -9,6 +10,9 @@ interface SetTransactionPinModalProps {
 }
 
 export function SetTransactionPinModal({ open }: SetTransactionPinModalProps) {
+    const colors = useThemeColors();
+    const primary = colors.primary || '#3b82f6';
+
     const [step, setStep] = useState<'set' | 'confirm'>('set');
     const [mismatch, setMismatch] = useState(false);
 
@@ -103,8 +107,9 @@ export function SetTransactionPinModal({ open }: SetTransactionPinModalProps) {
     };
 
     const inputBase =
-        'h-14 w-14 rounded-xl border-2 bg-white text-center text-2xl font-bold text-gray-900 shadow-sm transition-colors focus:outline-none dark:bg-gray-800 dark:text-white';
-    const inputDefault = 'border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-600 dark:focus:border-blue-400';
+        'h-14 w-14 rounded-xl border-2 bg-white text-center text-2xl font-bold text-gray-900 shadow-sm transition-all focus:outline-none dark:bg-gray-800 dark:text-white';
+    const inputDefault =
+        'border-gray-200 focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20 dark:border-gray-600';
     const inputError = 'border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 dark:border-red-500';
 
     return (
@@ -116,11 +121,17 @@ export function SetTransactionPinModal({ open }: SetTransactionPinModalProps) {
                 onEscapeKeyDown={(e) => e.preventDefault()}
             >
                 <DialogHeader className="items-center space-y-3 pb-2">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-blue-50 dark:bg-blue-900/30">
+                    <div
+                        className="flex h-14 w-14 items-center justify-center rounded-full transition-colors"
+                        style={{
+                            backgroundColor: `${primary}18`,
+                            color: primary,
+                        }}
+                    >
                         {step === 'set' ? (
-                            <KeyRound className="h-7 w-7 text-blue-600 dark:text-blue-400" />
+                            <KeyRound className="h-7 w-7" style={{ color: primary }} />
                         ) : (
-                            <ShieldCheck className="h-7 w-7 text-blue-600 dark:text-blue-400" />
+                            <ShieldCheck className="h-7 w-7" style={{ color: primary }} />
                         )}
                     </div>
                     <DialogTitle className="text-center text-xl font-semibold">
@@ -156,7 +167,8 @@ export function SetTransactionPinModal({ open }: SetTransactionPinModalProps) {
                             </div>
                             {errors.pin && <p className="text-center text-xs text-red-500">{errors.pin}</p>}
                             <Button
-                                className="w-full bg-blue-600 text-white hover:bg-blue-700"
+                                className="w-full text-white shadow-md transition-all hover:opacity-90 active:scale-[0.99]"
+                                style={{ backgroundColor: primary }}
                                 disabled={data.pin.length < 4 || processing}
                                 onClick={handleNext}
                             >
@@ -191,7 +203,8 @@ export function SetTransactionPinModal({ open }: SetTransactionPinModalProps) {
                             )}
 
                             <Button
-                                className="w-full bg-blue-600 text-white hover:bg-blue-700"
+                                className="w-full text-white shadow-md transition-all hover:opacity-90 active:scale-[0.99]"
+                                style={{ backgroundColor: primary }}
                                 disabled={data.pin_confirmation.length < 4 || processing}
                                 onClick={handleSubmit}
                             >
@@ -200,7 +213,8 @@ export function SetTransactionPinModal({ open }: SetTransactionPinModalProps) {
 
                             <button
                                 type="button"
-                                className="w-full text-center text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                                className="w-full text-center text-sm font-medium transition hover:underline"
+                                style={{ color: primary }}
                                 onClick={goBack}
                             >
                                 ← Change PIN

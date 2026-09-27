@@ -18,6 +18,7 @@ use App\Http\Resources\Admin\UserResource;
 use App\Jobs\CreatePayvesselVirtualAccount;
 use App\Http\Resources\Admin\UserSearchResource;
 use App\Models\FundingAccount;
+use App\Models\DataPlanType;
 use Illuminate\Support\Facades\Request as FilterRequest;
 use Illuminate\Support\Str;
 
@@ -131,8 +132,21 @@ class UserController extends Controller
     {
         $user->load(['wallet']);
 
+        $categories = DataPlanType::with('network')->get()->map(function ($type) {
+            return [
+                'id' => $type->id,
+                'name' => $type->name,
+                'network_id' => $type->mobile_network_id,
+                'network' => $type->network ? [
+                    'id' => $type->network->id,
+                    'name' => $type->network->name,
+                ] : null,
+            ];
+        });
+
         return Inertia::render('Admin/Users/Show', [
             'user' => new UserResource($user),
+            'categories' => $categories,
         ]);
     }
 
@@ -197,8 +211,15 @@ class UserController extends Controller
 
     public function sendLowBalanceAlert(User $user)
     {
-        // Implement real low-balance alerts later; placeholder for now
-        return response()->noContent();
+        try {
+            $balance = $user->wallet?->balance ?? 0;
+            $user->notify(new \App\Notifications\LowWalletBalance($balance));
+
+            return back()->with('success', 'Low balance alert sent successfully to ' . ($user->name ?? $user->email) . '.');
+        } catch (\Throwable $e) {
+            \Log::error('Failed to send Low Balance Alert: ' . $e->getMessage(), ['exception' => $e]);
+            return back()->with('error', 'Failed to send alert: ' . $e->getMessage());
+        }
     }
 
 

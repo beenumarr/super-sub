@@ -176,25 +176,27 @@ export default function Index({ users, activeRole, filters, categories = [] }: I
         kyc_level: 'BASIC' as string,
     });
 
-    const sendLBA = async (id: number) => {
+    const sendLBA = (id: number) => {
         setLoadingBalance(id);
 
-        getBalanceForm.setData({
-            userId: id,
-        });
-
-        getBalanceForm.post(route('admin.users.send_lba', id), {
-            preserveScroll: true,
-            preserveState: true,
-            onSuccess: () => {
-                toast.success('Alert sent succesfully!');
-                setLoadingBalance(null);
-            },
-            onError: (error) => {
-                toast.error(error.message);
-                setLoadingBalance(null);
-            },
-        });
+        router.post(
+            route('admin.users.send_lba', id),
+            {},
+            {
+                preserveScroll: true,
+                preserveState: true,
+                onSuccess: () => {
+                    toast.success('Alert sent successfully!');
+                },
+                onError: (errors: any) => {
+                    const message = typeof errors === 'string' ? errors : (errors?.error || errors?.message || 'Failed to send alert');
+                    toast.error(message);
+                },
+                onFinish: () => {
+                    setLoadingBalance(null);
+                },
+            }
+        );
     };
 
     const handleDeleteClick = (user: User) => {

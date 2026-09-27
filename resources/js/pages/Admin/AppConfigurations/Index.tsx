@@ -2,7 +2,7 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { cn } from '@/lib/utils';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
-import { CreditCard, Globe, Mail, Palette, Plug, SlidersHorizontal } from 'lucide-react';
+import { CreditCard, Globe, Mail, Palette, Plug, ShieldCheck, SlidersHorizontal } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 
@@ -13,6 +13,7 @@ import EmailConfig from './Components/Tabs/EmailConfig';
 import GeneralSettings from './Components/Tabs/GeneralSettings';
 import PaymentGateway from './Components/Tabs/PaymentGateway';
 import TransactionApi from './Components/Tabs/TransactionApi';
+import VerificationConfig from './Components/Tabs/VerificationConfig';
 import SiteFaviconForm from './Components/SiteFaviconForm';
 import SiteLogoForm from './Components/SiteLogoForm';
 import SitePhotosForm from './Components/SitePhotosForm';
@@ -22,7 +23,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'App Configurations', href: '/admin/app_configurations' },
 ];
 
-type TabValue = 'general' | 'appearance' | 'payments' | 'integrations' | 'email' | 'features';
+type TabValue = 'general' | 'appearance' | 'payments' | 'integrations' | 'verification' | 'email' | 'features';
 
 interface TabItem {
     title: string;
@@ -80,6 +81,7 @@ export default function Index() {
         { title: 'Appearance', value: 'appearance', icon: <Palette className="h-3.5 w-3.5" /> },
         { title: 'Payments', value: 'payments', icon: <CreditCard className="h-3.5 w-3.5" /> },
         { title: 'Integrations', value: 'integrations', icon: <Plug className="h-3.5 w-3.5" /> },
+        { title: 'Identity / KYC', value: 'verification', icon: <ShieldCheck className="h-3.5 w-3.5" /> },
         { title: 'Email', value: 'email', icon: <Mail className="h-3.5 w-3.5" /> },
         ...(auth?.isMaster
             ? [{ title: 'Features', value: 'features' as TabValue, icon: <SlidersHorizontal className="h-3.5 w-3.5" /> }]
@@ -124,6 +126,13 @@ export default function Index() {
                 setData={setData as unknown as (key: string, value: string) => void}
                 monnify_charges_options={monnify_charges_options}
                 isSuperAdmin={auth?.isSuperAdmin ?? false}
+            />
+        ),
+        verification: (
+            <VerificationConfig
+                data={data as Record<string, any>}
+                handleOnChange={handleOnChange as (e: React.ChangeEvent<HTMLInputElement>) => void}
+                setData={setData as unknown as (keyOrData: string | Record<string, unknown>, value?: unknown) => void}
             />
         ),
         email: (

@@ -19,7 +19,9 @@ class TransactionResource extends JsonResource
             'user' => $this->user->only('id','name','phone'),
             'reference_id' => $this->reference_id,
             'amount' => number_format((int)$this->amount, 2),
-            'api_response' => $this->api_response,
+            'api_response' => (auth()->check() && (auth()->user()->isAdmin || auth()->user()->hasRole(['Admin', 'Superadmin', 'Masteradmin'])))
+                ? $this->api_response
+                : $this->user_friendly_response,
             'description' => $this->description,
             'status' => $this->status,
             'balance_before' => number_format((int)$this->balance_before, 2),

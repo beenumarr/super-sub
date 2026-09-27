@@ -290,7 +290,7 @@ export default function ConfirmTransactionModal({
                                             className={`h-12 w-12 rounded-md border bg-white text-center text-lg font-bold text-gray-900 shadow-sm focus:outline-none dark:bg-gray-800 dark:text-white ${
                                                 pinError
                                                     ? 'border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500'
-                                                    : 'border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-gray-600'
+                                                    : 'border-gray-300 focus:border-[var(--theme-1,#3b82f6)] focus:ring-1 focus:ring-[var(--theme-1,#3b82f6)] dark:border-gray-600'
                                             }`}
                                         />
                                     ))}

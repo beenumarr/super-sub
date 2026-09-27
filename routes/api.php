@@ -33,6 +33,11 @@ Route::middleware(ApiAuthenticate::class, 'auth:sanctum')->group(function () {
 
     // Transaction status routes (authenticated)
     Route::post('/transaction/get-by-reference', [TransactionController::class, 'getByReference']);
+
+    // Identity Verification (NIN & BVN)
+    Route::get('/kyc/pricing', [\App\Http\Controllers\Api\VerificationApiController::class, 'pricing']);
+    Route::post('/kyc/nin', [\App\Http\Controllers\Api\VerificationApiController::class, 'verifyNin']);
+    Route::post('/kyc/bvn', [\App\Http\Controllers\Api\VerificationApiController::class, 'verifyBvn']);
 });
 
 

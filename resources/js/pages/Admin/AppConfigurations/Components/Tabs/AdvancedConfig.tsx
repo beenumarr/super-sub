@@ -20,6 +20,8 @@ const configItems = [
     { key: 'feat_enable_referral', label: 'Enable Referral' },
     { key: 'feat_enable_airtime_to_cash', label: 'Enable Airtime to Cash' },
     { key: 'feat_enable_email_verification', label: 'Email Verification' },
+    { key: 'feat_enable_nin_verification', label: 'NIN Verification Service' },
+    { key: 'feat_enable_bvn_verification', label: 'BVN Verification Service' },
 ];
 
 export default function AdvancedConfig({ data, setData }: AdvancedConfigProps) {

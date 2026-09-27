@@ -18,6 +18,8 @@ class Transaction extends Model
         'RESULT_CHECKER',
         'WALLET',
         'BONUS_WALLET',
+        'NIN_VERIFICATION',
+        'BVN_VERIFICATION',
     ];
 
     protected $fillable = [
@@ -220,6 +222,54 @@ class Transaction extends Model
     public function getReferenceAttribute($value): ?string
     {
         return $value ?: ($this->attributes['reference_id'] ?? null);
+    }
+
+    public function getUserFriendlyResponseAttribute(): string
+    {
+        if ($this->status === 'SUCCESS') {
+            return $this->api_response ?: 'Transaction Successful';
+        }
+
+        if (empty($this->api_response) || $this->api_response === 'No Response' || $this->api_response === 'Transaction failed on provider') {
+            return 'Transaction could not be completed at this time. Your wallet has been refunded.';
+        }
+
+        $lower = strtolower($this->api_response);
+
+        // Phone number issues
+        if (str_contains($lower, 'invalid phone') || str_contains($lower, 'phone number is invalid') || str_contains($lower, 'wrong phone')) {
+            return 'The phone number provided is invalid. Please verify and try again.';
+        }
+
+        // Out of stock / unavailable on provider SIM pool
+        if (str_contains($lower, 'no phone number available') || str_contains($lower, 'out of stock') || str_contains($lower, 'temporarily unavailable') || str_contains($lower, 'route unavailable') || str_contains($lower, 'vending unavailable')) {
+            return 'This service is temporarily unavailable on the selected network. Please try again shortly or use another network. Your wallet has been refunded.';
+        }
+
+        // Plan issues
+        if (str_contains($lower, 'plan not found') || str_contains($lower, 'invalid plan') || str_contains($lower, 'plan unavailable')) {
+            return 'The selected plan is temporarily unavailable. Please choose another plan or try again later. Your wallet has been refunded.';
+        }
+
+        // Meter or IUC validation issues
+        if (str_contains($lower, 'meter') && (str_contains($lower, 'invalid') || str_contains($lower, 'not found'))) {
+            return 'Invalid meter number. Please verify your meter details.';
+        }
+        if ((str_contains($lower, 'iuc') || str_contains($lower, 'smartcard')) && (str_contains($lower, 'invalid') || str_contains($lower, 'not found'))) {
+            return 'Invalid smartcard / IUC number. Please verify your details.';
+        }
+
+        // Provider technical errors (Balance, SSL, Guzzle, 400, 500, cURL, etc.)
+        if (str_contains($lower, 'insufficient') || str_contains($lower, 'balance') || str_contains($lower, 'curl') || str_contains($lower, 'ssl') || str_contains($lower, 'exception') || str_contains($lower, '500') || str_contains($lower, 'server error') || str_contains($lower, 'unauthorized') || str_contains($lower, 'api key') || str_contains($lower, 'bad request')) {
+            return 'Service is temporarily experiencing technical difficulties. Your wallet has been refunded. Please try again shortly.';
+        }
+
+        // If the error message is clean and short without code/json, use it safely without provider prefix
+        if (strlen($this->api_response) <= 80 && !str_contains($this->api_response, '{') && !str_contains($this->api_response, '\\')) {
+            return preg_replace('/^[A-Za-z0-9_-]+:\s*/', '', $this->api_response);
+        }
+
+        return 'Transaction failed. Your wallet has been refunded. Please try again later.';
     }
 
 }

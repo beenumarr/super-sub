@@ -59,7 +59,7 @@ interface ShowProps {
     categories: DataPlanCategory[];
 }
 
-export default function Show({ user, categories }: ShowProps) {
+export default function Show({ user, categories = [] }: ShowProps) {
     const breadcrumbs: BreadcrumbItem[] = [
         {
             title: 'Dashboard',
@@ -177,7 +177,7 @@ export default function Show({ user, categories }: ShowProps) {
     };
 
     // Group categories by network
-    const categoriesByNetwork = categories.reduce(
+    const categoriesByNetwork = (categories || []).reduce(
         (acc, category) => {
             const networkId = category.network_id;
             if (!acc[networkId]) {
@@ -200,7 +200,7 @@ export default function Show({ user, categories }: ShowProps) {
                 <div className="mb-6 flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl font-bold">{user.name}</h1>
-                        <p className="text-gray-500 capitalize">{user.role}</p>
+                        <p className="text-gray-500 capitalize">{user.role || 'User'}</p>
                     </div>
                     <div className="flex gap-2">
                         <Link href={route('admin.users.index')}>
@@ -229,17 +229,23 @@ export default function Show({ user, categories }: ShowProps) {
 
                                 <div>
                                     <h3 className="text-sm font-medium text-gray-500">Role</h3>
-                                    <span
-                                        className={`rounded-full px-2 py-1 text-xs font-semibold ${
-                                            user.role === 'admin'
-                                                ? 'bg-purple-100 text-purple-800'
-                                                : user.role === 'owner'
-                                                  ? 'bg-blue-100 text-blue-800'
-                                                  : 'bg-green-100 text-green-800'
-                                        }`}
-                                    >
-                                        {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
-                                    </span>
+                                    {(() => {
+                                        const roleName = user.role || 'User';
+                                        const lower = roleName.toLowerCase();
+                                        return (
+                                            <span
+                                                className={`rounded-full px-2 py-1 text-xs font-semibold ${
+                                                    lower === 'admin' || lower === 'superadmin' || lower === 'masteradmin'
+                                                        ? 'bg-purple-100 text-purple-800'
+                                                        : lower === 'owner'
+                                                          ? 'bg-blue-100 text-blue-800'
+                                                          : 'bg-green-100 text-green-800'
+                                                }`}
+                                            >
+                                                {roleName.charAt(0).toUpperCase() + roleName.slice(1)}
+                                            </span>
+                                        );
+                                    })()}
                                 </div>
                             </CardContent>
                         </Card>
@@ -316,7 +322,7 @@ export default function Show({ user, categories }: ShowProps) {
                                                                     <SelectValue placeholder="Select a category" />
                                                                 </SelectTrigger>
                                                                 <SelectContent>
-                                                                    {categories.map((category) => (
+                                                                    {(categories || []).map((category) => (
                                                                         <SelectItem key={category.id} value={category.id.toString()}>
                                                                             {category.network?.name} - {category.name}
                                                                         </SelectItem>

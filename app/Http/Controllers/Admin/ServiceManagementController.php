@@ -23,7 +23,8 @@ class ServiceManagementController extends Controller
             'mobile_networks' => MobileNetworkResource::collection(MobileNetwork::all()),
             'apis'=> TransactionApi::all(),
             'can_add_api'=> config('settings.feat_enable_add_api') === "1",
-            'electricicty_bill_transaction_api_id'=> config('settings.electricicty_bill_transaction_api_id')
+            'electricicty_bill_transaction_api_id'=> config('settings.electricicty_bill_transaction_api_id'),
+            'isStl' => (bool) config('app.enable_standalone_api'),
         ]);
 
     }
