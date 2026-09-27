@@ -29,9 +29,26 @@ Route::middleware(ApiAuthenticate::class, 'auth:sanctum')->group(function () {
     Route::post('/user/pin', [\App\Http\Controllers\Api\AuthApiController::class, 'updatePin']);
 
     // Airtime transaction routes
+    Route::get('/buy_airtime', [\App\Http\Controllers\User\BuyAirtimeController::class, 'index']);
+    Route::post('/buy_airtime', [\App\Http\Controllers\User\BuyAirtimeController::class, 'store']);
     Route::post('/topup/{id}', [BuyAirtimeController::class, 'storeApi']);
     Route::post('/topup', [BuyAirtimeController::class, 'storeApi']);
     Route::post('/airtime', [BuyAirtimeController::class, 'storeApi']);
+
+    // Data transaction routes
+    Route::get('/data-plans', [\App\Http\Controllers\User\BuyDataController::class, 'dataPlans']);
+    Route::post('/buy_data', [\App\Http\Controllers\User\BuyDataController::class, 'store']);
+
+    // Cable TV routes
+    Route::get('/cable-networks', [\App\Http\Controllers\User\CableSubscriptionController::class, 'index']);
+    Route::get('/validate_icu', [\App\Http\Controllers\User\CableSubscriptionController::class, 'validateIcu']);
+    Route::get('/cable_subscriptions/filter_plans', [\App\Http\Controllers\User\CableSubscriptionController::class, 'filterPlans']);
+    Route::post('/cable_subscriptions', [\App\Http\Controllers\User\CableSubscriptionController::class, 'store']);
+
+    // Electricity bill routes
+    Route::get('/electricity-distributors', [\App\Http\Controllers\User\ElectricityBillController::class, 'index']);
+    Route::get('/validate_meter', [\App\Http\Controllers\User\ElectricityBillController::class, 'validateMeter']);
+    Route::post('/electricity_bill_payments', [\App\Http\Controllers\User\ElectricityBillController::class, 'store']);
 
     // Transaction status routes (authenticated)
     Route::post('/transaction/get-by-reference', [TransactionController::class, 'getByReference']);
