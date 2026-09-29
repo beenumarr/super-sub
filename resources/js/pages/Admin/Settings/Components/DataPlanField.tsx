@@ -103,24 +103,29 @@ export default function DataPlanField({ handleClose, editData }: DataPlanFieldPr
 
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
         const updatedApiId = [...data.api_ids];
-        const product_id = e.target.value;
+        const val = e.target.value;
         const transaction_api_id = Number(e.target.id);
         const existingIndex = updatedApiId.findIndex(
             (api: { transaction_api_id: number }) => api.transaction_api_id === transaction_api_id,
         );
-        if (existingIndex !== -1) {
-            updatedApiId[existingIndex] = {
-                ...updatedApiId[existingIndex],
-                product_id: isNaN(Number(product_id)) ? '1' : product_id,
-                product_code: product_id,
-            };
+
+        if (!val.trim()) {
+            if (existingIndex !== -1) {
+                updatedApiId.splice(existingIndex, 1);
+            }
         } else {
-            updatedApiId.push({
+            const numericId = !isNaN(Number(val)) && val.trim() !== '' ? Number(val) : 1;
+            const item = {
                 id: transaction_api_id,
-                product_id: product_id,
-                product_code: product_id,
                 transaction_api_id,
-            } as (typeof updatedApiId)[0]);
+                product_id: String(numericId),
+                product_code: val,
+            };
+            if (existingIndex !== -1) {
+                updatedApiId[existingIndex] = item;
+            } else {
+                updatedApiId.push(item);
+            }
         }
         setData('api_ids', updatedApiId);
     };

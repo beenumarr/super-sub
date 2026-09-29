@@ -17,7 +17,7 @@ const CableSubscriptionPlanForm = ({ setFormModal, formModal }: CableSubscriptio
             handleClose={handleClose}
         >
             <CableSubscriptionPlanField
-                editData={""}
+                editData={null}
                 handleClose={handleClose}
             />
         </Modal>

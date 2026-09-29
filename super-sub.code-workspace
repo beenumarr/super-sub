@@ -1,0 +1,11 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../super_sub_app"
+		}
+	],
+	"settings": {}
+}
