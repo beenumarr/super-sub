@@ -64,7 +64,7 @@ class DashboardController extends Controller
                 && !in_array(config('settings.feat_enable_kyc'), ['0', 0, 'false', false], true)
             );
 
-        return inertia('Dashboard/Index', [
+        $payload = [
             'recent_transactions' => $recent_transactions,
             'wallet' => [
                 'balance' => $netBalance,
@@ -82,6 +82,16 @@ class DashboardController extends Controller
             ],
             'has_pin' => $user->hasTransactionPin(),
             'kyc_enabled' => (bool) $isKycEnabled,
-        ]);
+        ];
+
+        if ($request->wantsJson() || $request->is('api/*')) {
+            return response()->json([
+                'status' => 'success',
+                'data' => $payload,
+                ...$payload,
+            ]);
+        }
+
+        return inertia('Dashboard/Index', $payload);
     }
 }

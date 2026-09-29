@@ -35,11 +35,18 @@ class BuyAirtimeController extends Controller
     }
 
 
-    public function index(): Response
+    public function index(Request $request)
     {
+        $networks = MobileNetworkResource::collection(MobileNetwork::whereNotIn('name', ['KIRANI', 'SMILE'])->get());
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'mobile_networks' => $networks,
+            ]);
+        }
 
         return Inertia::render('BuyAirtime/Index', [
-            'mobile_networks' => MobileNetworkResource::collection(MobileNetwork::whereNotIn('name', ['KIRANI', 'SMILE'])->get()),
+            'mobile_networks' => $networks,
         ]);
     }
 
