@@ -2,14 +2,12 @@
 import Modal from "@/Components/Modal";
 import { useEffect, useState } from "react";
 import { CircularProgress } from "@mui/material";
-import CableSubscriptionPlanField from "./CableSubscriptionPlanField";
+import CableSubscriptionPlanField, { CablePlan } from "./CableSubscriptionPlanField";
 
 interface EditFormModalState {
     show: boolean;
     id: string | number;
 }
-
-type CablePlan = Record<string, unknown>;
 
 interface CableSubscriptionPlanEditFormProps {
     setFormModal: (state: EditFormModalState) => void;

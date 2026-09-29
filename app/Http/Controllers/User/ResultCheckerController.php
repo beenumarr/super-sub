@@ -67,35 +67,44 @@ class ResultCheckerController extends Controller
 
 
     function storeApi(Request $request) {
+        $examName = $request->input('exam_name') ?? $request->input('plan');
+        $quantity = (int) ($request->input('quantity') ?? 1);
 
-        $data =  $request->validate([
-            'exam_name'=> 'required|exists:exam_types,name',
-            'quantity'=> 'required|numeric|max:5'
-        ]);
+        $examType = null;
+        if ($examName) {
+            $examType = ExamType::where('name', 'LIKE', $examName)->first();
+        }
+        if (!$examType && $request->input('exam_type_id')) {
+            $examType = ExamType::find($request->input('exam_type_id'));
+        }
 
+        if (!$examType) {
+            throw ValidationException::withMessages([
+                'exam_name' => 'Please provide a valid exam_name (e.g. WAEC, NECO, NABTEB)',
+            ]);
+        }
+
+        $data = [
+            'exam_name' => $examType->name,
+            'exam_type_id' => $examType->id,
+            'quantity' => $quantity,
+        ];
 
         $user = $request->user();
-
-        $examType = ExamType::where('name', $data['exam_name'])->first();
-
-        $data['exam_type_id'] = $examType->id;
-
 
         $transaction = $this->performTransaction($request, $user, $data);
 
         $status = $this->buyResultChecker->handle($transaction);
 
-
         if($status !== 'SUCCESS'){
-                $error = $transaction->api_response;
+            $error = $transaction->api_response ?? $transaction->user_friendly_response;
 
-                throw ValidationException::withMessages([
-                    'status' => $error ?? 'Something Went Wrong! Try again Letter',
-                ]);
-            }
+            throw ValidationException::withMessages([
+                'status' => $error ?? 'Something Went Wrong! Try again Later',
+            ]);
+        }
 
         return response(new ApiTransactionResource($transaction));
-
     }
 
     function performTransaction(Request $request, $user, $data) {

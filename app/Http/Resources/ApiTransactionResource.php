@@ -14,20 +14,27 @@ class ApiTransactionResource extends JsonResource
      */
     public function toArray($request)
     {
-        return [
+        $metadata = $this->metadata ?? [];
+        $networkId = $metadata['network_id'] ?? ($this->provider_id ?? null);
+        $networkName = $metadata['network'] ?? ($this->provider_name ?? 'N/A');
 
+        return [
             'id' => $this->id,
-            'network' => optional($this->transactionable->mobile_network_id),
-            'ident' => $this->reference,
-            'amount' => number_format((int)$this->amount, 2),
-            'api_response' => $this->api_response,
-            'description' => $this->description ?? "N/A",
-            'plan_network' => "N/A",
+            'ident' => $this->reference_id ?? $this->reference,
+            'reference' => $this->reference_id ?? $this->reference,
+            'network' => $networkId,
+            'plan_network' => $networkName,
+            'amount' => number_format((float) ($this->amount ?? 0), 2),
+            'api_response' => $this->api_response ?? 'Transaction processed successfully',
+            'description' => $this->description ?? 'N/A',
+            'status' => strtolower((string) $this->status) === 'success' ? 'successful' : strtolower((string) $this->status),
             'Status' => strtolower((string) $this->status) === 'success' ? 'successful' : $this->status,
-            'balance_before' => number_format((int)$this->balance_before, 2),
-            'balance_after' => number_format((int)$this->balance_after, 2),
-            'create_date' => $this->created_at->format('d/m/Y h:i A'),
-           // 'pins' => $this->when($this->transaction->transactionable->pins, fn()=> $this->transaction->transactionable->pins),
+            'balance_before' => number_format((float) ($this->balance_before ?? 0), 2),
+            'balance_after' => number_format((float) ($this->balance_after ?? 0), 2),
+            'create_date' => $this->created_at ? $this->created_at->format('d/m/Y h:i A') : '',
+            'date' => $this->created_at ? $this->created_at->format('d/m/Y h:i A') : '',
+            'token' => $metadata['token'] ?? null,
+            'pins' => $metadata['pins'] ?? null,
         ];
     }
 }

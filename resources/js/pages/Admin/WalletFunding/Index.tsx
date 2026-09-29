@@ -1,7 +1,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -13,25 +13,28 @@ import { Filter, Plus, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
+import { UserSearchSelect } from '@/components/shared/user-search-select';
 
 interface WalletFundingUser {
-    id: number;
-    name: string;
+    id?: number;
+    name?: string;
     phone?: string | null;
 }
 
 interface WalletFundingRow {
     id: number;
-    reference: string;
-    user: WalletFundingUser;
-    funded_by: WalletFundingUser;
+    reference?: string;
+    reference_id?: string;
+    user?: WalletFundingUser | null;
+    funded_by?: WalletFundingUser | null;
     amount: string;
     balance_before: string;
     balance_after: string;
     api_response: string;
     description: string;
     status: string;
-    type: string;
+    type?: string;
+    ledger_type?: string;
     date: string;
 }
 
@@ -191,7 +194,7 @@ export default function WalletFundingIndex({ transactions, total_amount }: Walle
                                             <TableRow key={row.id}>
                                                 <TableCell>
                                                     <div className="flex flex-col">
-                                                        <span className="font-medium">{row.reference}</span>
+                                                        <span className="font-medium">{row.reference || row.reference_id || `#${row.id}`}</span>
                                                         <span className="text-xs text-gray-500">
                                                             {row.date ? row.date : ''}
                                                         </span>
@@ -199,15 +202,15 @@ export default function WalletFundingIndex({ transactions, total_amount }: Walle
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="flex flex-col">
-                                                        <span className="font-medium">{row.user.name}</span>
-                                                        <span className="text-xs text-gray-500">{row.user.phone ?? 'N/A'}</span>
+                                                        <span className="font-medium">{row.user?.name ?? 'Unknown User'}</span>
+                                                        <span className="text-xs text-gray-500">{row.user?.phone ?? 'N/A'}</span>
                                                     </div>
                                                 </TableCell>
                                                 <TableCell>
-                                                    <span className="text-sm">{row.funded_by.name}</span>
+                                                    <span className="text-sm">{row.funded_by?.name ?? 'System'}</span>
                                                 </TableCell>
                                                 <TableCell className="capitalize">
-                                                    {row.type}
+                                                    {row.type || row.ledger_type || 'credit'}
                                                 </TableCell>
                                                 <TableCell>₦{row.amount}</TableCell>
                                                 <TableCell>₦{row.balance_before}</TableCell>
@@ -265,6 +268,7 @@ export default function WalletFundingIndex({ transactions, total_amount }: Walle
                 <DialogContent className="max-w-md">
                     <DialogHeader>
                         <DialogTitle>Filter Wallet Funding</DialogTitle>
+                        <DialogDescription className="sr-only">Filter transactions by criteria</DialogDescription>
                     </DialogHeader>
                     <div className="space-y-3">
                         <div className="flex gap-2">
@@ -296,10 +300,11 @@ export default function WalletFundingIndex({ transactions, total_amount }: Walle
                             />
                         </div>
                         <div className="space-y-1">
-                            <Label>User ID (optional)</Label>
-                            <Input
+                            <Label>Filter by User (optional)</Label>
+                            <UserSearchSelect
                                 value={filterForm.data.user_id}
-                                onChange={(e) => filterForm.setData('user_id', e.target.value)}
+                                onValueChange={(userId) => filterForm.setData('user_id', userId)}
+                                placeholder="All users or search to filter..."
                             />
                         </div>
                         <div className="space-y-1">
@@ -351,14 +356,16 @@ export default function WalletFundingIndex({ transactions, total_amount }: Walle
                 <DialogContent className="max-w-md">
                     <DialogHeader>
                         <DialogTitle>Fund / Debit User Wallet</DialogTitle>
+                        <DialogDescription className="sr-only">Fund or debit a user wallet balance</DialogDescription>
                     </DialogHeader>
                     <form onSubmit={submitFunding} className="space-y-3">
                         <div className="space-y-1">
-                            <Label htmlFor="user_id">User ID</Label>
-                            <Input
-                                id="user_id"
+                            <Label>Select User</Label>
+                            <UserSearchSelect
                                 value={fundingForm.data.user_id}
-                                onChange={(e) => fundingForm.setData('user_id', e.target.value)}
+                                onValueChange={(userId) => fundingForm.setData('user_id', userId)}
+                                placeholder="Search & select user (name, email, phone, ID)..."
+                                error={fundingForm.errors.user_id}
                             />
                             {fundingForm.errors.user_id && (
                                 <p className="text-xs text-red-500">{fundingForm.errors.user_id}</p>

@@ -66,18 +66,34 @@ class DataPlanController extends Controller
 
         ]);
 
-        if(config('app.enable_standalone_api')){
+        if (config('app.enable_standalone_api') && is_array($request->api_ids)) {
+            $validApis = collect($request->api_ids)->filter(function ($apiItem) {
+                if (empty($apiItem['transaction_api_id'])) {
+                    return false;
+                }
+                $hasProductId = isset($apiItem['product_id']) && trim((string) $apiItem['product_id']) !== '';
+                $hasProductCode = isset($apiItem['product_code']) && trim((string) $apiItem['product_code']) !== '';
+                return $hasProductId || $hasProductCode;
+            })->map(function ($apiItem) use ($plan) {
+                $code = !empty($apiItem['product_code']) ? (string) $apiItem['product_code'] : (!empty($apiItem['product_id']) ? (string) $apiItem['product_id'] : (string) $plan->api_plan_id);
+                $prodId = isset($apiItem['product_id']) && is_numeric($apiItem['product_id'])
+                    ? (int) $apiItem['product_id']
+                    : (is_numeric($code) ? (int) $code : (is_numeric($plan->api_plan_id) ? (int) $plan->api_plan_id : null));
 
-            $plan->apis()->createMany($request->api_ids);
+                return [
+                    'transaction_api_id' => $apiItem['transaction_api_id'],
+                    'product_id' => $prodId,
+                    'product_code' => $code,
+                ];
+            })->values()->all();
 
+            if (!empty($validApis)) {
+                $plan->apis()->createMany($validApis);
+            }
         }
 
-
         return redirect()->back();
-
-
     }
-
 
     public function show(DataPlan $data_plan)
     {
@@ -86,10 +102,9 @@ class DataPlanController extends Controller
 
     public function update(DataPlanRequest $request, DataPlan $data_plan)
     {
-
         $data_plan->update([
-            'data_plan_type_id'=> $request->data_plan_type_id,
-            'size'=> $request->plan_size,
+            'data_plan_type_id' => $request->data_plan_type_id,
+            'size' => $request->plan_size,
             'api_plan_id' => $request->api_plan_id,
             'volume' => $request->plan_volume,
             'validity' => $request->plan_validity,
@@ -101,21 +116,39 @@ class DataPlanController extends Controller
             'name' => $request->name,
         ]);
 
-        if(config('app.enable_standalone_api')){
-
+        if (config('app.enable_standalone_api') && is_array($request->api_ids)) {
             foreach ($request->api_ids as $api_id) {
+                if (empty($api_id['transaction_api_id'])) {
+                    continue;
+                }
+
+                $hasProductId = isset($api_id['product_id']) && trim((string) $api_id['product_id']) !== '';
+                $hasProductCode = isset($api_id['product_code']) && trim((string) $api_id['product_code']) !== '';
+
                 $api = $data_plan->apis()->where('transaction_api_id', $api_id['transaction_api_id'])->first();
 
-                if($api){
+                if (!$hasProductId && !$hasProductCode) {
+                    if ($api) {
+                        $api->delete();
+                    }
+                    continue;
+                }
 
-                    $api->update(['product_id'=> $api_id['product_id'],'product_code'=> $api_id['product_code']]);
+                $code = !empty($api_id['product_code']) ? (string) $api_id['product_code'] : (!empty($api_id['product_id']) ? (string) $api_id['product_id'] : (string) $data_plan->api_plan_id);
+                $prodId = isset($api_id['product_id']) && is_numeric($api_id['product_id'])
+                    ? (int) $api_id['product_id']
+                    : (is_numeric($code) ? (int) $code : (is_numeric($data_plan->api_plan_id) ? (int) $data_plan->api_plan_id : null));
 
-                }else{
-
+                if ($api) {
+                    $api->update([
+                        'product_id' => $prodId,
+                        'product_code' => $code,
+                    ]);
+                } else {
                     $data_plan->apis()->create([
-                        'transaction_api_id'=> $api_id['transaction_api_id'],
-                        'product_id'=> $api_id['product_id'],
-                        'product_code'=> $api_id['product_code'],
+                        'transaction_api_id' => $api_id['transaction_api_id'],
+                        'product_id' => $prodId,
+                        'product_code' => $code,
                     ]);
                 }
             }

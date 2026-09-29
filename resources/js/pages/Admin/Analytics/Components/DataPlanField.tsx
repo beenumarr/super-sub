@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "react-hot-toast";
 import * as Yup from "yup";
 import { Loader2 } from "lucide-react";
+import UserSearchSelect from "@/components/shared/user-search-select";
 
 interface DataPlanFieldProps {
     setFormModal: (value: boolean) => void;
@@ -61,19 +62,19 @@ export default function DataPlanField({ setFormModal }: DataPlanFieldProps) {
         <form onSubmit={submit} className="flex flex-col p-3 w-full gap-4">
             <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    User Name
+                    Select User
                 </label>
-                <Input
-                    placeholder="Enter user name"
-                    type="text"
-                    value={data.user?.name || ""}
-                    onChange={(e) =>
+                <UserSearchSelect
+                    value={data.user_id}
+                    onValueChange={(userId, user) => {
                         setData({
                             ...data,
-                            user_id: data.user?.id || "",
-                            user: { ...data.user, name: e.target.value },
-                        })
-                    }
+                            user_id: userId,
+                            user: user || null,
+                        });
+                    }}
+                    placeholder="Search & select user (name, email, phone, ID)..."
+                    error={errors.user_id}
                 />
                 {errors.user_id && (
                     <p className="text-red-500 dark:text-red-400 text-sm mt-1">

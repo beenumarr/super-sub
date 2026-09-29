@@ -25,6 +25,7 @@ interface ApiPlanId {
 }
 
 interface CablePlanFormData {
+    [key: string]: any;
     cable_network_id: string | number;
     product_code: string | number;
     validity: string | number;
@@ -33,7 +34,7 @@ interface CablePlanFormData {
     api_ids: ApiPlanId[];
 }
 
-interface CablePlan {
+export interface CablePlan {
     id?: string | number;
     cable_network_id?: string | number;
     product_code?: string | number;
@@ -51,14 +52,14 @@ interface PageProps {
 
 interface CableSubscriptionPlanFieldProps {
     handleClose: () => void;
-    editData: CablePlan | "";
+    editData?: CablePlan | null;
 }
 
 export default function CableSubscriptionPlanField({
     handleClose,
     editData,
 }: CableSubscriptionPlanFieldProps) {
-    const { cable_networks, apis, isStl } = usePage<PageProps>().props;
+    const { cable_networks, apis, isStl } = usePage().props as unknown as PageProps;
 
     const validationSchema = Yup.object().shape({
         package_name: Yup.string().required("Package Name is required"),
@@ -81,7 +82,7 @@ export default function CableSubscriptionPlanField({
         validationSchema
             .validate(data, { abortEarly: false })
             .then(() => {
-                if (editData != "") {
+                if (editData && editData.id) {
                     put(
                         route("cable_subscription_plans.update", {
                             cable_subscription_plan: editData.id,
@@ -136,33 +137,33 @@ export default function CableSubscriptionPlanField({
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const updatedApiId = [...data.api_ids];
-
-        const product_id = e.target.value;
+        const val = e.target.value;
         const transaction_api_id = Number(e.target.id);
 
         const existingIndex = updatedApiId.findIndex(
             (api) => api.transaction_api_id === transaction_api_id
         );
 
-        if (existingIndex !== -1) {
-            updatedApiId[existingIndex] = {
-                ...updatedApiId[existingIndex],
-                product_id: Number.isNaN(Number(product_id)) ? 1 : product_id,
-                product_code: product_id,
-            };
+        if (!val.trim()) {
+            if (existingIndex !== -1) {
+                updatedApiId.splice(existingIndex, 1);
+            }
         } else {
-            updatedApiId.push({
+            const numericId = !isNaN(Number(val)) && val.trim() !== '' ? Number(val) : 1;
+            const item = {
                 id: transaction_api_id,
-                product_id: product_id,
-                product_code: product_id,
                 transaction_api_id: transaction_api_id,
-            });
+                product_id: numericId,
+                product_code: val,
+            };
+            if (existingIndex !== -1) {
+                updatedApiId[existingIndex] = item;
+            } else {
+                updatedApiId.push(item);
+            }
         }
 
-        setData({
-            ...data,
-            api_ids: updatedApiId,
-        });
+        setData("api_ids", updatedApiId);
     };
 
     return (
@@ -190,7 +191,7 @@ export default function CableSubscriptionPlanField({
                 label="Package Name"
                 name="package_name"
                 value={data.package_name}
-                error={errors.package_name && true}
+                error={Boolean(errors.package_name)}
                 onChange={(e) => setData("package_name", e.target.value)}
             />
             <InputError message={errors.package_name} className="mt-2" />
@@ -200,7 +201,7 @@ export default function CableSubscriptionPlanField({
                 label="Product Code"
                 name="product_code"
                 value={data.product_code}
-                error={errors.product_code && true}
+                error={Boolean(errors.product_code)}
                 onChange={(e) => setData("product_code", e.target.value)}
             />
             <InputError message={errors.product_code} className="mt-2" />
@@ -221,7 +222,7 @@ export default function CableSubscriptionPlanField({
                 type="text"
                 name="validity"
                 value={data.validity}
-                error={errors.validity && true}
+                error={Boolean(errors.validity)}
                 onChange={(e) => setData("validity", e.target.value)}
             />
             <InputError message={errors.validity} className="mt-2" />
@@ -234,7 +235,7 @@ export default function CableSubscriptionPlanField({
                             label={api.name}
                             type="text"
                             value={getValue(api.id, "product_code")}
-                            error={errors.api_plan_id && true}
+                            error={Boolean(errors.api_plan_id)}
                             onChange={handleChange}
                             onBlur={handleChange}
                         />

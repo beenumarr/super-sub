@@ -83,11 +83,18 @@ class TransactionController extends Controller
      */
     public function getByReference(Request $request)
     {
-        $request->validate([
-            'reference_id' => ['required', 'string'],
-        ]);
+        $ref = $request->input('reference_id') ?? $request->input('reference') ?? $request->input('ident');
 
-        $transaction = Transaction::where('reference_id', $request->reference_id)
+        if (!$ref) {
+            return response()->json([
+                'success' => false,
+                'message' => 'The reference_id or reference field is required.',
+                'data' => null,
+            ], 422);
+        }
+
+        $transaction = Transaction::where('reference_id', $ref)
+            ->orWhere('id', $ref)
             ->first();
 
         if (!$transaction) {
