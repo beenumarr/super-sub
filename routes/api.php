@@ -27,6 +27,10 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+// Public mobile authentication routes
+Route::post('/auth/login', [\App\Http\Controllers\Api\AuthApiController::class, 'login']);
+Route::post('/auth/register', [\App\Http\Controllers\Api\AuthApiController::class, 'register']);
+
 // Protected routes requiring authentication
 Route::middleware([ApiAuthenticate::class, 'auth:sanctum'])->group(function () {
     // User Profile & Balance Check
