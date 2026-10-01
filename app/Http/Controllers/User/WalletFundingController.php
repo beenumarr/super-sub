@@ -24,26 +24,46 @@ class WalletFundingController extends Controller
         $this->helpers = $helpers;
     }
     /**
-     * Display the user's profile form.
+     * Display the user's profile form or return JSON for mobile API.
      */
-    public function index(Request $request): Response
+    public function index(Request $request)
     {
         $active = FundingMethod::whereActive(1)->pluck('code');
 
+        $fundingAccounts = FundingAccount::where('user_id', $request->user()->id)
+            ->whereIn('bank_code', $active)
+            ->where('account_type', '!=', 'temporary')
+            ->get();
 
-        return Inertia::render('WalletFunding/Index', [
-            'funding_accounts' => FundingAccount::where('user_id', $request->user()->id)->whereIn('bank_code', $active)->where('account_type', '!=', 'temporary')->get(),
-            'temp_funding_accounts' => FundingAccount::where('user_id', $request->user()->id)->whereIn('bank_code', $active)->where('account_type', 'temporary')->get(),
-            'methods' => FundingMethod::whereActive(1)->get(['code', 'active'])
+        $tempFundingAccounts = FundingAccount::where('user_id', $request->user()->id)
+            ->whereIn('bank_code', $active)
+            ->where('account_type', 'temporary')
+            ->get();
+
+        $methods = FundingMethod::whereActive(1)->get(['code', 'active'])
             ->keyBy('code')
             ->transform(function ($setting) {
-                return $setting->active && true;
+                return (bool) $setting->active;
             })
-            ->toArray(),
+            ->toArray();
+
+        if ($request->wantsJson() || $request->is('api/*')) {
+            return response()->json([
+                'status' => 'success',
+                'data' => [
+                    'funding_accounts' => $fundingAccounts,
+                    'temp_funding_accounts' => $tempFundingAccounts,
+                    'methods' => $methods,
+                ],
+            ]);
+        }
+
+        return Inertia::render('WalletFunding/Index', [
+            'funding_accounts' => $fundingAccounts,
+            'temp_funding_accounts' => $tempFundingAccounts,
+            'methods' => $methods,
         ]);
-
     }
-
 
     public function refreshAccounts(Request $request)
     {
@@ -52,8 +72,26 @@ class WalletFundingController extends Controller
             $user = auth()->user();
             $accountHelper->generateVirtualAccount($user);
 
+            if ($request->wantsJson() || $request->is('api/*')) {
+                $accounts = FundingAccount::where('user_id', $user->id)
+                    ->where('account_type', '!=', 'temporary')
+                    ->get();
+
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'Accounts refreshed successfully.',
+                    'data' => $accounts,
+                ]);
+            }
+
             return redirect()->back()->with('success', 'Accounts refreshed successfully.');
         } catch (\Exception $e) {
+            if ($request->wantsJson() || $request->is('api/*')) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => $e->getMessage(),
+                ], 422);
+            }
             return redirect()->back()->with('error', $e->getMessage());
         }
     }

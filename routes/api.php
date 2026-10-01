@@ -27,29 +27,71 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+// Health check / API status route
+Route::get('/', function () {
+    return response()->json([
+        'status' => 'success',
+        'message' => 'SuperSub API is online',
+        'timestamp' => now()->toIso8601String(),
+    ]);
+});
+
+// App configuration (Public for theme colors & logo)
+Route::get('/app-config', function () {
+    $logo = \App\Models\AppConfiguration::where('key', 'site_logo')->first()?->value;
+    $logoUrl = null;
+    if ($logo) {
+        if (\Illuminate\Support\Facades\Storage::disk('public')->exists("uploads/" . $logo)) {
+            $logoUrl = url(\Illuminate\Support\Facades\Storage::url("uploads/" . $logo));
+        } else {
+            $logoUrl = asset('images/' . $logo);
+        }
+    } else {
+        $logoUrl = asset('images/logo.png');
+    }
+
+    $primary = \App\Models\AppConfiguration::where('key', 'site_primary_color')->first()?->value ?? config('settings.site_primary_color', '#9483EF');
+    $secondary = \App\Models\AppConfiguration::where('key', 'site_secondary_color')->first()?->value ?? config('settings.site_secondary_color', '#8B5CF6');
+    $siteName = \App\Models\AppConfiguration::where('key', 'site_name')->first()?->value ?? config('settings.site_name', config('app.name', 'SuperSub'));
+
+    return response()->json([
+        'status' => 'success',
+        'data' => [
+            'site_name' => $siteName,
+            'site_primary_color' => $primary,
+            'site_secondary_color' => $secondary,
+            'site_logo' => $logoUrl,
+        ],
+    ]);
+});
+
 // Public mobile authentication routes
 Route::post('/auth/login', [\App\Http\Controllers\Api\AuthApiController::class, 'login']);
 Route::post('/auth/register', [\App\Http\Controllers\Api\AuthApiController::class, 'register']);
 
 // Protected routes requiring authentication
 Route::middleware([ApiAuthenticate::class, 'auth:sanctum'])->group(function () {
-    // User Profile & Balance Check
-    Route::get('/user', function (Request $request) {
-        $user = $request->user();
-        return response()->json([
-            'status' => 'success',
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'phone_number' => $user->phone_number,
-                'wallet_balance' => (float) ($user->wallet?->balance ?? 0),
-                'bonus_balance' => (float) ($user->wallet?->bonus_balance ?? 0),
-                'package' => $user->package?->name ?? 'Standard',
-            ],
-            'message' => 'API connection successful',
-        ]);
-    });
+    // Dashboard & User Profile
+    Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'index']);
+    Route::get('/user', [\App\Http\Controllers\Api\AuthApiController::class, 'user']);
+    Route::post('/auth/logout', [\App\Http\Controllers\Api\AuthApiController::class, 'logout']);
+    Route::post('/auth/verify-pin', [\App\Http\Controllers\Api\AuthApiController::class, 'verifyPin']);
+    Route::post('/auth/email/verification-notification', [\App\Http\Controllers\Api\AuthApiController::class, 'sendVerificationEmail']);
+    Route::post('/settings/pin', [\App\Http\Controllers\Api\AuthApiController::class, 'updatePin']);
+
+    // Wallet & Funding Routes
+    Route::get('/funding', [\App\Http\Controllers\User\WalletFundingController::class, 'index']);
+    Route::get('/wallet/funding-accounts', [\App\Http\Controllers\User\WalletFundingController::class, 'index']);
+    Route::post('/refresh_funding_accounts', [\App\Http\Controllers\User\WalletFundingController::class, 'refreshAccounts']);
+    Route::post('/wallet/refresh-accounts', [\App\Http\Controllers\User\WalletFundingController::class, 'refreshAccounts']);
+    Route::post('/promotions/redeem', [\App\Http\Controllers\User\PromotionRedemptionController::class, 'redeem']);
+    Route::post('/fund-account', [\App\Http\Controllers\User\WalletTransferController::class, 'store']);
+    Route::post('/wallet/transfer', [\App\Http\Controllers\User\WalletTransferController::class, 'store']);
+    Route::post('/fund-account/validate-user', [\App\Http\Controllers\User\WalletTransferController::class, 'validateUser']);
+    Route::post('/wallet/validate-user', [\App\Http\Controllers\User\WalletTransferController::class, 'validateUser']);
+
+    // Transactions History
+    Route::get('/transactions', [TransactionController::class, 'index']);
 
     // Network & Catalog Lookup Routes
     Route::get('/networks', function () {
@@ -60,35 +102,8 @@ Route::middleware([ApiAuthenticate::class, 'auth:sanctum'])->group(function () {
         ]);
     });
 
-    Route::get('/data/plans', function (Request $request) {
-        $networkId = $request->input('network_id') ?? $request->input('network');
-        $query = DataPlan::with('planType.network')->where('active', 1);
-
-        if ($networkId) {
-            $query->whereHas('planType', function ($q) use ($networkId) {
-                $q->where('mobile_network_id', $networkId);
-            });
-        }
-
-        $plans = $query->orderBy('amount')->get()->map(function ($plan) {
-            return [
-                'id' => $plan->id,
-                'network_id' => $plan->planType?->mobile_network_id,
-                'network_name' => $plan->planType?->network?->name,
-                'plan_type' => $plan->planType?->name,
-                'name' => $plan->name,
-                'size' => $plan->size,
-                'volume' => $plan->volume,
-                'amount' => (float) $plan->amount,
-                'validity' => $plan->validity,
-            ];
-        });
-
-        return response()->json([
-            'status' => 'success',
-            'data' => $plans,
-        ]);
-    });
+    Route::get('/data/plans', [BuyDataController::class, 'dataPlans']);
+    Route::get('/data-plans', [BuyDataController::class, 'dataPlans']);
 
     Route::get('/cable/plans', function () {
         $plans = CableSubscriptionPlan::with('cableProvider')->get()->map(function ($plan) {
@@ -128,6 +143,7 @@ Route::middleware([ApiAuthenticate::class, 'auth:sanctum'])->group(function () {
 
     // Data Purchase Route
     Route::post('/data', [BuyDataController::class, 'storeApi']);
+    Route::post('/data/buy', [BuyDataController::class, 'storeApi']);
 
     // Cable TV Subscription Routes
     Route::post('/cable_subscription_payments', [CableSubscriptionController::class, 'storeApi']);

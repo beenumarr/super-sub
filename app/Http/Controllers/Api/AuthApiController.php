@@ -48,12 +48,16 @@ class AuthApiController extends Controller
 
         // Generate Sanctum Bearer token for mobile
         $token = $user->createToken('mobile_app')->plainTextToken;
+        $isEmailVerificationEnabled = in_array(config('settings.feat_enable_email_verification'), ['1', 1, 'true', true], true);
+        $needsEmailVerification = $isEmailVerificationEnabled && !$user->hasVerifiedEmail();
 
         return response()->json([
             'status' => 'success',
             'token' => $token,
             'user' => new AuthUserResource($user),
             'has_pin' => $user->hasTransactionPin(),
+            'email_verified' => $user->hasVerifiedEmail(),
+            'needs_email_verification' => $needsEmailVerification,
             'message' => 'Login successful',
         ]);
     }
@@ -100,12 +104,15 @@ class AuthApiController extends Controller
         event(new Registered($user));
 
         $token = $user->createToken('mobile_app')->plainTextToken;
+        $needsEmailVerification = $isEmailVerificationEnabled && !$user->hasVerifiedEmail();
 
         return response()->json([
             'status' => 'success',
             'token' => $token,
             'user' => new AuthUserResource($user),
             'has_pin' => false,
+            'email_verified' => $user->hasVerifiedEmail(),
+            'needs_email_verification' => $needsEmailVerification,
             'message' => 'Registration successful',
         ], 201);
     }
@@ -116,11 +123,39 @@ class AuthApiController extends Controller
     public function user(Request $request): JsonResponse
     {
         $user = $request->user();
+        $isEmailVerificationEnabled = in_array(config('settings.feat_enable_email_verification'), ['1', 1, 'true', true], true);
 
         return response()->json([
             'status' => 'success',
             'user' => new AuthUserResource($user),
             'has_pin' => $user->hasTransactionPin(),
+            'email_verified' => $user->hasVerifiedEmail(),
+            'needs_email_verification' => $isEmailVerificationEnabled && !$user->hasVerifiedEmail(),
+        ]);
+    }
+
+    /**
+     * Send or resend email verification notification.
+     */
+    public function sendVerificationEmail(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        if ($user->hasVerifiedEmail()) {
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Your email is already verified.',
+                'email_verified' => true,
+                'needs_email_verification' => false,
+            ]);
+        }
+
+        $user->sendEmailVerificationNotification();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Verification link sent to your email address.',
+            'email_verified' => false,
+            'needs_email_verification' => true,
         ]);
     }
 
@@ -157,6 +192,29 @@ class AuthApiController extends Controller
             'status' => 'success',
             'message' => $hasPin ? 'Transaction PIN updated successfully.' : 'Transaction PIN created successfully.',
             'has_pin' => true,
+        ]);
+    }
+
+    /**
+     * Verify transaction/login PIN.
+     */
+    public function verifyPin(Request $request): JsonResponse
+    {
+        $request->validate([
+            'pin' => ['required', 'string', 'digits:4'],
+        ]);
+
+        $user = $request->user();
+        if (!$user->verifyTransactionPin($request->input('pin'))) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Invalid PIN. Please try again.',
+            ], 422);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'PIN verified successfully.',
         ]);
     }
 

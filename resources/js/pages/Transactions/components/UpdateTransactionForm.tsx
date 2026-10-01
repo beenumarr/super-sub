@@ -60,13 +60,6 @@ const UpdateTransactionForm: FC<UpdateTransactionFormProps> = ({ editData }) => 
                 <div className="text-sm font-semibold uppercase text-gray-700 dark:text-gray-300">{editData.status}</div>
             </div>
 
-            <div>
-                <label className="text-sm font-medium">API Response</label>
-                <div className="text-sm text-gray-700 dark:text-gray-300 break-words bg-gray-50 dark:bg-gray-900 p-2 rounded max-h-32 overflow-y-auto">
-                    {editData.api_response || 'N/A'}
-                </div>
-            </div>
-
             {editData.balance_before !== undefined && (
                 <div className="grid grid-cols-2 gap-4">
                     <div>

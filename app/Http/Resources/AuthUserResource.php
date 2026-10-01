@@ -18,18 +18,35 @@ class AuthUserResource extends JsonResource
         $default_bank_code = config('settings.default_funding_bank') ?? "50515";
         $active = FundingMethod::whereActive(1)->pluck('code');
 
+        $wallet = $this->wallet;
+        $balance = (float) ($wallet?->balance ?? 0);
+        $bonusBalance = (float) ($wallet?->bonus_balance ?? 0);
+
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'phone'=> $this->phone,
-            'email'=> $this->email,
-            'address'=> $this->address,
-            'kyc_verified'=> $this->kyc_verified_at && true,
-            'package'=> $this->package,
-            'wallet'=> $this->wallet,
-            'funding_accounts'=> $this->fundingAccounts->count() > 0? $this->fundingAccounts()->whereIn('bank_code', $active)->orderByRaw("CASE WHEN bank_code = $default_bank_code THEN 0 ELSE 1 END")->get(): [],
-            'date' => $this->created_at->format('d/m/Y h:m A'),
-            'notifications'=> config('settings.site_notification')
+            'phone' => $this->phone_number,
+            'phone_number' => $this->phone_number,
+            'username' => $this->username ?? $this->email,
+            'email' => $this->email,
+            'address' => $this->address,
+            'kyc_verified' => (bool) $this->kyc_verified_at,
+            'package' => $this->package?->name ?? 'Standard',
+            'wallet' => [
+                'id' => $wallet?->id,
+                'balance' => $balance,
+                'actual_balance' => $balance,
+                'bonus_balance' => $bonusBalance,
+            ],
+            'balance' => $balance,
+            'wallet_balance' => $balance,
+            'bonus_balance' => $bonusBalance,
+            'has_pin' => $this->hasTransactionPin(),
+            'email_verified' => $this->hasVerifiedEmail(),
+            'needs_email_verification' => in_array(config('settings.feat_enable_email_verification'), ['1', 1, 'true', true], true) && !$this->hasVerifiedEmail(),
+            'funding_accounts' => $this->fundingAccounts->count() > 0 ? $this->fundingAccounts()->whereIn('bank_code', $active)->orderByRaw("CASE WHEN bank_code = $default_bank_code THEN 0 ELSE 1 END")->get() : [],
+            'date' => $this->created_at?->format('d/m/Y h:m A'),
+            'notifications' => config('settings.site_notification')
         ];
     }
 }

@@ -26,7 +26,6 @@ class DashboardController extends Controller
                     'status' => $transaction->status,
                     'telco_price' => $transaction->metadata['telco_price'] ?? 'N/A',
                     'network' => $transaction->metadata['network'] ?? 'Unknown',
-                    'api_response' => $transaction->api_response ?? 'N/A',
                 ];
             });
 
@@ -64,6 +63,25 @@ class DashboardController extends Controller
                 && !in_array(config('settings.feat_enable_kyc'), ['0', 0, 'false', false], true)
             );
 
+        $logo = AppConfiguration::where('key', 'site_logo')->first()?->value;
+        $logoUrl = null;
+        if ($logo) {
+            if (\Illuminate\Support\Facades\Storage::disk('public')->exists("uploads/" . $logo)) {
+                $logoUrl = url(\Illuminate\Support\Facades\Storage::url("uploads/" . $logo));
+            } else {
+                $logoUrl = asset('images/' . $logo);
+            }
+        } else {
+            $logoUrl = asset('images/logo.png');
+        }
+
+        $appConfig = [
+            'site_name' => AppConfiguration::where('key', 'site_name')->first()?->value ?? config('settings.site_name', config('app.name', 'SuperSub')),
+            'site_primary_color' => AppConfiguration::where('key', 'site_primary_color')->first()?->value ?? config('settings.site_primary_color', '#9483EF'),
+            'site_secondary_color' => AppConfiguration::where('key', 'site_secondary_color')->first()?->value ?? config('settings.site_secondary_color', '#8B5CF6'),
+            'site_logo' => $logoUrl,
+        ];
+
         $payload = [
             'recent_transactions' => $recent_transactions,
             'wallet' => [
@@ -82,6 +100,7 @@ class DashboardController extends Controller
             ],
             'has_pin' => $user->hasTransactionPin(),
             'kyc_enabled' => (bool) $isKycEnabled,
+            'app_config' => $appConfig,
         ];
 
         if ($request->wantsJson() || $request->is('api/*')) {

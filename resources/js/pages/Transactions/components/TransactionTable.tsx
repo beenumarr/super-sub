@@ -75,13 +75,12 @@ const TransactionTable: FC<TransactionTableProps> = ({ data, setViewDetailModal 
                         <TableHead className="whitespace-nowrap">Description</TableHead>
                         <TableHead className="whitespace-nowrap">Date</TableHead>
                         <TableHead className="whitespace-nowrap">Status</TableHead>
-                        <TableHead className="whitespace-nowrap">API Response</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
                     {data.data.length === 0 ? (
                         <TableRow>
-                            <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                            <TableCell colSpan={6} className="text-center py-8 text-gray-500">
                                 No transactions found
                             </TableCell>
                         </TableRow>
@@ -105,9 +104,6 @@ const TransactionTable: FC<TransactionTableProps> = ({ data, setViewDetailModal 
                                     <Badge variant="outline" className={getStatusColor(row.status)}>
                                         {row.status}
                                     </Badge>
-                                </TableCell>
-                                <TableCell className="text-sm max-w-xs truncate text-gray-600" title={row.api_response}>
-                                    {row.api_response || 'N/A'}
                                 </TableCell>
                             </TableRow>
                         ))

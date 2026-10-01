@@ -68,22 +68,26 @@ class BuyDataController extends Controller
 
         $default_datatype = config('settings.default_data_type') ?? 1;
 
-
         $dataPlanTypes = DataPlanType::where('active', 1)
+        ->whereHas('network', function($q) {
+            $q->where('data_active', 1)->whereNotIn('name', ['KIRANI', 'SMILE']);
+        })
         ->with([
-            'network.addon', // Load `addon` directly through the `network` relationship
-            'dataPlans.apis', // Load `apis` directly through the `dataPlans` relationship
+            'network.addon',
+            'dataPlans' => function($q) {
+                $q->where('active', 1);
+            },
+            'dataPlans.apis',
             'dataPlans.planType',
             'dataPlans.planType.network',
             'api'
         ])->orderByRaw("CASE WHEN id = $default_datatype THEN 0 ELSE 1 END")
         ->get();
 
-
-    $mobile_network = MobileNetworkResource::collection(MobileNetwork::with([
-        'addon.package',
-        'dataPlanTypes.dataPlans.apis',
-    ])->get());
+        $mobile_network = MobileNetworkResource::collection(MobileNetwork::with([
+            'addon.package',
+            'dataPlanTypes.dataPlans.apis',
+        ])->whereNotIn('name', ['KIRANI', 'SMILE'])->where('data_active', 1)->get());
 
         return response([
               'mobile_networks' => $mobile_network,
@@ -134,6 +138,10 @@ class BuyDataController extends Controller
         $data = $request->validated();
 
         $user = $request->user();
+
+        if ($request->filled('transaction_pin')) {
+            $this->helpers->validateTransactionPin($user, $request->input('transaction_pin'));
+        }
 
         $data['phone_number'] = $data['mobile_number'];
 
