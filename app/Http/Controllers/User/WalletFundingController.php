@@ -72,19 +72,33 @@ class WalletFundingController extends Controller
             $user = auth()->user();
             $accountHelper->generateVirtualAccount($user);
 
-            if ($request->wantsJson() || $request->is('api/*')) {
-                $accounts = FundingAccount::where('user_id', $user->id)
-                    ->where('account_type', '!=', 'temporary')
-                    ->get();
+            $active = FundingMethod::whereActive(1)->pluck('code');
+            $accounts = FundingAccount::where('user_id', $user->id)
+                ->whereIn('bank_code', $active)
+                ->where('account_type', '!=', 'temporary')
+                ->get();
 
+            if ($accounts->isEmpty()) {
+                $msg = 'Unable to generate virtual accounts at this time. Please ensure KYC requirements are completed or contact support.';
+                if ($request->wantsJson() || $request->is('api/*')) {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => $msg,
+                        'data' => [],
+                    ], 422);
+                }
+                return redirect()->back()->with('error', $msg)->withErrors(['error' => $msg]);
+            }
+
+            if ($request->wantsJson() || $request->is('api/*')) {
                 return response()->json([
                     'status' => 'success',
-                    'message' => 'Accounts refreshed successfully.',
+                    'message' => 'Virtual accounts generated successfully.',
                     'data' => $accounts,
                 ]);
             }
 
-            return redirect()->back()->with('success', 'Accounts refreshed successfully.');
+            return redirect()->back()->with('success', 'Virtual accounts generated successfully.');
         } catch (\Exception $e) {
             if ($request->wantsJson() || $request->is('api/*')) {
                 return response()->json([
@@ -92,26 +106,27 @@ class WalletFundingController extends Controller
                     'message' => $e->getMessage(),
                 ], 422);
             }
-            return redirect()->back()->with('error', $e->getMessage());
+            return redirect()->back()->with('error', $e->getMessage())->withErrors(['error' => $e->getMessage()]);
         }
     }
 
 
     public function getTempAccount(Request $request)
     {
-
         $serviceEnabled = config('settings.feat_enable_temp_account');
 
         if ($serviceEnabled != '1') {
-            throw ValidationException::withMessages([
-                'status' => 'Service Unavailable! Try again Letter',
-            ]);
+            if ($request->wantsJson() || $request->is('api/*')) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Temporary virtual account service is currently disabled. Please generate a permanent account instead.',
+                ], 422);
+            }
+            return redirect()->back()->with('error', 'Temporary virtual account service is currently disabled. Please generate a permanent account instead.');
         }
 
         $accountHelper = new AccountHelper();
-
         $user = auth()->user();
-
         $accountHelper->generateTemporaryAccount($user);
 
         if($request->wantsJson() ){

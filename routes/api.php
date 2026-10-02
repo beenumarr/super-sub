@@ -79,6 +79,35 @@ Route::middleware([ApiAuthenticate::class, 'auth:sanctum'])->group(function () {
     Route::post('/auth/email/verification-notification', [\App\Http\Controllers\Api\AuthApiController::class, 'sendVerificationEmail']);
     Route::post('/settings/pin', [\App\Http\Controllers\Api\AuthApiController::class, 'updatePin']);
 
+    // Push Notification Device Token
+    Route::post('/user/fcm-token', function (Request $request) {
+        $request->validate([
+            'token' => 'required|string|max:500',
+            'device_type' => 'nullable|string|in:android,ios,web',
+        ]);
+        $user = $request->user();
+        \App\Models\DeviceToken::updateOrCreate(
+            ['token' => $request->token],
+            [
+                'user_id' => $user->id,
+                'device_type' => $request->input('device_type', 'android'),
+            ]
+        );
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Device token registered successfully',
+        ]);
+    });
+
+    Route::post('/user/fcm-token/delete', function (Request $request) {
+        $request->validate(['token' => 'required|string']);
+        \App\Models\DeviceToken::where('token', $request->token)->delete();
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Device token removed successfully',
+        ]);
+    });
+
     // Wallet & Funding Routes
     Route::get('/funding', [\App\Http\Controllers\User\WalletFundingController::class, 'index']);
     Route::get('/wallet/funding-accounts', [\App\Http\Controllers\User\WalletFundingController::class, 'index']);
@@ -105,8 +134,19 @@ Route::middleware([ApiAuthenticate::class, 'auth:sanctum'])->group(function () {
     Route::get('/data/plans', [BuyDataController::class, 'dataPlans']);
     Route::get('/data-plans', [BuyDataController::class, 'dataPlans']);
 
-    Route::get('/cable/plans', function () {
-        $plans = CableSubscriptionPlan::with('cableProvider')->get()->map(function ($plan) {
+    Route::get('/cable/networks', function () {
+        return response()->json([
+            'status' => 'success',
+            'data' => CableNetwork::where('active', 1)->get(['id', 'name', 'code', 'active']),
+        ]);
+    });
+
+    Route::get('/cable/plans', function (Request $request) {
+        $query = CableSubscriptionPlan::with('cableProvider');
+        if ($request->filled('cable_network_id')) {
+            $query->where('cable_network_id', $request->cable_network_id);
+        }
+        $plans = $query->get()->map(function ($plan) {
             return [
                 'id' => $plan->id,
                 'cable_network_id' => $plan->cable_network_id,
@@ -122,17 +162,31 @@ Route::middleware([ApiAuthenticate::class, 'auth:sanctum'])->group(function () {
         ]);
     });
 
+    Route::get('/electricity/distributors', function () {
+        return response()->json([
+            'status' => 'success',
+            'data' => ElectricityDistributor::where('active', 1)->get(['id', 'name', 'code', 'active']),
+        ]);
+    });
+
     Route::get('/electricity/discos', function () {
         return response()->json([
             'status' => 'success',
-            'data' => ElectricityDistributor::where('active', 1)->get(['id', 'name']),
+            'data' => ElectricityDistributor::where('active', 1)->get(['id', 'name', 'code', 'active']),
+        ]);
+    });
+
+    Route::get('/result-checker/exams', function () {
+        return response()->json([
+            'status' => 'success',
+            'data' => ExamType::where('active', 1)->get(['id', 'name', 'amount', 'active']),
         ]);
     });
 
     Route::get('/exam_types', function () {
         return response()->json([
             'status' => 'success',
-            'data' => ExamType::where('active', 1)->get(['id', 'name', 'amount']),
+            'data' => ExamType::where('active', 1)->get(['id', 'name', 'amount', 'active']),
         ]);
     });
 
@@ -148,17 +202,25 @@ Route::middleware([ApiAuthenticate::class, 'auth:sanctum'])->group(function () {
     // Cable TV Subscription Routes
     Route::post('/cable_subscription_payments', [CableSubscriptionController::class, 'storeApi']);
     Route::post('/cable', [CableSubscriptionController::class, 'storeApi']);
+    Route::post('/cable/subscribe', [CableSubscriptionController::class, 'storeApi']);
     Route::post('/cable/validate', [CableSubscriptionController::class, 'validateIcu']);
+    Route::get('/cable/validate', [CableSubscriptionController::class, 'validateIcu']);
+    Route::get('/validate_icu', [CableSubscriptionController::class, 'validateIcu']);
 
     // Electricity Bill Payment Routes
     Route::post('/electricity_bill_payments', [ElectricityBillController::class, 'storeApi']);
     Route::post('/electricity', [ElectricityBillController::class, 'storeApi']);
+    Route::post('/electricity/pay', [ElectricityBillController::class, 'storeApi']);
     Route::post('/validate_meter', [ElectricityBillController::class, 'validateMeter']);
+    Route::get('/validate_meter', [ElectricityBillController::class, 'validateMeter']);
+    Route::post('/electricity/validate', [ElectricityBillController::class, 'validateMeter']);
+    Route::get('/electricity/validate', [ElectricityBillController::class, 'validateMeter']);
 
     // Exam PIN Purchase Routes
     Route::post('/kirani', [ResultCheckerController::class, 'storeApi']);
     Route::post('/exam_pin', [ResultCheckerController::class, 'storeApi']);
     Route::post('/result_checker', [ResultCheckerController::class, 'storeApi']);
+    Route::post('/result-checker/buy', [ResultCheckerController::class, 'storeApi']);
 
     // Transaction Status Routes (Authenticated)
     Route::post('/transaction/get-by-reference', [TransactionController::class, 'getByReference']);

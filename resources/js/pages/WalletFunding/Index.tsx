@@ -62,12 +62,17 @@ export default function Index() {
             {
                 preserveScroll: true,
                 preserveState: true,
-                onSuccess: () => {
-                    toast.success('Accounts refreshed successfully');
+                onSuccess: (page) => {
+                    const flashError = (page?.props as any)?.flash?.error;
+                    if (flashError) {
+                        toast.error(flashError);
+                    } else {
+                        toast.success('Accounts refreshed successfully');
+                    }
                     router.reload({ only: ['auth', 'funding_accounts'] });
                 },
                 onError: (errors) => {
-                    const message = (errors as unknown as { message?: string; error?: string }).message || (errors as unknown as { error?: string }).error || 'An error occurred. Please try again.';
+                    const message = (errors as any)?.error || (errors as any)?.message || (typeof errors === 'string' ? errors : 'An error occurred. Please try again.');
                     toast.error(message);
                 },
                 onFinish: () => {

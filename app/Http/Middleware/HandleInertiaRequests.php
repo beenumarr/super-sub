@@ -60,6 +60,10 @@ class HandleInertiaRequests extends Middleware
 
         return [
             ...parent::share($request),
+            'flash' => [
+                'success' => fn () => session('success'),
+                'error' => fn () => session('error'),
+            ],
             'name' => config('app.name'),
             'theme'=> config('settings.site_primary_color'),
             'isStl'=> config('app.enable_standalone_api'),

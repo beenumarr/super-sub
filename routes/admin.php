@@ -148,4 +148,12 @@ Route::middleware(['auth', Admin::class])->prefix('admin')->group(function () {
     Route::post('/smile/plans', [SmileController::class, 'storePlan'])->name('admin.smile.plans.store');
     Route::put('/smile/plans/{plan}', [SmileController::class, 'updatePlan'])->name('admin.smile.plans.update');
     Route::delete('/smile/plans/{plan}', [SmileController::class, 'destroyPlan'])->name('admin.smile.plans.destroy');
+
+    // Push Notifications
+    Route::get('/notifications/broadcast', [\App\Http\Controllers\Admin\NotificationController::class, 'broadcastIndex'])->name('admin.notifications.broadcast');
+    Route::post('/notifications/broadcast', [\App\Http\Controllers\Admin\NotificationController::class, 'broadcastSend'])->name('admin.notifications.broadcast.send');
+    Route::get('/notifications/users-search', [\App\Http\Controllers\Admin\NotificationController::class, 'searchUsers'])->name('admin.notifications.users-search');
+    Route::get('/notifications/settings', [\App\Http\Controllers\Admin\NotificationController::class, 'settingsIndex'])->name('admin.notifications.settings');
+    Route::post('/notifications/settings', [\App\Http\Controllers\Admin\NotificationController::class, 'settingsUpdate'])->name('admin.notifications.settings.update');
+    Route::post('/notifications/test', [\App\Http\Controllers\Admin\NotificationController::class, 'testNotification'])->name('admin.notifications.test');
 });

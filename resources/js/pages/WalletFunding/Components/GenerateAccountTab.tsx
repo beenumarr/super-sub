@@ -12,11 +12,15 @@ export default function AccountTabs() {
     const handleAction = async (url: string, successMessage: string) => {
         try {
             setProcessing(true);
-            await axios.post(url, { all: true });
-            toast.success(successMessage);
+            const res = await axios.post(url, { all: true });
+            toast.success(res?.data?.message || successMessage);
             router.reload();
         } catch (error: any) {
-            toast.error(error?.response?.data?.message || 'An error occurred. Please try again.');
+            const msg = error?.response?.data?.message ||
+                        error?.response?.data?.errors?.status?.[0] ||
+                        error?.response?.data?.status ||
+                        'An error occurred. Please try again.';
+            toast.error(msg);
         } finally {
             setProcessing(false);
         }
