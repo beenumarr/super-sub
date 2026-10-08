@@ -18,6 +18,7 @@ class TransactionResource extends JsonResource
             'id' => $this->id,
             'user' => $this->user->only('id','name','phone'),
             'reference_id' => $this->reference_id,
+            'reference' => $this->reference_id,
             'amount' => number_format((int)$this->amount, 2),
             'api_response' => (auth()->check() && (auth()->user()->isAdmin || auth()->user()->hasRole(['Admin', 'Superadmin', 'Masteradmin'])))
                 ? $this->api_response
@@ -30,6 +31,11 @@ class TransactionResource extends JsonResource
             'provider_name' => $this->provider_name,
             'provider_reference' => $this->provider_reference,
             'metadata' => $this->metadata,
+            'token' => $this->metadata['token'] ?? null,
+            'transactionable' => [
+                'token' => $this->metadata['token'] ?? null,
+                'description' => $this->description,
+            ],
             'date' => $this->created_at->format('d/m/Y h:i A'),
 
         ];

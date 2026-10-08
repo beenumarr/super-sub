@@ -75,11 +75,24 @@ class DashboardController extends Controller
             $logoUrl = asset('images/logo.png');
         }
 
+        $isWalletTransferEnabled = in_array(
+            AppConfiguration::where('key', 'feat_enable_wallet_transfer')->first()?->value ?? config('settings.feat_enable_wallet_transfer', '1'),
+            ['1', 1, 'true', true],
+            false
+        );
+        $isReferralEnabled = in_array(
+            AppConfiguration::where('key', 'feat_enable_referral')->first()?->value ?? config('settings.feat_enable_referral', '1'),
+            ['1', 1, 'true', true],
+            false
+        );
+
         $appConfig = [
             'site_name' => AppConfiguration::where('key', 'site_name')->first()?->value ?? config('settings.site_name', config('app.name', 'SuperSub')),
             'site_primary_color' => AppConfiguration::where('key', 'site_primary_color')->first()?->value ?? config('settings.site_primary_color', '#9483EF'),
             'site_secondary_color' => AppConfiguration::where('key', 'site_secondary_color')->first()?->value ?? config('settings.site_secondary_color', '#8B5CF6'),
             'site_logo' => $logoUrl,
+            'enable_wallet_transfer' => (bool) $isWalletTransferEnabled,
+            'enable_referral' => (bool) $isReferralEnabled,
         ];
 
         $payload = [
@@ -100,6 +113,8 @@ class DashboardController extends Controller
             ],
             'has_pin' => $user->hasTransactionPin(),
             'kyc_enabled' => (bool) $isKycEnabled,
+            'enable_wallet_transfer' => (bool) $isWalletTransferEnabled,
+            'enable_referral' => (bool) $isReferralEnabled,
             'app_config' => $appConfig,
         ];
 

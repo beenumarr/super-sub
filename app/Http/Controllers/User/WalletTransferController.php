@@ -44,6 +44,21 @@ class WalletTransferController extends Controller
 
         public function store(WalletTransferRequest $request)
         {
+            $isEnabled = in_array(
+                \App\Models\AppConfiguration::where('key', 'feat_enable_wallet_transfer')->first()?->value ?? config('settings.feat_enable_wallet_transfer', '1'),
+                ['1', 1, 'true', true],
+                false
+            );
+            if (!$isEnabled) {
+                if ($request->wantsJson()) {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => 'Wallet transfer is currently disabled by administrator.',
+                    ], 403);
+                }
+                abort(403, 'Wallet transfer is currently disabled.');
+            }
+
             $data = $request->validated();
 
             $beneficiary = $this->getBeneficiary($data['input']);

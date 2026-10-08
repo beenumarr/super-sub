@@ -53,6 +53,16 @@ Route::get('/app-config', function () {
     $primary = \App\Models\AppConfiguration::where('key', 'site_primary_color')->first()?->value ?? config('settings.site_primary_color', '#9483EF');
     $secondary = \App\Models\AppConfiguration::where('key', 'site_secondary_color')->first()?->value ?? config('settings.site_secondary_color', '#8B5CF6');
     $siteName = \App\Models\AppConfiguration::where('key', 'site_name')->first()?->value ?? config('settings.site_name', config('app.name', 'SuperSub'));
+    $isWalletTransferEnabled = in_array(
+        \App\Models\AppConfiguration::where('key', 'feat_enable_wallet_transfer')->first()?->value ?? config('settings.feat_enable_wallet_transfer', '1'),
+        ['1', 1, 'true', true],
+        false
+    );
+    $isReferralEnabled = in_array(
+        \App\Models\AppConfiguration::where('key', 'feat_enable_referral')->first()?->value ?? config('settings.feat_enable_referral', '1'),
+        ['1', 1, 'true', true],
+        false
+    );
 
     return response()->json([
         'status' => 'success',
@@ -61,6 +71,8 @@ Route::get('/app-config', function () {
             'site_primary_color' => $primary,
             'site_secondary_color' => $secondary,
             'site_logo' => $logoUrl,
+            'enable_wallet_transfer' => (bool) $isWalletTransferEnabled,
+            'enable_referral' => (bool) $isReferralEnabled,
         ],
     ]);
 });
@@ -68,6 +80,7 @@ Route::get('/app-config', function () {
 // Public mobile authentication routes
 Route::post('/auth/login', [\App\Http\Controllers\Api\AuthApiController::class, 'login']);
 Route::post('/auth/register', [\App\Http\Controllers\Api\AuthApiController::class, 'register']);
+Route::post('/auth/forgot-password', [\App\Http\Controllers\Api\AuthApiController::class, 'forgotPassword']);
 
 // Protected routes requiring authentication
 Route::middleware([ApiAuthenticate::class, 'auth:sanctum'])->group(function () {
@@ -78,6 +91,22 @@ Route::middleware([ApiAuthenticate::class, 'auth:sanctum'])->group(function () {
     Route::post('/auth/verify-pin', [\App\Http\Controllers\Api\AuthApiController::class, 'verifyPin']);
     Route::post('/auth/email/verification-notification', [\App\Http\Controllers\Api\AuthApiController::class, 'sendVerificationEmail']);
     Route::post('/settings/pin', [\App\Http\Controllers\Api\AuthApiController::class, 'updatePin']);
+    Route::post('/settings/password', [\App\Http\Controllers\Api\AuthApiController::class, 'updatePassword']);
+    Route::post('/settings/profile', [\App\Http\Controllers\Api\AuthApiController::class, 'updateProfile']);
+    Route::delete('/settings/account', [\App\Http\Controllers\Api\AuthApiController::class, 'deleteAccount']);
+    Route::post('/settings/account/delete', [\App\Http\Controllers\Api\AuthApiController::class, 'deleteAccount']);
+
+    // Bonus & Referrals
+    Route::post('/wallet/withdraw-bonus', [\App\Http\Controllers\Api\UserApiController::class, 'withdrawBonus']);
+    Route::get('/referrals', [\App\Http\Controllers\Api\UserApiController::class, 'getReferrals']);
+
+    // KYC Tier Upgrades
+    Route::post('/kyc/upgrade/bvn', [\App\Http\Controllers\Api\UserApiController::class, 'upgradeKycBvn']);
+    Route::post('/kyc/upgrade/nin', [\App\Http\Controllers\Api\UserApiController::class, 'upgradeKycNin']);
+
+    // Airtime to Cash
+    Route::get('/airtime-to-cash/config', [\App\Http\Controllers\Api\UserApiController::class, 'getAirtimeToCashConfig']);
+    Route::post('/airtime-to-cash/submit', [\App\Http\Controllers\Api\UserApiController::class, 'submitAirtimeToCash']);
 
     // Push Notification Device Token
     Route::post('/user/fcm-token', function (Request $request) {

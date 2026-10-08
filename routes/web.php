@@ -117,12 +117,19 @@ Route::middleware(['auth'])->group(function () {
 
 
 Route::get('/privacy-policy', function () {
-    return Inertia::render('legal/privacy-policy');
+    $siteName = \App\Models\AppConfiguration::where('key', 'site_name')->first()?->value
+        ?? config('settings.site_name', config('app.name', 'SuperSub'));
+    return view('privacy_policy', compact('siteName'));
 })->name('privacy-policy');
 
 Route::get('/terms-of-use', function () {
     return Inertia::render('legal/terms-of-use');
 })->name('terms-of-use');
+
+// Public Account Deletion Request routes (Google Play compliance)
+Route::get('/account-deletion', [\App\Http\Controllers\AccountDeletionController::class, 'index'])->name('account-deletion.index');
+Route::post('/account-deletion', [\App\Http\Controllers\AccountDeletionController::class, 'submit'])->name('account-deletion.submit');
+Route::get('/delete-account', [\App\Http\Controllers\AccountDeletionController::class, 'index'])->name('delete-account');
 
 
 

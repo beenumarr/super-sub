@@ -120,7 +120,7 @@ export default function Field({ handleClose, editData }: FieldProps) {
                 <InputError message={errors.name} className="mt-2" />
             </div>
 
-            {editData.model === 'APIs\\VtPass\\' ? (
+            {editData.model === 'APIs\\VtPass\\' || editData.model === 'APIs\\Accelerate\\' ? (
                 <>
                     <div className="mt-4 space-y-1.5">
                         <Label htmlFor="url">API Url</Label>
@@ -132,12 +132,15 @@ export default function Field({ handleClose, editData }: FieldProps) {
                             value={data.url}
                             onChange={handleChange}
                             aria-invalid={Boolean(errors.url)}
+                            placeholder={editData.model === 'APIs\\Accelerate\\' ? 'https://prod.airtime-data.irechargetech.com/api/v2' : ''}
                         />
                         <InputError message={errors.url} className="mt-2" />
                     </div>
 
                     <div className="mt-4 space-y-1.5">
-                        <Label htmlFor="username">Username (Optional)</Label>
+                        <Label htmlFor="username">
+                            {editData.model === 'APIs\\Accelerate\\' ? 'Public Key (Optional)' : 'Username (Optional)'}
+                        </Label>
                         <Input
                             id="username"
                             type="text"
@@ -151,7 +154,9 @@ export default function Field({ handleClose, editData }: FieldProps) {
                     </div>
 
                     <div className="mt-4 space-y-1.5">
-                        <Label htmlFor="password">Password (Optional)</Label>
+                        <Label htmlFor="password">
+                            {editData.model === 'APIs\\Accelerate\\' ? 'Private Key (Optional)' : 'Password (Optional)'}
+                        </Label>
                         <Input
                             id="password"
                             type="text"
