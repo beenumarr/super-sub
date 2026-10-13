@@ -16,6 +16,18 @@ if (file_exists($maintenance = __DIR__.'/../storage/framework/maintenance.php'))
     require $maintenance;
 }
 
+// Ensure critical storage framework directories exist...
+foreach ([
+    __DIR__.'/../storage/framework/views',
+    __DIR__.'/../storage/framework/cache/data',
+    __DIR__.'/../storage/framework/sessions',
+    __DIR__.'/../storage/logs',
+] as $storagePath) {
+    if (!is_dir($storagePath)) {
+        @mkdir($storagePath, 0775, true);
+    }
+}
+
 // Register the Composer autoloader...
 require __DIR__.'/../vendor/autoload.php';
 

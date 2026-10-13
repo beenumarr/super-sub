@@ -80,10 +80,10 @@ jobs:
             .env
             .env.*
             tests/**
-            storage/logs/**
-            storage/framework/cache/**
-            storage/framework/sessions/**
-            storage/framework/views/**
+            storage/logs/*.log
+            storage/framework/cache/data/*
+            storage/framework/sessions/*
+            storage/framework/views/*.php
 
       - name: Trigger Remote Database Migrations and Cache Refresh
         run: |
