@@ -13,12 +13,24 @@ return new class extends Migration
     public function up(): void
     {
         // Make the legacy 'reference' field nullable since new code uses 'reference_id'
-        DB::statement("ALTER TABLE `transactions` MODIFY `reference` VARCHAR(255) NULL");
+        if (DB::getDriverName() === 'sqlite') {
+            Schema::table('transactions', function (Blueprint $table) {
+                $table->string('reference', 255)->nullable()->change();
+            });
+        } else {
+            DB::statement("ALTER TABLE `transactions` MODIFY `reference` VARCHAR(255) NULL");
+        }
     }
 
     public function down(): void
     {
         // Revert to NOT NULL
-        DB::statement("ALTER TABLE `transactions` MODIFY `reference` VARCHAR(255) NOT NULL");
+        if (DB::getDriverName() === 'sqlite') {
+            Schema::table('transactions', function (Blueprint $table) {
+                $table->string('reference', 255)->nullable(false)->change();
+            });
+        } else {
+            DB::statement("ALTER TABLE `transactions` MODIFY `reference` VARCHAR(255) NOT NULL");
+        }
     }
 };

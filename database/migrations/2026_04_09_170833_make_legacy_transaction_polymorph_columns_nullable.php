@@ -12,8 +12,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        DB::statement("ALTER TABLE `transactions` MODIFY `transactionable_id` BIGINT(20) NULL");
-        DB::statement("ALTER TABLE `transactions` MODIFY `transactionable_type` VARCHAR(255) NULL");
+        if (DB::getDriverName() === 'sqlite') {
+            Schema::table('transactions', function (Blueprint $table) {
+                $table->unsignedBigInteger('transactionable_id')->nullable()->change();
+                $table->string('transactionable_type', 255)->nullable()->change();
+            });
+        } else {
+            DB::statement("ALTER TABLE `transactions` MODIFY `transactionable_id` BIGINT(20) NULL");
+            DB::statement("ALTER TABLE `transactions` MODIFY `transactionable_type` VARCHAR(255) NULL");
+        }
     }
 
     /**
@@ -21,7 +28,14 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::statement("ALTER TABLE `transactions` MODIFY `transactionable_id` BIGINT(20) NOT NULL");
-        DB::statement("ALTER TABLE `transactions` MODIFY `transactionable_type` VARCHAR(255) NOT NULL");
+        if (DB::getDriverName() === 'sqlite') {
+            Schema::table('transactions', function (Blueprint $table) {
+                $table->unsignedBigInteger('transactionable_id')->nullable(false)->change();
+                $table->string('transactionable_type', 255)->nullable(false)->change();
+            });
+        } else {
+            DB::statement("ALTER TABLE `transactions` MODIFY `transactionable_id` BIGINT(20) NOT NULL");
+            DB::statement("ALTER TABLE `transactions` MODIFY `transactionable_type` VARCHAR(255) NOT NULL");
+        }
     }
 };
