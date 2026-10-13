@@ -100,10 +100,10 @@ jobs:
           MIGRATION_SUCCESS=false
 
           for ENDPOINT in \
-            "${DEPLOY_HOST}/cheapexpress/api/deploy/migrate" \
-            "${DEPLOY_HOST}/cheapexpress/deploy/migrate" \
             "${DEPLOY_HOST}/api/deploy/migrate" \
-            "${DEPLOY_HOST}/deploy/migrate"; do
+            "${DEPLOY_HOST}/deploy/migrate" \
+            "${DEPLOY_HOST}/cheapexpress/api/deploy/migrate" \
+            "${DEPLOY_HOST}/cheapexpress/deploy/migrate"; do
             echo "Attempting: $ENDPOINT"
             HTTP_RESPONSE=$(curl -s -k -w "\nHTTP_STATUS:%{http_code}" -X POST "$ENDPOINT" \
               -H "X-Deploy-Token: $TOKEN" \
