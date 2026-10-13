@@ -8,7 +8,7 @@ test('profile page is displayed', function () {
     $user = User::factory()->create();
 
     $response = $this
-        ->actingAs($user)
+        ->actingAs($user) 
         ->get('/user-settings/profile');
 
     $response->assertOk();
