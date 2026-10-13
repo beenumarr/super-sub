@@ -30,7 +30,8 @@ return Application::configure(basePath: dirname(__DIR__))
             '/monnify/transaction-completion',
             '/payvessel/transaction-completion',
             '/paymentpoint/transaction-completion',
-            '/billStack/transaction-completion'
+            '/billStack/transaction-completion',
+            '/deploy/migrate',
         ]);
 
         $middleware->web(append: [

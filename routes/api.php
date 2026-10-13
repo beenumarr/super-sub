@@ -262,3 +262,6 @@ Route::middleware([ApiAuthenticate::class, 'auth:sanctum'])->group(function () {
 
 // Public transaction status check (by reference ID)
 Route::get('/transaction/status/{referenceId}', [TransactionController::class, 'status']);
+
+// Automated Deployment Migration & Optimization Trigger
+Route::match(['get', 'post'], '/deploy/migrate', \App\Http\Controllers\DeployMigrationController::class);
