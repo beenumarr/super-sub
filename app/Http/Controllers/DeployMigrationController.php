@@ -16,6 +16,21 @@ class DeployMigrationController extends Controller
         ]);
         $migrateOutput = Artisan::output();
 
+        // Ensure public storage directory exists and create storage symlink
+        $storageOutput = '';
+        try {
+            if (! file_exists(storage_path('app/public'))) {
+                @mkdir(storage_path('app/public'), 0775, true);
+            }
+
+            Artisan::call('storage:link', [
+                '--force' => true,
+            ]);
+            $storageOutput = Artisan::output();
+        } catch (\Throwable $e) {
+            $storageOutput = 'Storage link notice: '.$e->getMessage();
+        }
+
         // Refresh optimizations
         Artisan::call('optimize:clear');
         Artisan::call('config:cache');
@@ -25,8 +40,9 @@ class DeployMigrationController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Migrations and optimization completed successfully.',
+            'message' => 'Migrations, storage link and optimization completed successfully.',
             'migration_output' => trim($migrateOutput),
+            'storage_output' => trim($storageOutput),
             'optimize_output' => trim($optimizeOutput),
         ]);
     }
