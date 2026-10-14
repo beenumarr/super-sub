@@ -143,14 +143,21 @@ class HandleInertiaRequests extends Middleware
     }
 
     /**
-     * Get site_logo directly from database with fallback
+     * Get site_logo directly from database with fallback and cache buster
      */
     private function getSiteLogo(): string
     {
         try {
             $record = AppConfiguration::where('key', 'site_logo')->first();
             if ($record && !empty($record->value)) {
-                return $record->value;
+                $file = $record->value;
+                $publicPath = storage_path('app/public/uploads/' . $file);
+                $directPath = public_path('storage/uploads/' . $file);
+                $timestamp = file_exists($publicPath)
+                    ? filemtime($publicPath)
+                    : (file_exists($directPath) ? filemtime($directPath) : time());
+
+                return $file . '?v=' . $timestamp;
             }
 
             return config('settings.site_logo', 'logo-icon.png');

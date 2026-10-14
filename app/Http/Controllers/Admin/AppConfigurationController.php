@@ -43,21 +43,21 @@ class AppConfigurationController extends Controller
 
 
         // Prefer uploads folder where processed images are stored
-        $logoPath = isset($configs['site_logo']) && Storage::disk('public')->exists("uploads/" . $configs['site_logo'])
+        $logoPath = isset($configs['site_logo']) && (Storage::disk('public')->exists("uploads/" . $configs['site_logo']) || file_exists(public_path("storage/uploads/" . $configs['site_logo'])))
             ? Storage::url("uploads/" . $configs['site_logo'])
             : asset('images/logo.png');
 
-        $faviconPath = isset($configs['site_favicon']) && Storage::disk('public')->exists("uploads/" . $configs['site_favicon'])
+        $faviconPath = isset($configs['site_favicon']) && (Storage::disk('public')->exists("uploads/" . $configs['site_favicon']) || file_exists(public_path("storage/uploads/" . $configs['site_favicon'])))
             ? Storage::url("uploads/" . $configs['site_favicon'])
             : null;
 
-        $bg0Path = isset($configs['site_background_0']) && Storage::disk('public')->exists("uploads/" . $configs['site_background_0'])
+        $bg0Path = isset($configs['site_background_0']) && (Storage::disk('public')->exists("uploads/" . $configs['site_background_0']) || file_exists(public_path("storage/uploads/" . $configs['site_background_0'])))
             ? Storage::url("uploads/" . $configs['site_background_0'])
             : null;
-        $bg1Path = isset($configs['site_background_1']) && Storage::disk('public')->exists("uploads/" . $configs['site_background_1'])
+        $bg1Path = isset($configs['site_background_1']) && (Storage::disk('public')->exists("uploads/" . $configs['site_background_1']) || file_exists(public_path("storage/uploads/" . $configs['site_background_1'])))
             ? Storage::url("uploads/" . $configs['site_background_1'])
             : null;
-        $bg2Path = isset($configs['site_background_2']) && Storage::disk('public')->exists("uploads/" . $configs['site_background_2'])
+        $bg2Path = isset($configs['site_background_2']) && (Storage::disk('public')->exists("uploads/" . $configs['site_background_2']) || file_exists(public_path("storage/uploads/" . $configs['site_background_2'])))
             ? Storage::url("uploads/" . $configs['site_background_2'])
             : null;
 
@@ -253,20 +253,35 @@ class AppConfigurationController extends Controller
     }
 
 
-    public function clearImages()  {
+    public function clearImages()
+    {
+        Storage::disk('public')->deleteDirectory('uploads');
+        Storage::disk('public')->deleteDirectory('images');
 
+        $publicStorage = public_path('storage');
+        if (is_link($publicStorage)) {
+            @unlink($publicStorage);
+        } elseif (is_dir($publicStorage)) {
+            File::deleteDirectory($publicStorage);
+        }
 
-            Storage::disk('public')->deleteDirectory('images');
+        try {
+            if (function_exists('symlink')) {
+                @symlink('../storage/app/public', $publicStorage);
+            }
+        } catch (\Throwable $e) {
+            // Ignore
+        }
 
-            File::delete(public_path('storage'));
+        AppConfiguration::whereIn('key', ['site_logo', 'site_favicon', 'site_background_0', 'site_background_1', 'site_background_2'])->delete();
+        Cache::forget('app_settings');
+        try {
+            Artisan::call('cache:clear');
+        } catch (\Throwable $e) {
+            // Ignore
+        }
 
-            // If not linked, create a symbolic link
-            File::link(storage_path('app/public'), public_path('storage'));
-
-
-            return response(['status'=>'success']);
-
-
+        return response(['status' => 'success']);
     }
 
 

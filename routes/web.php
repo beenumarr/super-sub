@@ -138,6 +138,20 @@ Route::middleware('auth:sanctum')->get('/api2/user', function (Request $request)
     return response(new AuthUserResource($request->user()));
 });
 
+// Fallback route to serve uploaded public storage files if web server direct access is bypassed
+Route::get('/storage/uploads/{path}', function (string $path) {
+    $filePath = storage_path('app/public/uploads/' . $path);
+    if (! file_exists($filePath)) {
+        $directPath = public_path('storage/uploads/' . $path);
+        if (file_exists($directPath)) {
+            $filePath = $directPath;
+        } else {
+            abort(404);
+        }
+    }
+    return response()->file($filePath);
+})->where('path', '.*');
+
 require __DIR__.'/admin.php';
 require __DIR__.'/auth.php';
 require __DIR__.'/utils.php';
