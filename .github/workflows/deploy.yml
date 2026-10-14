@@ -95,6 +95,9 @@ jobs:
 
           TOKEN="${{ secrets.DEPLOY_SECRET }}"
           if [ -z "$TOKEN" ]; then
+            TOKEN="${{ secrets.APP_KEY }}"
+          fi
+          if [ -z "$TOKEN" ]; then
             TOKEN="${{ secrets.FTP_PASSWORD }}"
           fi
 
