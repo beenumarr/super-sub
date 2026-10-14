@@ -10,5 +10,6 @@ test('deploy migrate route succeeds and runs migrations', function () {
         'migration_output',
         'storage_output',
         'optimize_output',
+        'apis',
     ]);
 });

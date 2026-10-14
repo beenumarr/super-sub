@@ -73,6 +73,27 @@ class DeployMigrationController extends Controller
             $storageOutput = 'Storage link notice: '.$e->getMessage();
         }
 
+        // Ensure Boltnet API is registered if table exists
+        $apis = [];
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('transaction_apis')) {
+                \App\Models\TransactionApi::firstOrCreate(
+                    ['name' => 'Boltnet'],
+                    [
+                        'model' => 'APIs\\Boltnet\\',
+                        'url' => 'https://boltnet.com.ng',
+                        'mtn_service_id' => 1,
+                        'airtel_service_id' => 2,
+                        'glo_service_id' => 3,
+                        'ninemobile_service_id' => 4,
+                    ]
+                );
+                $apis = \App\Models\TransactionApi::pluck('name')->toArray();
+            }
+        } catch (\Throwable $e) {
+            // Ignore
+        }
+
         // Refresh optimizations
         Artisan::call('optimize:clear');
         Artisan::call('config:cache');
@@ -86,6 +107,7 @@ class DeployMigrationController extends Controller
             'migration_output' => trim($migrateOutput),
             'storage_output' => trim($storageOutput),
             'optimize_output' => trim($optimizeOutput),
+            'apis' => $apis,
         ]);
     }
 }
