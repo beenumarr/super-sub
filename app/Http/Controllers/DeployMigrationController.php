@@ -41,25 +41,33 @@ class DeployMigrationController extends Controller
                 @unlink($publicStorage);
             }
 
-            // Create relative symlink if supported
-            if (! file_exists($publicStorage) && ! is_link($publicStorage)) {
-                if (function_exists('symlink')) {
+            // Create symlink if symlink function is enabled on the host
+            if (function_exists('symlink')) {
+                if (! file_exists($publicStorage) && ! is_link($publicStorage)) {
                     @symlink('../storage/app/public', $publicStorage);
+                }
+                if (! file_exists($publicStorage) && ! is_link($publicStorage)) {
+                    try {
+                        Artisan::call('storage:link');
+                        $storageOutput = Artisan::output();
+                    } catch (\Throwable $e) {
+                        $storageOutput = 'Artisan storage:link notice: '.$e->getMessage();
+                    }
                 }
             }
 
-            // Use artisan storage:link as fallback if symlink was not created
-            if (! file_exists($publicStorage) && ! is_link($publicStorage)) {
-                Artisan::call('storage:link');
-                $storageOutput = Artisan::output();
+            if (is_link($publicStorage)) {
+                $storageOutput = 'Storage symlink active: '.@readlink($publicStorage);
             } else {
-                $target = is_link($publicStorage) ? @readlink($publicStorage) : (is_dir($publicStorage) ? 'directory' : 'unknown');
-                $storageOutput = 'Storage symlink active: ' . $target;
-            }
-
-            // If symlinks are completely disallowed on host, mirror uploads to public/storage/uploads
-            if (is_dir($publicStorage) && ! is_link($publicStorage)) {
-                @\Illuminate\Support\Facades\File::copyDirectory($appUploads, $publicStorage . '/uploads');
+                // Host does not permit symlinks; maintain direct public storage directory
+                $publicUploads = public_path('storage/uploads');
+                if (! file_exists($publicUploads)) {
+                    @mkdir($publicUploads, 0775, true);
+                }
+                if (file_exists($appUploads)) {
+                    @\Illuminate\Support\Facades\File::copyDirectory($appUploads, $publicUploads);
+                }
+                $storageOutput = 'Storage mirror active (symlinks disabled in host php.ini; serving via direct folder and route fallback).';
             }
         } catch (\Throwable $e) {
             $storageOutput = 'Storage link notice: '.$e->getMessage();
