@@ -91,19 +91,19 @@ jobs:
           if [ -z "$DEPLOY_HOST" ]; then
             DEPLOY_HOST="https://${{ secrets.FTP_SERVER }}"
           fi
+          DEPLOY_HOST="${DEPLOY_HOST%/}"
+
           TOKEN="${{ secrets.DEPLOY_SECRET }}"
           if [ -z "$TOKEN" ]; then
             TOKEN="${{ secrets.FTP_PASSWORD }}"
           fi
 
-          echo "Triggering database migrations and cache optimizations..."
+          echo "Triggering database migrations and cache optimizations on: ${DEPLOY_HOST}"
           MIGRATION_SUCCESS=false
 
           for ENDPOINT in \
             "${DEPLOY_HOST}/api/deploy/migrate" \
-            "${DEPLOY_HOST}/deploy/migrate" \
-            "${DEPLOY_HOST}/cheapexpress/api/deploy/migrate" \
-            "${DEPLOY_HOST}/cheapexpress/deploy/migrate"; do
+            "${DEPLOY_HOST}/deploy/migrate"; do
             echo "Attempting: $ENDPOINT"
             HTTP_RESPONSE=$(curl -s -k -w "\nHTTP_STATUS:%{http_code}" -X POST "$ENDPOINT" \
               -H "X-Deploy-Token: $TOKEN" \
