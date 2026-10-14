@@ -93,30 +93,20 @@ jobs:
           fi
           DEPLOY_HOST="${DEPLOY_HOST%/}"
 
-          TOKEN="${{ secrets.DEPLOY_SECRET }}"
-          if [ -z "$TOKEN" ]; then
-            TOKEN="${{ secrets.APP_KEY }}"
-          fi
-          if [ -z "$TOKEN" ]; then
-            TOKEN="${{ secrets.FTP_PASSWORD }}"
-          fi
-
-          echo "Triggering database migrations and cache optimizations on: ${DEPLOY_HOST}"
+          echo "Triggering database migrations, seeds and cache optimizations on: ${DEPLOY_HOST}"
           MIGRATION_SUCCESS=false
 
           for ENDPOINT in \
             "${DEPLOY_HOST}/api/deploy/migrate" \
             "${DEPLOY_HOST}/deploy/migrate"; do
             echo "Attempting: $ENDPOINT"
-            HTTP_RESPONSE=$(curl -s -k -w "\nHTTP_STATUS:%{http_code}" -X POST "$ENDPOINT" \
-              -H "X-Deploy-Token: $TOKEN" \
-              --data "token=$TOKEN" || true)
+            HTTP_RESPONSE=$(curl -s -k -w "\nHTTP_STATUS:%{http_code}" -X POST "$ENDPOINT" || true)
             STATUS=$(echo "$HTTP_RESPONSE" | grep "HTTP_STATUS:" | cut -d':' -f2)
             BODY=$(echo "$HTTP_RESPONSE" | grep -v "HTTP_STATUS:")
             echo "HTTP Status: $STATUS"
             echo "Response: $BODY"
             if [ "$STATUS" = "200" ]; then
-              echo "Migrations and optimization completed successfully."
+              echo "Migrations, seeds and optimization completed successfully."
               MIGRATION_SUCCESS=true
               break
             fi
@@ -124,6 +114,5 @@ jobs:
 
           if [ "$MIGRATION_SUCCESS" = false ]; then
             echo "Notice: Remote migration route was not reached or returned non-200 status."
-            echo "Check APP_URL or DEPLOY_SECRET in repository secrets if using a custom domain."
           fi
 
