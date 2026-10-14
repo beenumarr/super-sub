@@ -93,7 +93,7 @@ jobs:
           fi
           DEPLOY_HOST="${DEPLOY_HOST%/}"
 
-          echo "Triggering database migrations, seeds and cache optimizations on: ${DEPLOY_HOST}"
+          echo "Triggering database migrations and cache optimizations on: ${DEPLOY_HOST}"
           MIGRATION_SUCCESS=false
 
           for ENDPOINT in \
@@ -106,7 +106,7 @@ jobs:
             echo "HTTP Status: $STATUS"
             echo "Response: $BODY"
             if [ "$STATUS" = "200" ]; then
-              echo "Migrations, seeds and optimization completed successfully."
+              echo "Migrations and optimization completed successfully."
               MIGRATION_SUCCESS=true
               break
             fi

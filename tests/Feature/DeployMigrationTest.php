@@ -1,6 +1,6 @@
 <?php
 
-test('deploy migrate route succeeds and runs migrations and seeds', function () {
+test('deploy migrate route succeeds and runs migrations', function () {
     $response = $this->post('/api/deploy/migrate');
 
     $response->assertOk();

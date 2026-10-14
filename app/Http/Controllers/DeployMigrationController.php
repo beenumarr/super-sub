@@ -10,10 +10,9 @@ class DeployMigrationController extends Controller
 {
     public function __invoke(Request $request): JsonResponse
     {
-        // Run database migrations and seeders
+        // Run database migrations
         Artisan::call('migrate', [
             '--force' => true,
-            '--seed' => true,
         ]);
         $migrateOutput = Artisan::output();
 
@@ -26,7 +25,7 @@ class DeployMigrationController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Migrations, seeds and optimization completed successfully.',
+            'message' => 'Migrations and optimization completed successfully.',
             'migration_output' => trim($migrateOutput),
             'optimize_output' => trim($optimizeOutput),
         ]);
