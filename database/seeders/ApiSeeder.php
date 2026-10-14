@@ -83,8 +83,31 @@ class ApiSeeder extends Seeder
                 'airtel_service_id'=> 2,
                 'glo_service_id'=> 3,
                 'ninemobile_service_id'=> 4,
+            ],
+            [
+                'name'=> "Boltnet",
+                'url'=> 'https://boltnet.com.ng',
+                'model'=> 'APIs\\Boltnet\\',
+                'token'=> "",
+                'username'=> 'username',
+                'password'=> 'password',
+                'mtn_service_id'=> 1,
+                'airtel_service_id'=> 2,
+                'glo_service_id'=> 3,
+                'ninemobile_service_id'=> 4,
+            ],
+            [
+                'name'=> "Accelerate",
+                'url'=> 'https://prod.airtime-data.irechargetech.com/api/v2',
+                'model'=> 'APIs\\Accelerate\\',
+                'token'=> "",
+                'username'=> '',
+                'password'=> '',
+                'mtn_service_id'=> 1,
+                'airtel_service_id'=> 2,
+                'glo_service_id'=> 3,
+                'ninemobile_service_id'=> 4,
             ]
-
         ];
 
 
