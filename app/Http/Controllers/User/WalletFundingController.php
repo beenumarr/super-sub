@@ -200,4 +200,42 @@ class WalletFundingController extends Controller
 
 
 
+    public function initializeZainpayPayment(Request $request)
+    {
+        $request->validate([
+            'amount' => 'required|numeric|min:100',
+        ]);
+
+        $user = auth()->user();
+        $amount = (float) $request->amount;
+        $reference = $this->helpers->generateTransactionRef('ZP');
+        $callBackUrl = url('/wallet?status=success&gateway=zainpay&ref=' . $reference);
+
+        $chargesType = config('settings.zainpay_funding_charges', '1.6 %');
+        $charges = $this->helpers->applyFundingCharges($amount, $chargesType);
+        $totalAmount = $amount + $charges;
+
+        $initRes = \App\Services\PaymentGateway\Zainpay\ZainpayService::initializePayment(
+            $totalAmount,
+            $reference,
+            $user->email,
+            $user->phone_number ?? $user->phone ?? '08000000000',
+            $callBackUrl
+        );
+
+        if ($initRes['success'] && !empty($initRes['checkout_url'])) {
+            return response()->json([
+                'status' => 'success',
+                'checkout_url' => $initRes['checkout_url'],
+                'reference' => $reference,
+                'total_amount' => $totalAmount,
+                'charges' => $charges,
+            ]);
+        }
+
+        return response()->json([
+            'status' => 'error',
+            'message' => $initRes['message'] ?? 'Failed to initialize payment with Zainpay.',
+        ], 422);
+    }
 }

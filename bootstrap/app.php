@@ -42,6 +42,8 @@ return Application::configure(basePath: dirname(__DIR__))
             '/payvessel/transaction-completion',
             '/paymentpoint/transaction-completion',
             '/billStack/transaction-completion',
+            '/zainpay/transaction-completion',
+            '/zainpay/webhook',
             '/deploy/migrate',
         ]);
 

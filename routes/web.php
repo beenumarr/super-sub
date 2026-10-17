@@ -25,6 +25,7 @@ use App\Http\Controllers\WebHooks\BillStackWebhookController;
 use App\Http\Controllers\WebHooks\PaymentpointWebhookController;
 use App\Http\Controllers\WebHooks\PayvesselTransactionWebhookController;
 use App\Http\Controllers\WebHooks\TransactionWebhookController;
+use App\Http\Controllers\WebHooks\ZainpayWebhookController;
 use App\Http\Resources\AuthUserResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -40,6 +41,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/fund-account/validate-user', [WalletTransferController::class, 'validateUser'])->name('fund-account.validate-user');
     Route::post('/refresh_funding_accounts', [WalletFundingController::class, 'refreshAccounts'])->name('refresh_accounts');
     Route::post('/get_temp_accounts', [WalletFundingController::class, 'getTempAccount'])->name('get_temp_accounts');
+    Route::post('/wallet/zainpay/initialize', [WalletFundingController::class, 'initializeZainpayPayment'])->name('wallet.zainpay.initialize');
     Route::get('/kyc', [KycController::class, 'index'])->name('kyc');
     Route::get('/kyc-details', [KycController::class, 'getKycDetails'])->name('kyc-details');
     Route::get('/kyc-bvn', [KycController::class, 'kycBvn'])->name('kyc.bvn')->middleware('kycCheck');
@@ -110,6 +112,8 @@ Route::post('/monnify/transaction-completion', [TransactionWebhookController::cl
 Route::post('/payvessel/transaction-completion', [PayvesselTransactionWebhookController::class, 'handleTransactionCompletion']);
 Route::post('/paymentpoint/transaction-completion', [PaymentpointWebhookController::class, 'handleTransactionCompletion']);
 Route::post('/billStack/transaction-completion', [BillStackWebhookController::class,  'handlePaymentWebhook']);
+Route::post('/zainpay/transaction-completion', [ZainpayWebhookController::class, 'handleTransactionCompletion']);
+Route::post('/zainpay/webhook', [ZainpayWebhookController::class, 'handleTransactionCompletion']);
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/account/deactivated', [AccountStatusController::class, 'deactivated'])->name('account.deactivated');

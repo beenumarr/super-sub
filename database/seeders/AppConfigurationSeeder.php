@@ -69,6 +69,48 @@ class AppConfigurationSeeder extends Seeder
                 'type'=> 'text'
             ],
             [
+                'key' => "zainpay_service",
+                'value' => "0",
+                'type'=> 'text'
+            ],
+            [
+                'key' => "zainpay_api_url",
+                'value' => "https://api.zainpay.ng",
+                'type'=> 'text'
+            ],
+            [
+                'key' => "zainpay_username",
+                'value' => "",
+                'type'=> 'text'
+            ],
+            [
+                'key' => "zainpay_secret_key",
+                'value' => "",
+                'type'=> 'text'
+            ],
+            [
+                'key' => "zainpay_zainbox_code",
+                'value' => "",
+                'type'=> 'text'
+            ],
+            [
+                'key' => "zainpay_bank_type",
+                'value' => "wemaBank",
+                'type'=> 'text'
+            ],
+            [
+                'key' => "zainpay_funding_charges",
+                'value' => "1.6 %",
+                'type'=> "option",
+                'options'=> [
+                    ['name'=> "1% (percent)", 'value'=> "1 %"],
+                    ['name'=> "1.6% (percent)", 'value'=> "1.6 %"],
+                    ['name'=> "2% (percent)", 'value'=> "2 %"],
+                    ['name'=> "N50", 'value'=> "50 N"],
+                    ['name'=> "Settlement Amount", 'value'=> "settlement_amount"],
+                ]
+            ],
+            [
                 'key' => "site_name",
                 'value' => "My Site",
                 'type'=> 'text'

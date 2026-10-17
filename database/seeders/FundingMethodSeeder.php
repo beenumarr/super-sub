@@ -62,6 +62,18 @@ class FundingMethodSeeder extends Seeder
                 'active'=> true,
             ],
             [
+                'name' => "Fidelity Bank",
+                'code' => "070",
+                'type'=> 'bank',
+                'active'=> true,
+            ],
+            [
+                'name' => "FCMB",
+                'code' => "214",
+                'type'=> 'bank',
+                'active'=> true,
+            ],
+            [
                 'name' => "Wallet Transfer",
                 'code' => "002",
                 'type'=> 'wallet',

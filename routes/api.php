@@ -142,6 +142,7 @@ Route::middleware([ApiAuthenticate::class, 'auth:sanctum'])->group(function () {
     Route::get('/wallet/funding-accounts', [\App\Http\Controllers\User\WalletFundingController::class, 'index']);
     Route::post('/refresh_funding_accounts', [\App\Http\Controllers\User\WalletFundingController::class, 'refreshAccounts']);
     Route::post('/wallet/refresh-accounts', [\App\Http\Controllers\User\WalletFundingController::class, 'refreshAccounts']);
+    Route::post('/wallet/zainpay/initialize', [\App\Http\Controllers\User\WalletFundingController::class, 'initializeZainpayPayment']);
     Route::post('/promotions/redeem', [\App\Http\Controllers\User\PromotionRedemptionController::class, 'redeem']);
     Route::post('/fund-account', [\App\Http\Controllers\User\WalletTransferController::class, 'store']);
     Route::post('/wallet/transfer', [\App\Http\Controllers\User\WalletTransferController::class, 'store']);

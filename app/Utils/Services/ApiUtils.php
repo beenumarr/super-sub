@@ -17,8 +17,9 @@ class ApiUtils
             'payvessel_secret_key',
             'BillStack_secret_key',
             'paymentPoint_secret_key',
-            'transaction_api_token'
-
+            'transaction_api_token',
+            'zainpay_secret_key',
+            'zainpay_token',
     ];
 
 
