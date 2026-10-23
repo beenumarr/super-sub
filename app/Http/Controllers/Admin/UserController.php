@@ -301,7 +301,11 @@ class UserController extends Controller
     {
         $user->delete();
 
-        return response()->noContent();
+        if (request()->wantsJson() && !request()->header('X-Inertia')) {
+            return response()->noContent();
+        }
+
+        return back()->with('success', 'User deleted successfully');
     }
 
     public function search()

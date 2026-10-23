@@ -91,7 +91,7 @@ class ServiceCardController extends Controller
     {
         $data_plan->forceDelete();
 
-		return response()->json(['success'=>'Deleted']);
+        return back()->with('success', 'Service card deleted successfully');
     }
 
 }

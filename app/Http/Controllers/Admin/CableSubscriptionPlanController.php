@@ -138,7 +138,7 @@ class CableSubscriptionPlanController extends Controller
     {
         $cable_subscription_plan->forceDelete();
 
-		return response()->json(['success'=>'Deleted']);
+        return back()->with('success', 'Cable subscription plan deleted successfully');
     }
 
 }
