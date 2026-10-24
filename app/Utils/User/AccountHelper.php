@@ -8,55 +8,57 @@ use Illuminate\Support\Facades\Log;
 use App\Jobs\createBillstackAccount;
 use App\Jobs\CreatePaymentPointAccount;
 use App\Jobs\CreatePayvesselVirtualAccount;
+use App\Jobs\CreateZainpayVirtualAccount;
 
 
 class AccountHelper
 {
 
 
-   public function generateVirtualAccount(User $user) {
-
+    public function generateVirtualAccount(User $user) {
         $hasMonifyAccount = $this->hasAccountWithBankCodes($user, ['232', '035', '50515']);
         $hasPayvesselAccount = $this->hasAccountWithBankCodes($user, ['120001']);
         $hasBillAccount = $this->hasAccountWithBankCodes($user, ['PALMPAY', 'SAFEHAVEN']);
         $hasPaymentPointAccount = $this->hasAccountWithBankCodes($user, ['20946']);
-
+        $hasZainpayAccount = $user->fundingAccounts()->where('gateway', 'Zainpay')->where('active', 1)->exists();
 
         if (config('settings.payvessel_service') === '1' && !$hasPayvesselAccount) {
-            CreatePayvesselVirtualAccount::dispatch($user);
+            CreatePayvesselVirtualAccount::dispatchSync($user);
         }
         if (config('settings.monnify_service') === '1' && !$hasMonifyAccount) {
-            CreateVirtualAccount::dispatch($user);
+            CreateVirtualAccount::dispatchSync($user);
         }
         if (config('settings.BillStack_service') === "1" && !$hasBillAccount) {
-            dispatch(new createBillstackAccount($user, $user->id));
+            createBillstackAccount::dispatchSync($user, $user->id);
         }
         if (config('settings.paymentPoint_service') === "1" && !$hasPaymentPointAccount) {
-            dispatch(new CreatePaymentPointAccount($user, $user->id));
+            CreatePaymentPointAccount::dispatchSync($user, $user->id);
+        }
+        if (config('settings.zainpay_service') === "1" && !$hasZainpayAccount) {
+            CreateZainpayVirtualAccount::dispatchSync($user);
         }
     }
 
-
-
     public function generateTemporaryAccount(User $user) {
-
-
         $hasMonifyAccount = $this->hasAccountWithBankCodes($user, ['232', '035', '50515']);
         $hasPayvesselAccount = $this->hasAccountWithBankCodes($user, ['120001']);
+        $hasZainpayAccount = $user->fundingAccounts()->where('gateway', 'Zainpay')->where('active', 1)->exists();
 
+        if (config('settings.payvessel_service') === '1' && !$hasPayvesselAccount) {
+            CreatePayvesselVirtualAccount::dispatchSync($user, true);
+        }
 
-            if (config('settings.payvessel_service') === '1' && !$hasPayvesselAccount) {
-                CreatePayvesselVirtualAccount::dispatch($user, true);
-            }
+        if (config('settings.monnify_service') === '1' && !$hasMonifyAccount) {
+            CreateVirtualAccount::dispatchSync($user, true);
+        }
 
-            if (config('settings.monnify_service') === '1' && !$hasMonifyAccount) {
-                CreateVirtualAccount::dispatch($user, true);
-            }
-
+        if (config('settings.zainpay_service') === '1' && !$hasZainpayAccount) {
+            CreateZainpayVirtualAccount::dispatchSync($user, true);
+        }
     }
 
     private function hasAccountWithBankCodes(User $user, array $bankCodes) {
-        return $user->fundingAccounts->whereIn('bank_code', $bankCodes)->isNotEmpty();
+        return $user->fundingAccounts()->whereIn('bank_code', $bankCodes)->exists();
     }
 
 

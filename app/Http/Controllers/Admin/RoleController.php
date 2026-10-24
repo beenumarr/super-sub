@@ -78,6 +78,11 @@ class RoleController extends Controller
     public function destroy(Role $role)
     {
         $role->delete();
-		return response()->json(['success'=>'Deleted']);
+
+        if (request()->wantsJson() && !request()->header('X-Inertia')) {
+            return response()->json(['success' => 'Deleted']);
+        }
+
+        return back()->with('success', 'Role deleted successfully');
     }
 }

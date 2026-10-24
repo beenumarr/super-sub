@@ -104,7 +104,7 @@ class DataPlanTypeController extends Controller
     {
         $data_plan_type->delete();
 
-		return response()->json(['success'=>'Deleted']);
+        return back()->with('success', 'Data plan category deleted successfully');
     }
 
     /**

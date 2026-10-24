@@ -80,6 +80,17 @@ class ImageUpload implements ShouldQueue
                     if (File::copy($tempPath, $publicPath)) {
                         Log::info("File processed successfully: {$logicalId} -> {$fileName}");
 
+                        // Mirror directly to public_path('storage/uploads/' . $fileName) as a bulletproof fallback
+                        try {
+                            $directPublicPath = public_path('storage/uploads/' . $fileName);
+                            if (! is_link(public_path('storage')) || ! file_exists($directPublicPath)) {
+                                @File::ensureDirectoryExists(dirname($directPublicPath));
+                                @File::copy($publicPath, $directPublicPath);
+                            }
+                        } catch (\Throwable $e) {
+                            Log::warning('Direct public copy warning: ' . $e->getMessage());
+                        }
+
                         // Determine the config key to update
                         if ($logicalId === 'logo') {
                             $configKey = 'site_logo';
@@ -97,6 +108,11 @@ class ImageUpload implements ShouldQueue
 
                         // Clear the settings cache so new values are picked up
                         Cache::forget('app_settings');
+                        try {
+                            \Illuminate\Support\Facades\Artisan::call('cache:clear');
+                        } catch (\Throwable $e) {
+                            // Ignore
+                        }
                     } else {
                         Log::error("Failed to copy file: {$fileId}");
                         continue;

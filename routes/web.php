@@ -25,6 +25,7 @@ use App\Http\Controllers\WebHooks\BillStackWebhookController;
 use App\Http\Controllers\WebHooks\PaymentpointWebhookController;
 use App\Http\Controllers\WebHooks\PayvesselTransactionWebhookController;
 use App\Http\Controllers\WebHooks\TransactionWebhookController;
+use App\Http\Controllers\WebHooks\ZainpayWebhookController;
 use App\Http\Resources\AuthUserResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -40,6 +41,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/fund-account/validate-user', [WalletTransferController::class, 'validateUser'])->name('fund-account.validate-user');
     Route::post('/refresh_funding_accounts', [WalletFundingController::class, 'refreshAccounts'])->name('refresh_accounts');
     Route::post('/get_temp_accounts', [WalletFundingController::class, 'getTempAccount'])->name('get_temp_accounts');
+    Route::post('/wallet/zainpay/initialize', [WalletFundingController::class, 'initializeZainpayPayment'])->name('wallet.zainpay.initialize');
     Route::get('/kyc', [KycController::class, 'index'])->name('kyc');
     Route::get('/kyc-details', [KycController::class, 'getKycDetails'])->name('kyc-details');
     Route::get('/kyc-bvn', [KycController::class, 'kycBvn'])->name('kyc.bvn')->middleware('kycCheck');
@@ -110,6 +112,8 @@ Route::post('/monnify/transaction-completion', [TransactionWebhookController::cl
 Route::post('/payvessel/transaction-completion', [PayvesselTransactionWebhookController::class, 'handleTransactionCompletion']);
 Route::post('/paymentpoint/transaction-completion', [PaymentpointWebhookController::class, 'handleTransactionCompletion']);
 Route::post('/billStack/transaction-completion', [BillStackWebhookController::class,  'handlePaymentWebhook']);
+Route::post('/zainpay/transaction-completion', [ZainpayWebhookController::class, 'handleTransactionCompletion']);
+Route::post('/zainpay/webhook', [ZainpayWebhookController::class, 'handleTransactionCompletion']);
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/account/deactivated', [AccountStatusController::class, 'deactivated'])->name('account.deactivated');
@@ -117,12 +121,19 @@ Route::middleware(['auth'])->group(function () {
 
 
 Route::get('/privacy-policy', function () {
-    return Inertia::render('legal/privacy-policy');
+    $siteName = \App\Models\AppConfiguration::where('key', 'site_name')->first()?->value
+        ?? config('settings.site_name', config('app.name', 'SuperSub'));
+    return view('privacy_policy', compact('siteName'));
 })->name('privacy-policy');
 
 Route::get('/terms-of-use', function () {
     return Inertia::render('legal/terms-of-use');
 })->name('terms-of-use');
+
+// Public Account Deletion Request routes (Google Play compliance)
+Route::get('/account-deletion', [\App\Http\Controllers\AccountDeletionController::class, 'index'])->name('account-deletion.index');
+Route::post('/account-deletion', [\App\Http\Controllers\AccountDeletionController::class, 'submit'])->name('account-deletion.submit');
+Route::get('/delete-account', [\App\Http\Controllers\AccountDeletionController::class, 'index'])->name('delete-account');
 
 
 
@@ -130,6 +141,20 @@ Route::get('/terms-of-use', function () {
 Route::middleware('auth:sanctum')->get('/api2/user', function (Request $request) {
     return response(new AuthUserResource($request->user()));
 });
+
+// Fallback route to serve uploaded public storage files if web server direct access is bypassed
+Route::get('/storage/uploads/{path}', function (string $path) {
+    $filePath = storage_path('app/public/uploads/' . $path);
+    if (! file_exists($filePath)) {
+        $directPath = public_path('storage/uploads/' . $path);
+        if (file_exists($directPath)) {
+            $filePath = $directPath;
+        } else {
+            abort(404);
+        }
+    }
+    return response()->file($filePath);
+})->where('path', '.*');
 
 require __DIR__.'/admin.php';
 require __DIR__.'/auth.php';

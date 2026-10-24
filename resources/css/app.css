@@ -189,8 +189,8 @@
     --sidebar-accent-foreground: oklch(0.985 0 0);
     --sidebar-border: oklch(0.269 0 0);
     --sidebar-ring: oklch(0.439 0 0);
-    --theme-1: #9483ef;
-    --theme-2: #8b5cf6;
+    --theme-1: #8b5cf6;
+    --theme-2: #9483ef;
 }
 
 @layer base {

@@ -20,7 +20,9 @@ class MonnifyUtils
     public function generateApiToken()
     {
         $client = new Client();
-        $url = config('settings.monnify_api_url');
+        $apiKey = config('settings.monnify_api_key');
+        $isTest = str_starts_with($apiKey ?? '', 'MK_TEST_');
+        $url = $isTest ? 'https://sandbox.monnify.com' : (config('settings.monnify_api_url') ?: 'https://api.monnify.com');
 
         try {
             $response = $client->post("$url/api/v1/auth/login", [

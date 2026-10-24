@@ -74,6 +74,13 @@ class PromotionRedemptionController extends Controller
             $promotion->increment('redeemed_count');
         });
 
+        if ($request->wantsJson() || $request->is('api/*')) {
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Promo redeemed successfully.',
+            ]);
+        }
+
         return redirect()->back();
     }
 }

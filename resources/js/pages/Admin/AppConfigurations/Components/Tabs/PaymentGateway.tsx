@@ -19,6 +19,15 @@ const banks = [
     { bankCode: '50515', bankName: 'Moniepoint Microfinance Bank' },
     { bankCode: '058', bankName: 'GTBank' },
     { bankCode: '120001', bankName: '9 Payment PSB' },
+    { bankCode: '070', bankName: 'Fidelity Bank' },
+    { bankCode: '214', bankName: 'FCMB' },
+];
+
+const zainpayBankTypes = [
+    { name: 'Wema Bank (wemaBank)', value: 'wemaBank' },
+    { name: 'GTBank (gtBank)', value: 'gtBank' },
+    { name: 'Fidelity Bank (fidelity)', value: 'fidelity' },
+    { name: 'FCMB (fcmb)', value: 'fcmb' },
 ];
 
 const fundingCharges = [
@@ -154,6 +163,80 @@ export default function PaymentGateway({
                     </Select>
                 </div>
                 <ToggleRow label="Enable Service" dataKey="monnify_service" data={data} setData={setData} />
+            </SectionBlock>
+
+            <SectionBlock title="Zainpay">
+                <ConfigItem
+                    label="API URL"
+                    name="zainpay_api_url"
+                    value={(data['zainpay_api_url'] as string) || 'https://api.zainpay.ng'}
+                    handleOnChange={handleOnChange}
+                />
+                <ConfigItem
+                    label="Username"
+                    name="zainpay_username"
+                    value={data['zainpay_username'] as string}
+                    handleOnChange={handleOnChange}
+                />
+                <ConfigItem
+                    label="Secret Key / Private Key"
+                    name="zainpay_secret_key"
+                    value={data['zainpay_secret_key'] as string}
+                    handleOnChange={handleOnChange}
+                />
+                <ConfigItem
+                    label="Zainbox Code"
+                    name="zainpay_zainbox_code"
+                    value={data['zainpay_zainbox_code'] as string}
+                    handleOnChange={handleOnChange}
+                />
+                <div className="space-y-2">
+                    <Label>Bank Provider</Label>
+                    <Select
+                        value={(data['zainpay_bank_type'] as string) || 'wemaBank'}
+                        onValueChange={(v) => setDataKey('zainpay_bank_type', v)}
+                    >
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select Bank" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {zainpayBankTypes.map((item) => (
+                                <SelectItem key={item.value} value={item.value}>
+                                    {item.name}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className="space-y-2">
+                    <Label>Funding Charges</Label>
+                    <Select
+                        value={(data['zainpay_funding_charges'] as string) || 'none'}
+                        onValueChange={(v) => setDataKey('zainpay_funding_charges', v === 'none' ? '' : v)}
+                    >
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="none">Select</SelectItem>
+                            {fundingCharges.map((item) => (
+                                <SelectItem key={item.value} value={item.value}>
+                                    {item.name}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className="rounded-md border bg-muted/40 p-3 text-xs space-y-1">
+                    <div className="font-semibold text-foreground">Webhook / Callback URL:</div>
+                    <code className="block select-all rounded bg-background px-2 py-1 text-muted-foreground border">
+                        {typeof window !== 'undefined' ? `${window.location.origin}/zainpay/transaction-completion` : '/zainpay/transaction-completion'}
+                    </code>
+                    <p className="text-muted-foreground">
+                        Configure this URL in your Zainpay dashboard to receive real-time wallet funding notifications.
+                    </p>
+                </div>
+                <ToggleRow label="Enable Service" dataKey="zainpay_service" data={data} setData={setData} />
             </SectionBlock>
 
             {enable_payvessel && (

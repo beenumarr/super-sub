@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\URL;
 uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
 
 test('email verification screen can be rendered', function () {
+    config(['settings.feat_enable_email_verification' => true]);
+
     $user = User::factory()->unverified()->create();
 
     $response = $this->actingAs($user)->get('/verify-email');

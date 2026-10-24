@@ -14,6 +14,17 @@ use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Spatie\Permission\Middleware\PermissionMiddleware;
 use Spatie\Permission\Middleware\RoleMiddleware;
 
+foreach ([
+    dirname(__DIR__).'/storage/framework/views',
+    dirname(__DIR__).'/storage/framework/cache/data',
+    dirname(__DIR__).'/storage/framework/sessions',
+    dirname(__DIR__).'/storage/logs',
+] as $storageDir) {
+    if (!is_dir($storageDir)) {
+        @mkdir($storageDir, 0775, true);
+    }
+}
+
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
@@ -30,7 +41,10 @@ return Application::configure(basePath: dirname(__DIR__))
             '/monnify/transaction-completion',
             '/payvessel/transaction-completion',
             '/paymentpoint/transaction-completion',
-            '/billStack/transaction-completion'
+            '/billStack/transaction-completion',
+            '/zainpay/transaction-completion',
+            '/zainpay/webhook',
+            '/deploy/migrate',
         ]);
 
         $middleware->web(append: [

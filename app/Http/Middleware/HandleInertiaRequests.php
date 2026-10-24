@@ -60,6 +60,10 @@ class HandleInertiaRequests extends Middleware
 
         return [
             ...parent::share($request),
+            'flash' => [
+                'success' => fn () => session('success'),
+                'error' => fn () => session('error'),
+            ],
             'name' => config('app.name'),
             'theme'=> config('settings.site_primary_color'),
             'isStl'=> config('app.enable_standalone_api'),
@@ -73,6 +77,9 @@ class HandleInertiaRequests extends Middleware
                 'monnify_api_key'=> config('settings.monnify_api_key'),
                 'monnify_marchant_name'=> config('settings.monnify_marchant_name'),
                 'monnify_funding_charges'=> config('settings.monnify_funding_charges'),
+                'monnify_service'=> (bool) (config('settings.monnify_service') == '1' || config('settings.monnify_service') === true),
+                'zainpay_service'=> (bool) (config('settings.zainpay_service') == '1' || config('settings.zainpay_service') === true),
+                'zainpay_funding_charges'=> config('settings.zainpay_funding_charges'),
                 'site_name'=> config('settings.site_name', 'VTU App'),
                 'site_logo'=> $this->getSiteLogo(),
                 'site_favicon'=> config('settings.site_favicon'),
@@ -139,14 +146,21 @@ class HandleInertiaRequests extends Middleware
     }
 
     /**
-     * Get site_logo directly from database with fallback
+     * Get site_logo directly from database with fallback and cache buster
      */
     private function getSiteLogo(): string
     {
         try {
             $record = AppConfiguration::where('key', 'site_logo')->first();
             if ($record && !empty($record->value)) {
-                return $record->value;
+                $file = $record->value;
+                $publicPath = storage_path('app/public/uploads/' . $file);
+                $directPath = public_path('storage/uploads/' . $file);
+                $timestamp = file_exists($publicPath)
+                    ? filemtime($publicPath)
+                    : (file_exists($directPath) ? filemtime($directPath) : time());
+
+                return $file . '?v=' . $timestamp;
             }
 
             return config('settings.site_logo', 'logo-icon.png');

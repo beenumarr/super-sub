@@ -12,6 +12,7 @@ import { type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
 import {
     BadgePercent,
+    Bell,
     ChevronDown,
     Cog,
     DollarSign,
@@ -146,6 +147,22 @@ const adminMainNavItems: NavItem[] = [
         title: '',
         href: '',
         divider: true,
+    },
+    // Push Notifications
+    {
+        title: 'Push Notifications',
+        href: '',
+        icon: Bell,
+        submenu: [
+            {
+                title: 'Broadcast',
+                href: '/admin/notifications/broadcast',
+            },
+            {
+                title: 'Firebase Settings',
+                href: '/admin/notifications/settings',
+            },
+        ],
     },
     // Settings
     {

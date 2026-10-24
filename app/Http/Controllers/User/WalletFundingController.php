@@ -24,26 +24,46 @@ class WalletFundingController extends Controller
         $this->helpers = $helpers;
     }
     /**
-     * Display the user's profile form.
+     * Display the user's profile form or return JSON for mobile API.
      */
-    public function index(Request $request): Response
+    public function index(Request $request)
     {
         $active = FundingMethod::whereActive(1)->pluck('code');
 
+        $fundingAccounts = FundingAccount::where('user_id', $request->user()->id)
+            ->whereIn('bank_code', $active)
+            ->where('account_type', '!=', 'temporary')
+            ->get();
 
-        return Inertia::render('WalletFunding/Index', [
-            'funding_accounts' => FundingAccount::where('user_id', $request->user()->id)->whereIn('bank_code', $active)->where('account_type', '!=', 'temporary')->get(),
-            'temp_funding_accounts' => FundingAccount::where('user_id', $request->user()->id)->whereIn('bank_code', $active)->where('account_type', 'temporary')->get(),
-            'methods' => FundingMethod::whereActive(1)->get(['code', 'active'])
+        $tempFundingAccounts = FundingAccount::where('user_id', $request->user()->id)
+            ->whereIn('bank_code', $active)
+            ->where('account_type', 'temporary')
+            ->get();
+
+        $methods = FundingMethod::whereActive(1)->get(['code', 'active'])
             ->keyBy('code')
             ->transform(function ($setting) {
-                return $setting->active && true;
+                return (bool) $setting->active;
             })
-            ->toArray(),
+            ->toArray();
+
+        if ($request->wantsJson() || $request->is('api/*')) {
+            return response()->json([
+                'status' => 'success',
+                'data' => [
+                    'funding_accounts' => $fundingAccounts,
+                    'temp_funding_accounts' => $tempFundingAccounts,
+                    'methods' => $methods,
+                ],
+            ]);
+        }
+
+        return Inertia::render('WalletFunding/Index', [
+            'funding_accounts' => $fundingAccounts,
+            'temp_funding_accounts' => $tempFundingAccounts,
+            'methods' => $methods,
         ]);
-
     }
-
 
     public function refreshAccounts(Request $request)
     {
@@ -52,28 +72,61 @@ class WalletFundingController extends Controller
             $user = auth()->user();
             $accountHelper->generateVirtualAccount($user);
 
-            return redirect()->back()->with('success', 'Accounts refreshed successfully.');
+            $active = FundingMethod::whereActive(1)->pluck('code');
+            $accounts = FundingAccount::where('user_id', $user->id)
+                ->whereIn('bank_code', $active)
+                ->where('account_type', '!=', 'temporary')
+                ->get();
+
+            if ($accounts->isEmpty()) {
+                $msg = 'Unable to generate virtual accounts at this time. Please ensure KYC requirements are completed or contact support.';
+                if ($request->wantsJson() || $request->is('api/*')) {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => $msg,
+                        'data' => [],
+                    ], 422);
+                }
+                return redirect()->back()->with('error', $msg)->withErrors(['error' => $msg]);
+            }
+
+            if ($request->wantsJson() || $request->is('api/*')) {
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'Virtual accounts generated successfully.',
+                    'data' => $accounts,
+                ]);
+            }
+
+            return redirect()->back()->with('success', 'Virtual accounts generated successfully.');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', $e->getMessage());
+            if ($request->wantsJson() || $request->is('api/*')) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => $e->getMessage(),
+                ], 422);
+            }
+            return redirect()->back()->with('error', $e->getMessage())->withErrors(['error' => $e->getMessage()]);
         }
     }
 
 
     public function getTempAccount(Request $request)
     {
-
         $serviceEnabled = config('settings.feat_enable_temp_account');
 
         if ($serviceEnabled != '1') {
-            throw ValidationException::withMessages([
-                'status' => 'Service Unavailable! Try again Letter',
-            ]);
+            if ($request->wantsJson() || $request->is('api/*')) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Temporary virtual account service is currently disabled. Please generate a permanent account instead.',
+                ], 422);
+            }
+            return redirect()->back()->with('error', 'Temporary virtual account service is currently disabled. Please generate a permanent account instead.');
         }
 
         $accountHelper = new AccountHelper();
-
         $user = auth()->user();
-
         $accountHelper->generateTemporaryAccount($user);
 
         if($request->wantsJson() ){
@@ -147,4 +200,42 @@ class WalletFundingController extends Controller
 
 
 
+    public function initializeZainpayPayment(Request $request)
+    {
+        $request->validate([
+            'amount' => 'required|numeric|min:100',
+        ]);
+
+        $user = auth()->user();
+        $amount = (float) $request->amount;
+        $reference = $this->helpers->generateTransactionRef('ZP');
+        $callBackUrl = url('/wallet?status=success&gateway=zainpay&ref=' . $reference);
+
+        $chargesType = config('settings.zainpay_funding_charges', '1.6 %');
+        $charges = $this->helpers->applyFundingCharges($amount, $chargesType);
+        $totalAmount = $amount + $charges;
+
+        $initRes = \App\Services\PaymentGateway\Zainpay\ZainpayService::initializePayment(
+            $totalAmount,
+            $reference,
+            $user->email,
+            $user->phone_number ?? $user->phone ?? '08000000000',
+            $callBackUrl
+        );
+
+        if ($initRes['success'] && !empty($initRes['checkout_url'])) {
+            return response()->json([
+                'status' => 'success',
+                'checkout_url' => $initRes['checkout_url'],
+                'reference' => $reference,
+                'total_amount' => $totalAmount,
+                'charges' => $charges,
+            ]);
+        }
+
+        return response()->json([
+            'status' => 'error',
+            'message' => $initRes['message'] ?? 'Failed to initialize payment with Zainpay.',
+        ], 422);
+    }
 }

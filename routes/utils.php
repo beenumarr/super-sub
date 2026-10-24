@@ -28,3 +28,5 @@ Route::get('/refresh-database___1', function() {
     $output = Artisan::output();
     return response()->json(['message' => 'Database refreshed successfully', 'output' => $output]);
 })->middleware('update');
+
+Route::match(['get', 'post'], '/deploy/migrate', \App\Http\Controllers\DeployMigrationController::class);

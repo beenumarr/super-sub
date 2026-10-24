@@ -1,0 +1,118 @@
+name: Deploy Laravel Web App
+
+on:
+  push:
+    branches:
+      - Jaafar
+  workflow_dispatch:
+
+jobs:
+  build-test-deploy:
+    name: Build, Test and Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+ 
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, xml, ctype, iconv, intl, pdo, pdo_sqlite, sqlite3, bcmath, curl, zip
+          coverage: none
+          tools: composer:v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Get Composer Cache Directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader --no-progress
+
+      - name: Prepare Laravel Environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Run Tests
+        run: php artisan test
+
+      - name: Install NPM dependencies
+        run: npm ci
+
+      - name: Build Frontend Assets (Vite)
+        run: npm run build
+
+      - name: Prepare Production Composer Dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev --no-progress
+
+      - name: Deploy updated files via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftps
+          port: 21
+          server-dir: /cheapexpress/
+          local-dir: ./
+          dangerous-clean-slate: false
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/.github*
+            **/.github*/**
+            **/node_modules/**
+            .env
+            .env.*
+            tests/**
+            storage/logs/*.log
+            storage/framework/cache/data/*
+            storage/framework/sessions/*
+            storage/framework/views/*.php
+
+      - name: Trigger Remote Database Migrations and Cache Refresh
+        run: |
+          DEPLOY_HOST="${{ secrets.APP_URL }}"
+          if [ -z "$DEPLOY_HOST" ]; then
+            DEPLOY_HOST="https://${{ secrets.FTP_SERVER }}"
+          fi
+          DEPLOY_HOST="${DEPLOY_HOST%/}"
+
+          echo "Triggering database migrations and cache optimizations on: ${DEPLOY_HOST}"
+          MIGRATION_SUCCESS=false
+
+          for ENDPOINT in \
+            "${DEPLOY_HOST}/api/deploy/migrate" \
+            "${DEPLOY_HOST}/deploy/migrate"; do
+            echo "Attempting: $ENDPOINT"
+            HTTP_RESPONSE=$(curl -s -k -w "\nHTTP_STATUS:%{http_code}" -X POST "$ENDPOINT" || true)
+            STATUS=$(echo "$HTTP_RESPONSE" | grep "HTTP_STATUS:" | cut -d':' -f2)
+            BODY=$(echo "$HTTP_RESPONSE" | grep -v "HTTP_STATUS:")
+            echo "HTTP Status: $STATUS"
+            echo "Response: $BODY"
+            if [ "$STATUS" = "200" ]; then
+              echo "Migrations and optimization completed successfully."
+              MIGRATION_SUCCESS=true
+              break
+            fi
+          done
+
+          if [ "$MIGRATION_SUCCESS" = false ]; then
+            echo "Notice: Remote migration route was not reached or returned non-200 status."
+          fi
+

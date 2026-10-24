@@ -203,4 +203,8 @@ class User extends Authenticatable implements MustVerifyEmail
         return false;
     }
 
+    public function deviceTokens(): HasMany
+    {
+        return $this->hasMany(DeviceToken::class);
+    }
 }

@@ -1,5 +1,5 @@
 import { usePage } from '@inertiajs/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface Props {
     className?: string;
@@ -13,12 +13,18 @@ export default function AppLogoIcon({ className = 'h-10 w-10', alt }: Props) {
 
     const [errorStage, setErrorStage] = useState<number>(0);
 
+    // Reset error stage whenever the configured logo updates
+    useEffect(() => {
+        setErrorStage(0);
+    }, [siteLogo]);
+
     // Compute primary logo URL
     let primaryUrl = '/logo-icon.png';
     if (siteLogo && siteLogo.trim() !== '') {
+        const cleanLogo = siteLogo.split('?')[0];
         if (siteLogo.startsWith('http://') || siteLogo.startsWith('https://') || siteLogo.startsWith('/')) {
             primaryUrl = siteLogo;
-        } else if (siteLogo === 'logo-icon.png' || siteLogo === 'logo_mob.png') {
+        } else if (cleanLogo === 'logo-icon.png' || cleanLogo === 'logo_mob.png') {
             primaryUrl = `/${siteLogo}`;
         } else {
             primaryUrl = `/storage/uploads/${siteLogo}`;

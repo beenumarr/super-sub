@@ -10,6 +10,8 @@ use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Validation\Rules\Password as PasswordRule;
 use Illuminate\Validation\ValidationException;
 
 class AuthApiController extends Controller
@@ -48,12 +50,16 @@ class AuthApiController extends Controller
 
         // Generate Sanctum Bearer token for mobile
         $token = $user->createToken('mobile_app')->plainTextToken;
+        $isEmailVerificationEnabled = in_array(config('settings.feat_enable_email_verification'), ['1', 1, 'true', true], true);
+        $needsEmailVerification = $isEmailVerificationEnabled && !$user->hasVerifiedEmail();
 
         return response()->json([
             'status' => 'success',
             'token' => $token,
             'user' => new AuthUserResource($user),
             'has_pin' => $user->hasTransactionPin(),
+            'email_verified' => $user->hasVerifiedEmail(),
+            'needs_email_verification' => $needsEmailVerification,
             'message' => 'Login successful',
         ]);
     }
@@ -100,12 +106,15 @@ class AuthApiController extends Controller
         event(new Registered($user));
 
         $token = $user->createToken('mobile_app')->plainTextToken;
+        $needsEmailVerification = $isEmailVerificationEnabled && !$user->hasVerifiedEmail();
 
         return response()->json([
             'status' => 'success',
             'token' => $token,
             'user' => new AuthUserResource($user),
             'has_pin' => false,
+            'email_verified' => $user->hasVerifiedEmail(),
+            'needs_email_verification' => $needsEmailVerification,
             'message' => 'Registration successful',
         ], 201);
     }
@@ -116,11 +125,39 @@ class AuthApiController extends Controller
     public function user(Request $request): JsonResponse
     {
         $user = $request->user();
+        $isEmailVerificationEnabled = in_array(config('settings.feat_enable_email_verification'), ['1', 1, 'true', true], true);
 
         return response()->json([
             'status' => 'success',
             'user' => new AuthUserResource($user),
             'has_pin' => $user->hasTransactionPin(),
+            'email_verified' => $user->hasVerifiedEmail(),
+            'needs_email_verification' => $isEmailVerificationEnabled && !$user->hasVerifiedEmail(),
+        ]);
+    }
+
+    /**
+     * Send or resend email verification notification.
+     */
+    public function sendVerificationEmail(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        if ($user->hasVerifiedEmail()) {
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Your email is already verified.',
+                'email_verified' => true,
+                'needs_email_verification' => false,
+            ]);
+        }
+
+        $user->sendEmailVerificationNotification();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Verification link sent to your email address.',
+            'email_verified' => false,
+            'needs_email_verification' => true,
         ]);
     }
 
@@ -161,6 +198,29 @@ class AuthApiController extends Controller
     }
 
     /**
+     * Verify transaction/login PIN.
+     */
+    public function verifyPin(Request $request): JsonResponse
+    {
+        $request->validate([
+            'pin' => ['required', 'string', 'digits:4'],
+        ]);
+
+        $user = $request->user();
+        if (!$user->verifyTransactionPin($request->input('pin'))) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Invalid PIN. Please try again.',
+            ], 422);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'PIN verified successfully.',
+        ]);
+    }
+
+    /**
      * Revoke active token.
      */
     public function logout(Request $request): JsonResponse
@@ -172,6 +232,102 @@ class AuthApiController extends Controller
         return response()->json([
             'status' => 'success',
             'message' => 'Logged out successfully',
+        ]);
+    }
+
+    /**
+     * Send password reset link to user email.
+     */
+    public function forgotPassword(Request $request): JsonResponse
+    {
+        $request->validate([
+            'email' => 'required|email',
+        ]);
+
+        Password::sendResetLink($request->only('email'));
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'A password reset link will be sent if the email exists in our records.',
+        ]);
+    }
+
+    /**
+     * Update user account password.
+     */
+    public function updatePassword(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        $request->validate([
+            'current_password' => ['required', 'string'],
+            'password' => ['required', 'string', 'min:6', 'confirmed'],
+            'password_confirmation' => ['required', 'string'],
+        ]);
+
+        if (!Hash::check($request->current_password, $user->password)) {
+            throw ValidationException::withMessages([
+                'current_password' => ['The current password provided is incorrect.'],
+            ]);
+        }
+
+        $user->update([
+            'password' => Hash::make($request->password),
+        ]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Password updated successfully.',
+        ]);
+    }
+
+    /**
+     * Update user profile information.
+     */
+    public function updateProfile(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'phone_number' => ['required', 'string', 'max:20'],
+            'address' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $user->update($validated);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Profile updated successfully.',
+            'user' => new AuthUserResource($user->fresh()),
+        ]);
+    }
+
+    /**
+     * Delete user account and revoke all tokens.
+     */
+    public function deleteAccount(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        $request->validate([
+            'password' => ['required', 'string'],
+        ]);
+
+        if (!Hash::check($request->password, $user->password)) {
+            throw ValidationException::withMessages([
+                'password' => ['The password provided is incorrect.'],
+            ]);
+        }
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($user) {
+            $user->tokens()->delete();
+            $user->delete();
+        });
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Your account has been permanently deleted.',
         ]);
     }
 }

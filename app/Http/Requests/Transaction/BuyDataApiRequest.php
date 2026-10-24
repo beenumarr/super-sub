@@ -24,8 +24,14 @@ class BuyDataApiRequest extends FormRequest
         if ($this->has('network_id') && !$this->has('network')) {
             $this->merge(['network' => $this->input('network_id')]);
         }
+        if ($this->has('mobile_network') && !$this->has('network')) {
+            $this->merge(['network' => $this->input('mobile_network')]);
+        }
         if ($this->has('plan_id') && !$this->has('plan')) {
             $this->merge(['plan' => $this->input('plan_id')]);
+        }
+        if ($this->has('data_plan_id') && !$this->has('plan')) {
+            $this->merge(['plan' => $this->input('data_plan_id')]);
         }
     }
 

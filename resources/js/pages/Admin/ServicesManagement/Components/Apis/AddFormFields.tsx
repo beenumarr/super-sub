@@ -70,6 +70,10 @@ const API_TYPE_OPTIONS = [
         value: 'APIs\\Boltnet\\',
         name: 'Boltnet',
     },
+    {
+        value: 'APIs\\Accelerate\\',
+        name: 'Accelerate (iStrategyTech)',
+    },
 ] as const;
 
 export default function AddFormFields({ handleClose }: AddFormFieldsProps) {
@@ -161,10 +165,27 @@ export default function AddFormFields({ handleClose }: AddFormFieldsProps) {
                 <InputError message={errors.name} className="mt-2" />
             </div>
 
-            {data.model === 'APIs\\VtPass\\' ? (
+            {data.model === 'APIs\\VtPass\\' || data.model === 'APIs\\Accelerate\\' ? (
                 <>
                     <div className="mt-4 space-y-1.5">
-                        <Label htmlFor="username">Username</Label>
+                        <Label htmlFor="url">API Url</Label>
+                        <Input
+                            id="url"
+                            type="text"
+                            className="h-8 w-40"
+                            name="url"
+                            value={data.url}
+                            onChange={handleChange}
+                            aria-invalid={Boolean(errors.url)}
+                            placeholder={data.model === 'APIs\\Accelerate\\' ? 'https://prod.airtime-data.irechargetech.com/api/v2' : ''}
+                        />
+                        <InputError message={errors.url} className="mt-2" />
+                    </div>
+
+                    <div className="mt-4 space-y-1.5">
+                        <Label htmlFor="username">
+                            {data.model === 'APIs\\Accelerate\\' ? 'Public Key' : 'Username'}
+                        </Label>
                         <Input
                             id="username"
                             type="text"
@@ -178,7 +199,9 @@ export default function AddFormFields({ handleClose }: AddFormFieldsProps) {
                     </div>
 
                     <div className="mt-4 space-y-1.5">
-                        <Label htmlFor="password">Password</Label>
+                        <Label htmlFor="password">
+                            {data.model === 'APIs\\Accelerate\\' ? 'Private Key' : 'Password'}
+                        </Label>
                         <Input
                             id="password"
                             type="text"
